@@ -15,14 +15,24 @@ class AuthScreen extends GetView<AuthController> {
           children: [
             Stack(
               children: [
-                Container(
+                SizedBox(
                   height: 50.hp,
                   width: 100.wp,
-                  decoration: BoxDecoration(
-                    color: context.colors.primary.withOpacity(.2),
-                  ),
-                  child: const Center(
-                    child: Icon(Icons.image),
+                  // decoration: BoxDecoration(
+                  //   color: context.colors.primary.withOpacity(.2),
+                  // ),
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 32),
+                      child: Hero(
+                        tag: 'appLogo',
+                        child: Image.asset(
+                          "assets/images/logo.png",
+                          width: 200,
+                          height: 200,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
                 _buildThemeButton(),
@@ -56,38 +66,60 @@ class AuthScreen extends GetView<AuthController> {
                 child: Column(
                   children: [
                     InputFieldWidget(
-                      label: "email".tr,
+                      label: "Tài khoản",
                       controller: controller.emailController,
                       hint: 'email_hint'.tr,
                     ),
                     const Space(),
                     InputFieldWidget(
-                      label: "password".tr,
+                      label: "Mật khẩu",
                       controller: controller.passwordController,
                       hint: 'enter_password'.tr,
                       isHideContent: true,
                     ),
                     const Space(height: 8),
                     Align(
-                      alignment: Alignment.centerRight,
-                      child: RichText(
-                          text: TextSpan(
-                        text: '${'dont_have_account'.tr} ',
-                        style: context.bodySmall,
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          TextSpan(
-                            text: 'register'.tr,
-                            style: context.bodySmall.copyWith(
-                              color: context.colors.primary,
-                            ),
+                          Checkbox(
+                            value: true,
+                            onChanged: (bool? value) {
+                              //  controller.rememberMe.value = value ?? false;
+                            },
+                          ),
+                          Text(
+                            'Ghi nhớ thông tin đăng nhập',
+                            style: context.bodySmall,
                           ),
                         ],
-                      )),
+                      ),
                     ),
                     const Space(height: 40),
-                    ButtonWidget(
-                      text: "login".tr,
-                      onPressed: controller.onLogin,
+                    // ButtonWidget(
+                    //   text: "Đăng nhập",
+                    //   onPressed: controller.onLogin,
+                    //   labelStyle: const TextStyle(
+                    //       fontWeight: FontWeight.bold, color: Colors.white),
+                    // ),
+                    GestureDetector(
+                      onTap: controller.onLogin,
+                      child: Container(
+                        width: double.infinity,
+                        height: 45,
+                        decoration: BoxDecoration(
+                            color: const Color.fromRGBO(136, 216, 74, 1),
+                            borderRadius: BorderRadius.circular(10)),
+                        child: const Center(
+                          child: Text(
+                            "Đăng nhập",
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white),
+                          ),
+                        ),
+                      ),
                     ),
                     const Space(height: 40),
                   ],

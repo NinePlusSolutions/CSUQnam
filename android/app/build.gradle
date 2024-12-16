@@ -14,12 +14,12 @@ android {
         dev {
             dimension "flavor-type"
             applicationId "com.example.getx.dev"
-            resValue "string", "app_name", "[DEV] Flutter GetX"
+            resValue "string", "app_name", "[Dev]Cao Su QNam"
         }
         prod {
             dimension "flavor-type"
             applicationId "com.example.getx"
-            resValue "string", "app_name", "Flutter GetX"
+            resValue "string", "app_name", "Cao Su QNam"
         }
     }
 

@@ -24,28 +24,29 @@ class AuthController extends BaseController<AuthRepository> {
   }
 
   onLogin() async {
-    if (formKey.currentState?.validate() != true) {
-      showError("Error", "fill_correct_info".tr);
+    // if (formKey.currentState?.validate() != true) {
+    //   showError("Error", "fill_correct_info".tr);
 
-      return;
-    }
+    //   return;
+    // }
 
-    setLoading(true);
+    // setLoading(true);
     try {
-      final request = LoginRequest(
-        username: emailController.text,
-        password: passwordController.text,
-        expiresInMins: 1,
-      );
-      final res = await repository.login(request);
-      if (res.accessToken != null) {
-        StorageService.token = res.accessToken!;
-        NavigatorHelper.toHome();
-      } else {
-        // showError("login_failed".tr,res. )
-      }
+      // final request = LoginRequest(
+      //   username: emailController.text,
+      //   password: passwordController.text,
+      //   expiresInMins: 1,
+      // );
+      // final res = await repository.login(request);
+      // if (res.accessToken != null) {
+      //   StorageService.token = res.accessToken!;
+      //   NavigatorHelper.toHome();
+      // } else {
+      //   // showError("login_failed".tr,res. )
+      // }
+      NavigatorHelper.toHome();
     } on ErrorResponse catch (e) {
-      showError("login_failed".tr, e.message);
+      // showError("login_failed".tr, e.message);
     } finally {
       setLoading(false);
     }

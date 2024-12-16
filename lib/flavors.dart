@@ -11,9 +11,9 @@ class F {
   static String get title {
     switch (appFlavor) {
       case Flavor.dev:
-        return '[DEV] Flutter GetX';
+        return '[Dev]Cao Su QNam';
       case Flavor.prod:
-        return 'Flutter GetX';
+        return 'Cao Su QNam';
       default:
         return 'title';
     }

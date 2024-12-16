@@ -28,9 +28,9 @@ class _SplashScreenState extends State<SplashScreen> {
     }
     final firstInstall = StorageService.firstInstall;
     await Future.delayed(const Duration(milliseconds: 300));
-    if (firstInstall) {
-      NavigatorHelper.toOnBoardScreen();
-    }
+    // if (firstInstall) {
+    //   NavigatorHelper.toOnBoardScreen();
+    // }
 
     final accessToken = StorageService.token;
     if (accessToken != null) {
@@ -44,9 +44,16 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     SizeConfig().init(context);
 
-    return const Scaffold(
+    return Scaffold(
       body: Center(
-        child: Text("Welcome to SplashScreen"),
+        child: Hero(
+          tag: 'appLogo',
+          child: Image.asset(
+            "assets/images/logo.png",
+            width: 200,
+            height: 200,
+          ),
+        ),
       ),
     );
   }

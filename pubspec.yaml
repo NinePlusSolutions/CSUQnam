@@ -26,6 +26,8 @@ dependencies:
   intl: ^0.20.1
   path_provider: ^2.1.5
   flutter_dotenv: ^5.2.1
+  flutter_slidable: ^3.1.1
+  get_storage: ^2.1.1
 
 dev_dependencies:
   flutter_test:
@@ -57,7 +59,7 @@ flavorizr:
   flavors:
     dev:
       app:
-        name: "[DEV] Flutter GetX" # replace with your app name
+        name: "[Dev]Cao Su QNam" # replace with your app name
       android:
         applicationId: "com.example.getx.dev" # replace with your package name
         icon: "assets/system/logo_circle.png" # replace with your icon path
@@ -75,7 +77,7 @@ flavorizr:
   
     prod:
       app:
-        name: "Flutter GetX" # replace with your app name
+        name: "Cao Su QNam" # replace with your app name
       android:
           applicationId: "com.example.getx" # replace with your package name
           icon: "assets/system/logo_circle.png" # replace with your icon path

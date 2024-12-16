@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_getx_boilerplate/app_binding.dart';
@@ -10,6 +11,8 @@ import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:get/get_navigation/src/routes/transitions_type.dart';
 
 import 'flavors.dart';
+import 'pages/my_home_page.dart';
+
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -40,3 +43,4 @@ class App extends StatelessWidget {
     );
   }
 }
+

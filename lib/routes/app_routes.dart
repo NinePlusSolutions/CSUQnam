@@ -10,4 +10,6 @@ abstract class Routes {
 
   static const home = '/';
   static const inventory = '/inventory';
+  static const updateTree = '/update-tree';
+  static const sync = '/sync';
 }

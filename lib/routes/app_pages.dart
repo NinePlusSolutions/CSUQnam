@@ -3,6 +3,10 @@ import 'package:flutter_getx_boilerplate/modules/inventory/inventory_controller.
 import 'package:flutter_getx_boilerplate/modules/inventory/inventory_screen.dart';
 import 'package:flutter_getx_boilerplate/modules/modules.dart';
 import 'package:flutter_getx_boilerplate/modules/updated_trees/updated_trees_screen.dart';
+import 'package:flutter_getx_boilerplate/modules/inventory/update_tree_binding.dart';
+import 'package:flutter_getx_boilerplate/modules/inventory/update_tree_screen.dart';
+import 'package:flutter_getx_boilerplate/modules/sync/sync_binding.dart';
+import 'package:flutter_getx_boilerplate/modules/sync/sync_screen.dart';
 import 'package:get/get.dart';
 
 part 'app_routes.dart';
@@ -33,7 +37,7 @@ class AppPages {
     ),
     GetPage(
       name: Routes.inventory,
-      page: () => const InventoryScreen(),
+      page: () =>  InventoryScreen(),
       binding: BindingsBuilder(() {
         Get.lazyPut(() => InventoryController());
       }),
@@ -41,6 +45,22 @@ class AppPages {
     GetPage(
       name: '/updated-trees',
       page: () => UpdatedTreesScreen(),
+    ),
+    GetPage(
+      name: Routes.updateTree,
+      page: () => const UpdateTreeScreen(
+        farm: '',
+        lot: '',
+        team: '',
+        row: '',
+        statusCounts: {},
+      ),
+      binding: UpdateTreeBinding(),
+    ),
+    GetPage(
+      name: Routes.sync,
+      page: () => const SyncScreen(),
+      binding: SyncBinding(),
     ),
   ];
 }

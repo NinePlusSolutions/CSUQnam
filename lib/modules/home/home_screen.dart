@@ -1,15 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_getx_boilerplate/modules/home/home.dart';
 import 'package:get/get.dart';
+import 'package:badges/badges.dart' as badges;
+import '../sync/sync_controller.dart';
 
 class HomeScreen extends GetView<HomeController> {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    Get.put(SyncController());
+
     return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'Trang chủ',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+        backgroundColor: Colors.green,
+        elevation: 0,
+      ),
       body: SafeArea(
-        child: _buildBody(context),
+        child: _buildBody(),
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const [
@@ -28,7 +44,9 @@ class HomeScreen extends GetView<HomeController> {
     );
   }
 
-  Widget _buildBody(BuildContext context) {
+  Widget _buildBody() {
+    final syncController = Get.find<SyncController>();
+
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Column(
@@ -59,14 +77,13 @@ class HomeScreen extends GetView<HomeController> {
             onTap: () => Get.toNamed('/inventory'),
           ),
           const SizedBox(height: 16),
-          _buildActionButton(
-            icon: Icons.sync,
-            label: 'Đồng bộ',
-            color: Colors.blue,
-            onTap: () {
-              // TODO: Implement sync functionality
-            },
-          ),
+          Obx(() => _buildActionButton(
+                icon: Icons.sync,
+                label: 'Đồng bộ',
+                color: Colors.blue,
+                hasBadge: syncController.pendingUpdates.isNotEmpty,
+                onTap: () => Get.toNamed('/sync'),
+              )),
         ],
       ),
     );
@@ -77,7 +94,32 @@ class HomeScreen extends GetView<HomeController> {
     required String label,
     required Color color,
     required VoidCallback onTap,
+    bool hasBadge = false,
   }) {
+    Widget iconWidget = Icon(
+      icon,
+      color: Colors.white,
+      size: 32,
+    );
+
+    if (hasBadge) {
+      iconWidget = badges.Badge(
+        position: badges.BadgePosition.topEnd(top: -8, end: -6),
+        badgeContent: const Text(
+          '!',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+          ),
+        ),
+        badgeStyle: const badges.BadgeStyle(
+          badgeColor: Colors.red,
+          padding: EdgeInsets.all(6),
+        ),
+        child: iconWidget,
+      );
+    }
+
     return Container(
       height: 120,
       decoration: BoxDecoration(
@@ -106,14 +148,10 @@ class HomeScreen extends GetView<HomeController> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
+                    color: color.withOpacity(0.6),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(
-                    icon,
-                    size: 32,
-                    color: color,
-                  ),
+                  child: iconWidget,
                 ),
                 const SizedBox(width: 20),
                 Expanded(
@@ -131,7 +169,7 @@ class HomeScreen extends GetView<HomeController> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        label == 'Kiểm kê' 
+                        label == 'Kiểm kê'
                             ? 'Cập nhật thông tin cây'
                             : 'Đồng bộ dữ liệu mới nhất',
                         style: TextStyle(

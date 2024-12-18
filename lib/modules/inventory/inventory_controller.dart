@@ -1,4 +1,8 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_getx_boilerplate/modules/inventory/update_tree_controller.dart';
+import 'package:flutter_getx_boilerplate/routes/app_pages.dart';
 import 'package:get/get.dart';
+import 'update_tree_screen.dart';
 
 class StatusInfo {
   final String code;
@@ -11,6 +15,7 @@ class InventoryController extends GetxController {
   final RxList<StatusInfo> statusList = <StatusInfo>[].obs;
   final RxMap<String, RxInt> statusCounts = <String, RxInt>{}.obs;
   final RxString note = ''.obs;
+  final RxString tappingAge = 'Năm 1'.obs;
 
   // Farm, lot, and row information
   final RxString farm = 'Nông trường 1'.obs;
@@ -18,59 +23,55 @@ class InventoryController extends GetxController {
   final RxString lot = 'Lô A'.obs;
   final RxString row = 'Hàng 1'.obs;
 
-  // Danh sách các giá trị cho dropdown
-  final List<String> farms = [
-    'Nông trường 1',
-    'Nông trường 2',
-    'Nông trường 3',
-    'Nông trường 4',
-    'Nông trường 5',
-  ];
+  // Trạng thái cho phép chỉnh sửa
+  final RxBool isEditingEnabled = true.obs;
 
-  final List<String> teams = [
-    'Tổ 1',
-    'Tổ 2',
-    'Tổ 3',
-    'Tổ 4',
-    'Tổ 5',
-  ];
+  // Danh sách dữ liệu mẫu cho các dropdown
+  final RxList<String> farms =
+      ['Nông trường 1', 'Nông trường 2', 'Nông trường 3'].obs;
+  final RxList<String> lots = ['Lô A', 'Lô B', 'Lô C', 'Lô D'].obs;
+  final RxList<String> teams = ['Tổ 1', 'Tổ 2', 'Tổ 3', 'Tổ 4'].obs;
+  final RxList<String> rows =
+      ['Hàng 1', 'Hàng 2', 'Hàng 3', 'Hàng 4', 'Hàng 5'].obs;
 
-  final Map<String, List<String>> lotsByFarm = {
-    'Nông trường 1': ['Lô A', 'Lô B', 'Lô C', 'Lô D'],
-    'Nông trường 2': ['Lô E', 'Lô F', 'Lô G', 'Lô H'],
-    'Nông trường 3': ['Lô I', 'Lô J', 'Lô K', 'Lô L'],
-    'Nông trường 4': ['Lô M', 'Lô N', 'Lô O', 'Lô P'],
-    'Nông trường 5': ['Lô Q', 'Lô R', 'Lô S', 'Lô T'],
+  final Map<String, List<String>> lotsMap = {
+    'Nông trường 1': ['Lô A', 'Lô B', 'Lô C'],
+    'Nông trường 2': ['Lô D', 'Lô E', 'Lô F'],
+    'Nông trường 3': ['Lô G', 'Lô H', 'Lô I'],
   };
 
-  final Map<String, List<String>> rowsByLot = {
-    'Lô A': ['Hàng 1', 'Hàng 2', 'Hàng 3', 'Hàng 4'],
-    'Lô B': ['Hàng 5', 'Hàng 6', 'Hàng 7', 'Hàng 8'],
-    'Lô C': ['Hàng 9', 'Hàng 10', 'Hàng 11', 'Hàng 12'],
-    'Lô D': ['Hàng 13', 'Hàng 14', 'Hàng 15', 'Hàng 16'],
+  final Map<String, List<String>> rowsMap = {
+    'Lô A': ['Hàng 1', 'Hàng 2', 'Hàng 3'],
+    'Lô B': ['Hàng 4', 'Hàng 5', 'Hàng 6'],
+    'Lô C': ['Hàng 7', 'Hàng 8', 'Hàng 9'],
+    'Lô D': ['Hàng 10', 'Hàng 11', 'Hàng 12'],
+    'Lô E': ['Hàng 13', 'Hàng 14', 'Hàng 15'],
+    'Lô F': ['Hàng 16', 'Hàng 17', 'Hàng 18'],
+    'Lô G': ['Hàng 19', 'Hàng 20', 'Hàng 21'],
+    'Lô H': ['Hàng 22', 'Hàng 23', 'Hàng 24'],
+    'Lô I': ['Hàng 25', 'Hàng 26', 'Hàng 27'],
   };
 
-  // Lấy danh sách lô dựa trên nông trường
-  List<String> getLotsForFarm(String farmName) {
-    return lotsByFarm[farmName] ?? [];
+  List<String> getLotsForFarm(String farm) {
+    return lotsMap[farm] ?? [];
   }
 
-  // Lấy danh sách hàng dựa trên lô
-  List<String> getRowsForLot(String lotName) {
-    return rowsByLot[lotName] ?? [];
+  List<String> getRowsForLot(String lot) {
+    return rowsMap[lot] ?? [];
   }
 
-  // Cập nhật lô khi thay đổi nông trường
   void updateFarm(String newFarm) {
     farm.value = newFarm;
     final lots = getLotsForFarm(newFarm);
     if (lots.isNotEmpty) {
       lot.value = lots.first;
-      updateLot(lots.first);
+      final rows = getRowsForLot(lots.first);
+      if (rows.isNotEmpty) {
+        row.value = rows.first;
+      }
     }
   }
 
-  // Cập nhật hàng khi thay đổi lô
   void updateLot(String newLot) {
     lot.value = newLot;
     final rows = getRowsForLot(newLot);
@@ -78,6 +79,21 @@ class InventoryController extends GetxController {
       row.value = rows.first;
     }
   }
+
+  // Map màu cho từng trạng thái
+  final Map<String, Color> statusColors = {
+    'B1': Colors.red,
+    'B2': Colors.orange,
+    'B3': Colors.yellow[700]!,
+    'B45': Colors.green,
+    'C1': Colors.blue[300]!,
+    'C2': Colors.blue,
+    'D1': Colors.purple[300]!,
+    'D2': Colors.purple,
+    'E1': Colors.pink[300]!,
+    'E2': Colors.pink,
+    'F': Colors.grey,
+  };
 
   @override
   void onInit() {
@@ -90,11 +106,10 @@ class InventoryController extends GetxController {
       StatusInfo('KB', 'Cây khô miệng cạo'),
       StatusInfo('KG', 'Cây cạo không hiệu quả'),
       StatusInfo('KC', 'Cây không phát triển'),
-      StatusInfo('O', 'Hố trống, cây chết'),
-      StatusInfo('M', 'Hố bị mất do lấn chiểm'),
-      StatusInfo('B', 'Cây bệnh'),
-      StatusInfo('B4', 'Cây bệnh cấp 4'),
-      StatusInfo('B5', 'Cây bệnh cấp 5'),
+      StatusInfo('O', 'Hố trống(cây chết)'),
+      StatusInfo('M', 'Hố bị mất do lấn chiếm'),
+      StatusInfo('B', 'Cây bênh'),
+      StatusInfo('B4,5', 'Cây bệnh 4,5'),
     ];
 
     statusList.addAll(statuses);
@@ -104,14 +119,18 @@ class InventoryController extends GetxController {
   }
 
   void incrementStatus(String status) {
-    final currentCount = statusCounts[status] ?? 0.obs;
-    currentCount.value++;
+    if (isEditingEnabled.value) {
+      final currentCount = statusCounts[status] ?? 0.obs;
+      currentCount.value++;
+    }
   }
 
   void decrementStatus(String status) {
-    final currentCount = statusCounts[status] ?? 0.obs;
-    if (currentCount.value > 0) {
-      currentCount.value--;
+    if (isEditingEnabled.value) {
+      final currentCount = statusCounts[status] ?? 0.obs;
+      if (currentCount.value > 0) {
+        currentCount.value--;
+      }
     }
   }
 
@@ -124,7 +143,68 @@ class InventoryController extends GetxController {
   }
 
   void submitInventory() {
-    // TODO: Implement inventory submission
-    Get.back();
+    Get.dialog(
+      AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.green[700]),
+            const SizedBox(width: 8),
+            const Text('Xác nhận'),
+          ],
+        ),
+        content: const Text(
+          'Bạn có chắc chắn muốn kết thúc không? Tác vụ này sẽ không được hoàn tác.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Get.back();
+              // Chuyển đổi từ RxMap<String, RxInt> sang Map<String, int>
+              final Map<String, int> finalCounts = {};
+              statusCounts.forEach((key, value) {
+                if (value.value > 0) {
+                  finalCounts[key] = value.value;
+                }
+              });
+
+              Get.delete<UpdateTreeController>(); // Xóa controller cũ nếu có
+              final controller = Get.put(UpdateTreeController());
+
+              final result = await Get.to<Map<String, dynamic>>(
+                () => UpdateTreeScreen(
+                  farm: farm.value,
+                  lot: lot.value,
+                  team: productionTeam.value,
+                  row: row.value,
+                  statusCounts: finalCounts,
+                ),
+              );
+
+              // Nếu có kết quả trả về từ màn hình UpdateTree
+              if (result != null) {
+                // Reset dữ liệu cho hàng mới
+                statusCounts.forEach((key, value) {
+                  value.value = 0;
+                });
+                row.value = result['row'] as String;
+                // Cập nhật UI
+                update(['row']); // Cập nhật widget có ID là 'row'
+                update([
+                  'status_counts'
+                ]); // Cập nhật widget có ID là 'status_counts'
+              }
+            },
+            child: Text(
+              'Đồng ý',
+              style: TextStyle(color: Colors.green[700]),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

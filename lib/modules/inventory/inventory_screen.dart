@@ -10,7 +10,7 @@ class InventoryScreen extends GetView<InventoryController> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Cập nhật',
+          'Kiểm kê',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w600,
@@ -19,49 +19,18 @@ class InventoryScreen extends GetView<InventoryController> {
         backgroundColor: Colors.green,
         elevation: 2,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Get.back(),
         ),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: Container(
-              margin: const EdgeInsets.symmetric(vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.green.withOpacity(0.15),
-                    spreadRadius: 1,
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-                border: Border.all(color: Colors.green.withOpacity(0.5)),
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: controller.submitInventory,
-                  borderRadius: BorderRadius.circular(20),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Center(
-                      child: Text(
-                        'Kết thúc',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.green[700],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
+          Obx(() => Switch(
+                value: controller.isEditingEnabled.value,
+                onChanged: (value) {
+                  controller.isEditingEnabled.value = value;
+                },
+                activeColor: Colors.white,
+                activeTrackColor: Colors.green[300],
+              )),
         ],
       ),
       body: SafeArea(
@@ -77,6 +46,44 @@ class InventoryScreen extends GetView<InventoryController> {
                     _buildStatusGrid(),
                     const SizedBox(height: 24),
                     _buildNoteSection(),
+                    Container(
+                      margin: const EdgeInsets.symmetric(vertical: 20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.green.withOpacity(0.15),
+                            spreadRadius: 1,
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                        border:
+                            Border.all(color: Colors.green.withOpacity(0.5)),
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: controller.submitInventory,
+                          borderRadius: BorderRadius.circular(20),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 15),
+                            child: Center(
+                              child: Text(
+                                'Kết thúc',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.green[700],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -103,51 +110,113 @@ class InventoryScreen extends GetView<InventoryController> {
       child: InkWell(
         onTap: () => _showEditDialog(),
         borderRadius: BorderRadius.circular(8),
-        child: Row(
+        child: Column(
           children: [
-            Expanded(
-              child: Row(
-                children: [
-                  Icon(Icons.location_on_outlined,
-                      size: 18, color: Colors.grey[600]),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${controller.farm.value} • ${controller.lot.value}',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
+            Row(
+              children: [
+                // Bên trái: Nông trường và Tổ
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.location_on_outlined,
+                              size: 18, color: Colors.grey[600]),
+                          const SizedBox(width: 4),
+                          Obx(() => Text(
+                                controller.farm.value,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              )),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Icon(Icons.groups_outlined,
+                              size: 18, color: Colors.grey[600]),
+                          const SizedBox(width: 4),
+                          Obx(() => Text(
+                                controller.productionTeam.value,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              )),
+                        ],
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
-            Container(
-              height: 20,
-              width: 1,
-              color: Colors.grey[300],
-            ),
-            Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Icon(Icons.groups_outlined,
-                      size: 18, color: Colors.grey[600]),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${controller.productionTeam.value} • ${controller.row.value}',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
+                ),
+                Container(
+                  height: 40,
+                  width: 1,
+                  color: Colors.grey[300],
+                ),
+                const SizedBox(width: 16),
+                // Bên phải: Lô, Tuổi cạo và Hàng
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.grid_view_outlined,
+                              size: 18, color: Colors.grey[600]),
+                          const SizedBox(width: 4),
+                          Obx(() => Text(
+                                controller.lot.value,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              )),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(Icons.calendar_today_outlined,
+                              size: 16, color: Colors.grey[600]),
+                          const SizedBox(width: 4),
+                          Obx(() => Text(
+                                'Tuổi cạo: ${controller.tappingAge.value}',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[700],
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              )),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(Icons.straighten_outlined,
+                              size: 18, color: Colors.grey[600]),
+                          const SizedBox(width: 4),
+                          Obx(() => Text(
+                                controller.row.value,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              )),
+                          const SizedBox(width: 8),
+                          Icon(
+                            Icons.edit_outlined,
+                            size: 16,
+                            color: Colors.green[700],
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  Icon(
-                    Icons.edit_outlined,
-                    size: 16,
-                    color: Colors.green[700],
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ],
         ),
@@ -156,131 +225,131 @@ class InventoryScreen extends GetView<InventoryController> {
   }
 
   void _showEditDialog() {
-    final farmController = TextEditingController(text: controller.farm.value);
-    final lotController = TextEditingController(text: controller.lot.value);
-    final teamController =
-        TextEditingController(text: controller.productionTeam.value);
-    final rowController = TextEditingController(text: controller.row.value);
-
     Get.dialog(
       AlertDialog(
         title: Row(
           children: [
-            Icon(Icons.edit_outlined, size: 20, color: Colors.green[700]),
+            Icon(Icons.edit, color: Colors.green[700]),
             const SizedBox(width: 8),
-            const Text(
-              'Chỉnh sửa thông tin',
-              style: TextStyle(fontSize: 16),
-            ),
+            const Text('Chỉnh sửa thông tin'),
           ],
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _buildEditField(
-              controller: farmController,
-              label: 'Nông trường',
-              icon: Icons.location_on_outlined,
+            // Dropdown Nông trường
+            DropdownButtonFormField<String>(
+              decoration: const InputDecoration(
+                labelText: 'Nông trường',
+                border: OutlineInputBorder(),
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ),
+              value: controller.farm.value,
+              items: controller.farms
+                  .map((farm) => DropdownMenuItem(
+                        value: farm,
+                        child: Text(farm),
+                      ))
+                  .toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  controller.farm.value = value;
+                }
+              },
             ),
             const SizedBox(height: 16),
-            _buildEditField(
-              controller: lotController,
-              label: 'Lô',
-              icon: Icons.grid_4x4,
+            // Dropdown Lô
+            DropdownButtonFormField<String>(
+              decoration: const InputDecoration(
+                labelText: 'Lô',
+                border: OutlineInputBorder(),
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ),
+              value: controller.lot.value,
+              items: controller.lots
+                  .map((lot) => DropdownMenuItem(
+                        value: lot,
+                        child: Text(lot),
+                      ))
+                  .toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  controller.lot.value = value;
+                }
+              },
             ),
             const SizedBox(height: 16),
-            _buildEditField(
-              controller: teamController,
-              label: 'Tổ sản xuất',
-              icon: Icons.groups_outlined,
+            // Dropdown Tổ sản xuất
+            DropdownButtonFormField<String>(
+              decoration: const InputDecoration(
+                labelText: 'Tổ sản xuất',
+                border: OutlineInputBorder(),
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ),
+              value: controller.productionTeam.value,
+              items: controller.teams
+                  .map((team) => DropdownMenuItem(
+                        value: team,
+                        child: Text(team),
+                      ))
+                  .toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  controller.productionTeam.value = value;
+                }
+              },
             ),
             const SizedBox(height: 16),
-            _buildEditField(
-              controller: rowController,
-              label: 'Hàng',
-              icon: Icons.view_week_outlined,
-            ),
+            // Dropdown Hàng
+            Obx(() {
+              return DropdownButtonFormField<String>(
+                decoration: const InputDecoration(
+                  labelText: 'Hàng',
+                  border: OutlineInputBorder(),
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+                value: controller.row.value,
+                items: controller.rows
+                    .map((row) => DropdownMenuItem(
+                          value: row,
+                          child: Text(row),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    controller.row.value = value;
+                  }
+                },
+              );
+            }),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: Text(
-              'Hủy',
-              style: TextStyle(color: Colors.grey[600]),
-            ),
+            child: const Text('Hủy'),
           ),
-          Container(
-            margin: const EdgeInsets.only(left: 8, right: 8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.green.withOpacity(0.15),
-                  spreadRadius: 1,
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-              border: Border.all(color: Colors.green.withOpacity(0.5)),
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () {
-                  controller.farm.value = farmController.text;
-                  controller.lot.value = lotController.text;
-                  controller.productionTeam.value = teamController.text;
-                  controller.row.value = rowController.text;
-                  Get.back();
-                },
-                borderRadius: BorderRadius.circular(20),
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Text(
-                    'Cập nhật',
-                    style: TextStyle(
-                      color: Colors.green[700],
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
+          TextButton(
+            onPressed: () {
+              Get.back();
+              Get.snackbar(
+                'Thành công',
+                'Đã cập nhật thông tin',
+                backgroundColor: Colors.green,
+                colorText: Colors.white,
+                snackPosition: SnackPosition.TOP,
+              );
+            },
+            child: Text(
+              'Cập nhật',
+              style: TextStyle(color: Colors.green[700]),
             ),
           ),
         ],
-      ),
-      barrierDismissible: false,
-    );
-  }
-
-  Widget _buildEditField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-  }) {
-    return TextField(
-      controller: controller,
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: TextStyle(color: Colors.grey[600], fontSize: 14),
-        prefixIcon: Icon(icon, size: 20, color: Colors.grey[600]),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.grey[300]!),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.grey[300]!),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Colors.green),
-        ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       ),
     );
   }
@@ -319,6 +388,7 @@ class InventoryScreen extends GetView<InventoryController> {
 
   Widget _buildStatusGrid() {
     return Obx(() {
+      final isEditing = controller.isEditingEnabled.value;
       return GridView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
@@ -338,13 +408,17 @@ class InventoryScreen extends GetView<InventoryController> {
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: _getStatusColor(status.code).withOpacity(0.1),
+                  color: isEditing
+                      ? _getStatusColor(status.code).withOpacity(0.1)
+                      : Colors.grey.withOpacity(0.1),
                   spreadRadius: 1,
                   blurRadius: 4,
                 ),
               ],
               border: Border.all(
-                color: _getStatusColor(status.code).withOpacity(0.2),
+                color: isEditing
+                    ? _getStatusColor(status.code).withOpacity(0.2)
+                    : Colors.grey.withOpacity(0.2),
               ),
             ),
             child: Column(
@@ -361,7 +435,9 @@ class InventoryScreen extends GetView<InventoryController> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: _getStatusColor(status.code).withOpacity(0.1),
+                          color: isEditing
+                              ? _getStatusColor(status.code).withOpacity(0.1)
+                              : Colors.grey.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -369,7 +445,9 @@ class InventoryScreen extends GetView<InventoryController> {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: _getStatusColor(status.code),
+                            color: isEditing
+                                ? _getStatusColor(status.code)
+                                : Colors.grey,
                           ),
                         ),
                       ),
@@ -384,10 +462,12 @@ class InventoryScreen extends GetView<InventoryController> {
                     children: [
                       _buildControlButton(
                         icon: Icons.remove,
-                        onPressed: count > 0
+                        onPressed: (count > 0 && isEditing)
                             ? () => controller.decrementStatus(status.code)
                             : null,
-                        color: _getStatusColor(status.code),
+                        color: isEditing
+                            ? _getStatusColor(status.code)
+                            : Colors.grey,
                       ),
                       Container(
                         margin: const EdgeInsets.symmetric(horizontal: 12),
@@ -401,17 +481,21 @@ class InventoryScreen extends GetView<InventoryController> {
                         ),
                         child: Text(
                           count.toString(),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
+                            color: isEditing ? Colors.black : Colors.grey,
                           ),
                         ),
                       ),
                       _buildControlButton(
                         icon: Icons.add,
-                        onPressed: () =>
-                            controller.incrementStatus(status.code),
-                        color: _getStatusColor(status.code),
+                        onPressed: isEditing
+                            ? () => controller.incrementStatus(status.code)
+                            : null,
+                        color: isEditing
+                            ? _getStatusColor(status.code)
+                            : Colors.grey,
                       ),
                     ],
                   );
@@ -451,30 +535,28 @@ class InventoryScreen extends GetView<InventoryController> {
     );
   }
 
-  Color _getStatusColor(String status) {
-    switch (status) {
+  Color _getStatusColor(String code) {
+    switch (code) {
       case 'N':
-        return Colors.blue;
+        return Colors.green[600]!;
       case 'U':
-        return Colors.green;
+        return Colors.blue[600]!;
       case 'UN':
-        return Colors.purple;
+        return Colors.teal[500]!;
       case 'KB':
         return Colors.orange[700]!;
       case 'KG':
         return Colors.red[700]!;
       case 'KC':
-        return Colors.red;
+        return Colors.purple[700]!;
       case 'O':
-        return Colors.black;
+        return Colors.grey[800]!;
       case 'M':
-        return Colors.indigo;
+        return Colors.brown[700]!;
       case 'B':
         return Colors.amber[900]!;
-      case 'B4':
-        return Colors.brown;
-      case 'B5':
-        return Colors.brown[900]!;
+      case 'B4,5':
+        return Colors.deepOrange[600]!;
       default:
         return Colors.grey;
     }

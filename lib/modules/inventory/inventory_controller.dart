@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_getx_boilerplate/api/api_provider.dart';
+import 'package:flutter_getx_boilerplate/models/response/status_response.dart';
 import 'package:flutter_getx_boilerplate/modules/inventory/update_tree_controller.dart';
 import 'package:flutter_getx_boilerplate/routes/app_pages.dart';
 import 'package:get/get.dart';
@@ -52,6 +54,8 @@ class InventoryController extends GetxController {
     'Lô I': ['Hàng 25', 'Hàng 26', 'Hàng 27'],
   };
 
+  final ApiProvider _apiProvider = ApiProvider();
+
   List<String> getLotsForFarm(String farm) {
     return lotsMap[farm] ?? [];
   }
@@ -81,40 +85,65 @@ class InventoryController extends GetxController {
   }
 
   // Map màu cho từng trạng thái
-  final Map<String, Color> statusColors = {
-    'B1': Colors.red,
-    'B2': Colors.orange,
-    'B3': Colors.yellow[700]!,
-    'B45': Colors.green,
-    'C1': Colors.blue[300]!,
-    'C2': Colors.blue,
-    'D1': Colors.purple[300]!,
-    'D2': Colors.purple,
-    'E1': Colors.pink[300]!,
-    'E2': Colors.pink,
-    'F': Colors.grey,
-  };
+  final RxMap<String, Color> statusColors = <String, Color>{
+    'N': Colors.blue, // Cây cạo ngữa
+    'U': Colors.green, // Cây cạo úp
+    'UN': Colors.teal, // Cây cạo úp ngữa
+    'C': Colors.purple, // Cây hữ hiệu sẽ đưa vào cạo
+    'KB': Colors.orange, // Cây khô miệng cạo
+    'K': Colors.red, // Cây không phát triển
+    'KG': Colors.pink, // Cây cạo không hiệu quả
+    'O': Colors.grey, // Hố trống
+    'M': Colors.brown, // Hố bị mất do lấn chiếm
+    'B': Colors.red[700]!, // Cây bệnh
+    'B4,5': Colors.red[900]!, // Cây bệnh cấp 4,5
+  }.obs;
 
   @override
   void onInit() {
     super.onInit();
-    // Initialize with status options and their descriptions
-    final statuses = [
-      StatusInfo('N', 'Cây cạo ngửa'),
-      StatusInfo('U', 'Cây cạo úp'),
-      StatusInfo('UN', 'Cây cạo úp ngửa'),
-      StatusInfo('KB', 'Cây khô miệng cạo'),
-      StatusInfo('KG', 'Cây cạo không hiệu quả'),
-      StatusInfo('KC', 'Cây không phát triển'),
-      StatusInfo('O', 'Hố trống(cây chết)'),
-      StatusInfo('M', 'Hố bị mất do lấn chiếm'),
-      StatusInfo('B', 'Cây bênh'),
-      StatusInfo('B4,5', 'Cây bệnh 4,5'),
-    ];
+    fetchStatusData();
+  }
 
-    statusList.addAll(statuses);
-    for (var status in statusList) {
-      statusCounts[status.code] = 0.obs;
+  Future<void> fetchStatusData() async {
+    try {
+      final response = await _apiProvider.getStatus();
+      final statusResponse = StatusResponse.fromJson(response.data);
+
+      // Clear existing status list and counts
+      statusList.clear();
+      statusCounts.clear();
+
+      // Map API response to StatusInfo objects
+      final statuses = statusResponse.data
+          .map((item) => StatusInfo(item.name, item.description))
+          .toList();
+
+      // Update the status list and initialize counts
+      statusList.addAll(statuses);
+      for (var status in statusList) {
+        statusCounts[status.code] = 0.obs;
+      }
+    } catch (e) {
+      print('Error fetching status data: $e');
+      // In case of error, initialize with default values
+      final defaultStatuses = [
+        StatusInfo('N', 'Cây cạo ngửa'),
+        StatusInfo('U', 'Cây cạo úp'),
+        StatusInfo('UN', 'Cây cạo úp ngửa'),
+        StatusInfo('KB', 'Cây khô miệng cạo'),
+        StatusInfo('KG', 'Cây cạo không hiệu quả'),
+        StatusInfo('KC', 'Cây không phát triển'),
+        StatusInfo('O', 'Hố trống(cây chết)'),
+        StatusInfo('M', 'Hố bị mất do lấn chiếm'),
+        StatusInfo('B', 'Cây bênh'),
+        StatusInfo('B4,5', 'Cây bệnh 4,5'),
+      ];
+
+      statusList.addAll(defaultStatuses);
+      for (var status in statusList) {
+        statusCounts[status.code] = 0.obs;
+      }
     }
   }
 

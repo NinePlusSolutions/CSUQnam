@@ -12,7 +12,7 @@ class AuthBinding implements Bindings {
     );
 
     Get.lazyPut<AuthController>(
-      () => AuthController(Get.find()),
+      () => AuthController(),
     );
   }
 }

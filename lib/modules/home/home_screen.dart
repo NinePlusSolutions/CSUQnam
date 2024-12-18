@@ -3,6 +3,7 @@ import 'package:flutter_getx_boilerplate/modules/home/home.dart';
 import 'package:get/get.dart';
 import 'package:badges/badges.dart' as badges;
 import '../sync/sync_controller.dart';
+import '../auth/auth_controller.dart'; // Add this line
 
 class HomeScreen extends GetView<HomeController> {
   const HomeScreen({super.key});
@@ -23,7 +24,16 @@ class HomeScreen extends GetView<HomeController> {
         ),
         backgroundColor: Colors.green,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              Get.find<AuthController>().onLogout();
+            },
+          ),
+        ],
       ),
+    
       body: SafeArea(
         child: _buildBody(),
       ),

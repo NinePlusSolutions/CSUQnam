@@ -1,68 +1,65 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_getx_boilerplate/base/base_controller.dart';
-import 'package:flutter_getx_boilerplate/models/request/login_request.dart';
-import 'package:flutter_getx_boilerplate/models/response/error/error_response.dart';
-import 'package:flutter_getx_boilerplate/repositories/auth_repository.dart';
-import 'package:flutter_getx_boilerplate/routes/navigator_helper.dart';
-import 'package:flutter_getx_boilerplate/shared/shared.dart';
+import 'package:flutter_getx_boilerplate/api/api_provider.dart';
+import 'package:flutter_getx_boilerplate/routes/app_pages.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 
-class AuthController extends BaseController<AuthRepository> {
-  AuthController(super.repository);
+class AuthController extends GetxController {
+  final storage = GetStorage();
+  final ApiProvider _apiProvider = ApiProvider();
 
-  final emailController = TextEditingController(text: "emilys");
-  final passwordController = TextEditingController(text: "emilyspass");
-
-  final formKey = GlobalKey<FormState>();
-
-  final isDarkMode = false.obs;
+  final username = ''.obs;
+  final password = ''.obs;
+  final isLoading = false.obs;
 
   @override
-  onInit() {
+  void onInit() {
     super.onInit();
-    isDarkMode.value = StorageService.themeMode == 2;
+    checkLoginStatus();
   }
 
-  onLogin() async {
-    // if (formKey.currentState?.validate() != true) {
-    //   showError("Error", "fill_correct_info".tr);
-
-    //   return;
-    // }
-
-    // setLoading(true);
-    try {
-      // final request = LoginRequest(
-      //   username: emailController.text,
-      //   password: passwordController.text,
-      //   expiresInMins: 1,
-      // );
-      // final res = await repository.login(request);
-      // if (res.accessToken != null) {
-      //   StorageService.token = res.accessToken!;
-      //   NavigatorHelper.toHome();
-      // } else {
-      //   // showError("login_failed".tr,res. )
-      // }
-      NavigatorHelper.toHome();
-    } on ErrorResponse catch (e) {
-      // showError("login_failed".tr, e.message);
-    } finally {
-      setLoading(false);
+  void checkLoginStatus() {
+    if (storage.read('token') != null) {
+      Get.offAllNamed(Routes.home);
     }
   }
 
-  onChangeTheme() {
-    isDarkMode.value = !isDarkMode.value;
-    Get.changeThemeMode(
-      !isDarkMode.value ? ThemeMode.light : ThemeMode.dark,
-    );
+  Future<void> onLogin() async {
+    if (username.value.isEmpty || password.value.isEmpty) {
+      Get.snackbar(
+        'Lỗi',
+        'Vui lòng nhập đầy đủ thông tin',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+      );
+      return;
+    }
 
-    StorageService.themeMode = isDarkMode.value ? 2 : 1;
+    try {
+      isLoading.value = true;
+      final response = await _apiProvider.login(username.value, password.value);
+
+      if (response.statusCode == 200) {
+        final token = response.data["data"]['token'];
+        storage.write('token', token);
+        Get.offAllNamed(Routes.home);
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Lỗi',
+        'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+      );
+    } finally {
+      isLoading.value = false;
+    }
   }
 
-  onChangeLanguage(String lang) {
-    Get.updateLocale(Locale(lang));
-    StorageService.lang = lang;
+  void onLogout() {
+    storage.remove('token');
+    Get.offAllNamed(Routes.auth);
   }
 }

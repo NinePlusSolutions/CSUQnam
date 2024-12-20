@@ -8,18 +8,38 @@ class AuthController extends GetxController {
   final storage = GetStorage();
   final ApiProvider _apiProvider = ApiProvider();
 
-  final username = ''.obs;
-  final password = ''.obs;
-  final isLoading = false.obs;
+  final RxString username = ''.obs;
+  final RxString password = ''.obs;
+  final RxBool isLoading = false.obs;
+  final RxBool rememberLogin = false.obs;
 
   @override
   void onInit() {
     super.onInit();
-    checkLoginStatus();
+    // Use a small delay to ensure the widget tree is built
+    Future.delayed(Duration.zero, checkLoginStatus);
+    _loadSavedCredentials();
+  }
+
+  void _loadSavedCredentials() {
+    final savedUsername = storage.read('saved_username');
+    final savedPassword = storage.read('saved_password');
+    final savedRemember = storage.read('remember_login') ?? false;
+
+    if (savedRemember && savedUsername != null && savedPassword != null) {
+      username.value = savedUsername;
+      password.value = savedPassword;
+      rememberLogin.value = true;
+    }
+  }
+
+  void toggleRememberLogin(bool? value) {
+    rememberLogin.value = value ?? false;
   }
 
   void checkLoginStatus() {
-    if (storage.read('token') != null) {
+    final token = storage.read('token');
+    if (token != null) {
       Get.offAllNamed(Routes.home);
     }
   }
@@ -43,6 +63,19 @@ class AuthController extends GetxController {
       if (response.statusCode == 200) {
         final token = response.data["data"]['token'];
         storage.write('token', token);
+
+        // Save credentials if remember login is enabled
+        if (rememberLogin.value) {
+          storage.write('saved_username', username.value);
+          storage.write('saved_password', password.value);
+          storage.write('remember_login', true);
+        } else {
+          // Clear saved credentials if remember login is disabled
+          storage.remove('saved_username');
+          storage.remove('saved_password');
+          storage.remove('remember_login');
+        }
+
         Get.offAllNamed(Routes.home);
       }
     } catch (e) {
@@ -59,7 +92,18 @@ class AuthController extends GetxController {
   }
 
   void onLogout() {
+    // Only remove the token, keep saved credentials if remember login is enabled
     storage.remove('token');
+
+    // Reset current values but don't clear saved credentials
+    final savedUsername = storage.read('saved_username');
+    final savedPassword = storage.read('saved_password');
+    final savedRemember = storage.read('remember_login') ?? false;
+
+    username.value = savedRemember ? (savedUsername ?? '') : '';
+    password.value = savedRemember ? (savedPassword ?? '') : '';
+    rememberLogin.value = savedRemember;
+
     Get.offAllNamed(Routes.auth);
   }
 }

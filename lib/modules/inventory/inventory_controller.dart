@@ -85,19 +85,23 @@ class InventoryController extends GetxController {
   }
 
   // Map màu cho từng trạng thái
-  final RxMap<String, Color> statusColors = <String, Color>{
-    'N': Colors.blue, // Cây cạo ngữa
-    'U': Colors.green, // Cây cạo úp
-    'UN': Colors.teal, // Cây cạo úp ngữa
-    'C': Colors.purple, // Cây hữ hiệu sẽ đưa vào cạo
-    'KB': Colors.orange, // Cây khô miệng cạo
-    'K': Colors.red, // Cây không phát triển
-    'KG': Colors.pink, // Cây cạo không hiệu quả
-    'O': Colors.grey, // Hố trống
-    'M': Colors.brown, // Hố bị mất do lấn chiếm
-    'B': Colors.red[700]!, // Cây bệnh
-    'B4,5': Colors.red[900]!, // Cây bệnh cấp 4,5
-  }.obs;
+  final RxMap<String, Color> statusColors = <String, Color>{}.obs;
+  final RxBool isLoading = false.obs;
+
+  // List of predefined colors for statuses
+  final List<Color> _statusColorPalette = [
+    Colors.blue, // 1
+    Colors.green, // 2
+    Colors.teal, // 3
+    Colors.purple, // 4
+    Colors.orange, // 5
+    Colors.red, // 6
+    Colors.pink, // 7
+    Colors.grey, // 8
+    Colors.brown, // 9
+    Colors.red[700]!, // 10
+    Colors.red[900]!, // 11
+  ];
 
   @override
   void onInit() {
@@ -107,22 +111,25 @@ class InventoryController extends GetxController {
 
   Future<void> fetchStatusData() async {
     try {
+      isLoading.value = true;
       final response = await _apiProvider.getStatus();
       final statusResponse = StatusResponse.fromJson(response.data);
 
-      // Clear existing status list and counts
       statusList.clear();
       statusCounts.clear();
 
-      // Map API response to StatusInfo objects
       final statuses = statusResponse.data
           .map((item) => StatusInfo(item.name, item.description))
           .toList();
 
-      // Update the status list and initialize counts
       statusList.addAll(statuses);
-      for (var status in statusList) {
-        statusCounts[status.code] = 0.obs;
+
+      for (var item in statusResponse.data) {
+        // Assign color based on item's ID (1-based index)
+        // If ID is out of range, use grey as default
+        final colorIndex = (item.id - 1) % _statusColorPalette.length;
+        statusColors[item.name] = _statusColorPalette[colorIndex];
+        statusCounts[item.name] = 0.obs;
       }
     } catch (e) {
       print('Error fetching status data: $e');
@@ -133,7 +140,7 @@ class InventoryController extends GetxController {
         StatusInfo('UN', 'Cây cạo úp ngửa'),
         StatusInfo('KB', 'Cây khô miệng cạo'),
         StatusInfo('KG', 'Cây cạo không hiệu quả'),
-        StatusInfo('KC', 'Cây không phát triển'),
+        StatusInfo('K', 'Cây không phát triển'),
         StatusInfo('O', 'Hố trống(cây chết)'),
         StatusInfo('M', 'Hố bị mất do lấn chiếm'),
         StatusInfo('B', 'Cây bênh'),
@@ -143,7 +150,10 @@ class InventoryController extends GetxController {
       statusList.addAll(defaultStatuses);
       for (var status in statusList) {
         statusCounts[status.code] = 0.obs;
+        statusColors[status.code] = Colors.grey;
       }
+    } finally {
+      isLoading.value = false;
     }
   }
 
@@ -172,17 +182,24 @@ class InventoryController extends GetxController {
   }
 
   void submitInventory() {
+    showFinishDialog();
+  }
+
+  void showFinishDialog() {
     Get.dialog(
       AlertDialog(
-        title: Row(
+        title: const Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.green[700]),
-            const SizedBox(width: 8),
-            const Text('Xác nhận'),
+            Icon(
+              Icons.warning_rounded,
+              color: Colors.orange,
+            ),
+            SizedBox(width: 8),
+            Text('Xác nhận'),
           ],
         ),
         content: const Text(
-          'Bạn có chắc chắn muốn kết thúc không? Tác vụ này sẽ không được hoàn tác.',
+          'Bạn có chắc chắn muốn kết thúc không?',
         ),
         actions: [
           TextButton(
@@ -192,45 +209,80 @@ class InventoryController extends GetxController {
           TextButton(
             onPressed: () async {
               Get.back();
-              // Chuyển đổi từ RxMap<String, RxInt> sang Map<String, int>
-              final Map<String, int> finalCounts = {};
+
+              // Check if any tree status was updated
+              bool hasUpdates = false;
               statusCounts.forEach((key, value) {
                 if (value.value > 0) {
-                  finalCounts[key] = value.value;
+                  hasUpdates = true;
                 }
               });
 
-              Get.delete<UpdateTreeController>(); // Xóa controller cũ nếu có
-              final controller = Get.put(UpdateTreeController());
+              if (!hasUpdates) {
+                // If no updates, show dialog to move to next row
+                Get.dialog(
+                  AlertDialog(
+                    title: const Text('Thông báo'),
+                    content: const Text(
+                        'Không có trạng thái cây nào được cập nhật. Bạn có muốn qua hàng tiếp theo không?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Get.back();
+                        },
+                        child: const Text('Không'),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Get.back();
+                          // Increment row and reload trees
+                          row.value = getRowsForLot(lot.value)[
+                              (getRowsForLot(lot.value).indexOf(row.value) +
+                                      1) %
+                                  getRowsForLot(lot.value).length];
+                          statusCounts.forEach((key, value) {
+                            value.value = 0;
+                          });
+                          update(['row']);
+                          update(['status_counts']);
+                        },
+                        child: const Text('Có'),
+                      ),
+                    ],
+                  ),
+                );
+              } else {
+                Get.delete<UpdateTreeController>();
+                Get.put(UpdateTreeController());
 
-              final result = await Get.to<Map<String, dynamic>>(
-                () => UpdateTreeScreen(
-                  farm: farm.value,
-                  lot: lot.value,
-                  team: productionTeam.value,
-                  row: row.value,
-                  statusCounts: finalCounts,
-                ),
-              );
-
-              // Nếu có kết quả trả về từ màn hình UpdateTree
-              if (result != null) {
-                // Reset dữ liệu cho hàng mới
+                Map<String, int> finalCounts = {};
                 statusCounts.forEach((key, value) {
-                  value.value = 0;
+                  if (value.value > 0) {
+                    finalCounts[key] = value.value;
+                  }
                 });
-                row.value = result['row'] as String;
-                // Cập nhật UI
-                update(['row']); // Cập nhật widget có ID là 'row'
-                update([
-                  'status_counts'
-                ]); // Cập nhật widget có ID là 'status_counts'
+
+                final result = await Get.to<Map<String, dynamic>>(
+                  () => UpdateTreeScreen(
+                    farm: farm.value,
+                    lot: lot.value,
+                    team: productionTeam.value,
+                    row: row.value,
+                    statusCounts: finalCounts,
+                  ),
+                );
+
+                if (result != null) {
+                  statusCounts.forEach((key, value) {
+                    value.value = 0;
+                  });
+                  row.value = result['row'] as String;
+                  update(['row']);
+                  update(['status_counts']);
+                }
               }
             },
-            child: Text(
-              'Đồng ý',
-              style: TextStyle(color: Colors.green[700]),
-            ),
+            child: const Text('Đồng ý'),
           ),
         ],
       ),

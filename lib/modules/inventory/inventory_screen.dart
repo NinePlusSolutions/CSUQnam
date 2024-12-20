@@ -388,6 +388,11 @@ class InventoryScreen extends GetView<InventoryController> {
 
   Widget _buildStatusGrid() {
     return Obx(() {
+      if (controller.isLoading.value) {
+        return const Center(
+          child: CircularProgressIndicator(),
+        );
+      }
       final isEditing = controller.isEditingEnabled.value;
       return GridView.builder(
         shrinkWrap: true,
@@ -536,30 +541,8 @@ class InventoryScreen extends GetView<InventoryController> {
   }
 
   Color _getStatusColor(String code) {
-    switch (code) {
-      case 'N':
-        return Colors.green[600]!;
-      case 'U':
-        return Colors.blue[600]!;
-      case 'UN':
-        return Colors.teal[500]!;
-      case 'KB':
-        return Colors.orange[700]!;
-      case 'KG':
-        return Colors.red[700]!;
-      case 'KC':
-        return Colors.purple[700]!;
-      case 'O':
-        return Colors.grey[800]!;
-      case 'M':
-        return Colors.brown[700]!;
-      case 'B':
-        return Colors.amber[900]!;
-      case 'B4,5':
-        return Colors.deepOrange[600]!;
-      default:
-        return Colors.grey;
-    }
+    final controller = Get.find<InventoryController>();
+    return controller.statusColors[code] ?? Colors.grey;
   }
 
   void _showStatusDescription(BuildContext context, StatusInfo status) {

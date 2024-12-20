@@ -3,15 +3,13 @@ import 'package:flutter_getx_boilerplate/modules/home/home.dart';
 import 'package:get/get.dart';
 import 'package:badges/badges.dart' as badges;
 import '../sync/sync_controller.dart';
-import '../auth/auth_controller.dart'; // Add this line
+import '../auth/auth_controller.dart';
 
 class HomeScreen extends GetView<HomeController> {
-  const HomeScreen({super.key});
+  const HomeScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    Get.put(SyncController());
-
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -26,14 +24,16 @@ class HomeScreen extends GetView<HomeController> {
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(
+              Icons.logout,
+              color: Colors.white,
+            ),
             onPressed: () {
               Get.find<AuthController>().onLogout();
             },
           ),
         ],
       ),
-    
       body: SafeArea(
         child: _buildBody(),
       ),

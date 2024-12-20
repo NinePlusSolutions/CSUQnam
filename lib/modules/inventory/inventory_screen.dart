@@ -229,7 +229,7 @@ class InventoryScreen extends GetView<InventoryController> {
       AlertDialog(
         title: Row(
           children: [
-            Icon(Icons.edit, color: Colors.green[700]),
+            Icon(Icons.edit, color: Colors.green[700], size: 24),
             const SizedBox(width: 8),
             const Text('Chỉnh sửa thông tin'),
           ],
@@ -237,83 +237,101 @@ class InventoryScreen extends GetView<InventoryController> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Dropdown Nông trường
-            DropdownButtonFormField<String>(
-              decoration: const InputDecoration(
-                labelText: 'Nông trường',
-                border: OutlineInputBorder(),
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            // Farm dropdown
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey[300]!),
               ),
-              value: controller.farm.value,
-              items: controller.farms
-                  .map((farm) => DropdownMenuItem(
-                        value: farm,
-                        child: Text(farm),
-                      ))
-                  .toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  controller.farm.value = value;
-                }
-              },
+              child: DropdownButton<String>(
+                value: controller.farm.value,
+                isExpanded: true,
+                underline: const SizedBox(),
+                items: controller.farms
+                    .map((farm) => DropdownMenuItem(
+                          value: farm,
+                          child: Text(farm),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    controller.farm.value = value;
+                    controller.lot.value =
+                        controller.getLotsForFarm(value).first;
+                    controller.row.value =
+                        controller.getRowsForLot(controller.lot.value).first;
+                  }
+                },
+              ),
             ),
             const SizedBox(height: 16),
-            // Dropdown Lô
-            DropdownButtonFormField<String>(
-              decoration: const InputDecoration(
-                labelText: 'Lô',
-                border: OutlineInputBorder(),
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            // Lot dropdown
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey[300]!),
               ),
-              value: controller.lot.value,
-              items: controller.lots
-                  .map((lot) => DropdownMenuItem(
-                        value: lot,
-                        child: Text(lot),
-                      ))
-                  .toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  controller.lot.value = value;
-                }
-              },
+              child: DropdownButton<String>(
+                value: controller.lot.value,
+                isExpanded: true,
+                underline: const SizedBox(),
+                items: controller
+                    .getLotsForFarm(controller.farm.value)
+                    .map((lot) => DropdownMenuItem(
+                          value: lot,
+                          child: Text(lot),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    controller.lot.value = value;
+                    controller.row.value =
+                        controller.getRowsForLot(value).first;
+                  }
+                },
+              ),
             ),
             const SizedBox(height: 16),
-            // Dropdown Tổ sản xuất
-            DropdownButtonFormField<String>(
-              decoration: const InputDecoration(
-                labelText: 'Tổ sản xuất',
-                border: OutlineInputBorder(),
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            // Team dropdown
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey[300]!),
               ),
-              value: controller.productionTeam.value,
-              items: controller.teams
-                  .map((team) => DropdownMenuItem(
-                        value: team,
-                        child: Text(team),
-                      ))
-                  .toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  controller.productionTeam.value = value;
-                }
-              },
+              child: DropdownButton<String>(
+                value: controller.productionTeam.value,
+                isExpanded: true,
+                underline: const SizedBox(),
+                items: controller.teams
+                    .map((team) => DropdownMenuItem(
+                          value: team,
+                          child: Text(team),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    controller.productionTeam.value = value;
+                  }
+                },
+              ),
             ),
             const SizedBox(height: 16),
-            // Dropdown Hàng
-            Obx(() {
-              return DropdownButtonFormField<String>(
-                decoration: const InputDecoration(
-                  labelText: 'Hàng',
-                  border: OutlineInputBorder(),
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                ),
+            // Row dropdown
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey[300]!),
+              ),
+              child: DropdownButton<String>(
                 value: controller.row.value,
-                items: controller.rows
+                isExpanded: true,
+                underline: const SizedBox(),
+                items: controller
+                    .getRowsForLot(controller.lot.value)
                     .map((row) => DropdownMenuItem(
                           value: row,
                           child: Text(row),
@@ -324,8 +342,33 @@ class InventoryScreen extends GetView<InventoryController> {
                     controller.row.value = value;
                   }
                 },
-              );
-            }),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Tapping Age dropdown
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey[300]!),
+              ),
+              child: DropdownButton<String>(
+                value: controller.tappingAge.value,
+                isExpanded: true,
+                underline: const SizedBox(),
+                items: controller.tappingAges
+                    .map((age) => DropdownMenuItem(
+                          value: age,
+                          child: Text('Năm $age'),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    controller.tappingAge.value = value;
+                  }
+                },
+              ),
+            ),
           ],
         ),
         actions: [
@@ -336,16 +379,10 @@ class InventoryScreen extends GetView<InventoryController> {
           TextButton(
             onPressed: () {
               Get.back();
-              Get.snackbar(
-                'Thành công',
-                'Đã cập nhật thông tin',
-                backgroundColor: Colors.green,
-                colorText: Colors.white,
-                snackPosition: SnackPosition.TOP,
-              );
+              controller.update(['farm', 'lot', 'team', 'row', 'tapping_age']);
             },
             child: Text(
-              'Cập nhật',
+              'Lưu',
               style: TextStyle(color: Colors.green[700]),
             ),
           ),

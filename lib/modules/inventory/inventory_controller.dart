@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_getx_boilerplate/api/api_provider.dart';
 import 'package:flutter_getx_boilerplate/models/response/status_response.dart';
 import 'package:flutter_getx_boilerplate/modules/inventory/update_tree_controller.dart';
+import 'package:flutter_getx_boilerplate/modules/sync/sync_controller.dart';
 import 'package:flutter_getx_boilerplate/routes/app_pages.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
+import 'dart:convert';
 import 'update_tree_screen.dart';
 
 class StatusInfo {
@@ -14,21 +17,35 @@ class StatusInfo {
 }
 
 class InventoryController extends GetxController {
+  final storage = GetStorage();
   final RxList<StatusInfo> statusList = <StatusInfo>[].obs;
+  final RxMap<String, Color> statusColors = <String, Color>{}.obs;
   final RxMap<String, RxInt> statusCounts = <String, RxInt>{}.obs;
   final RxString note = ''.obs;
-  final RxString tappingAge = 'Năm 1'.obs;
+  final RxString tappingAge = '1'.obs;
+  final List<String> tappingAges = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
 
-  // Farm, lot, and row information
   final RxString farm = 'Nông trường 1'.obs;
   final RxString productionTeam = 'Tổ 1'.obs;
   final RxString lot = 'Lô A'.obs;
   final RxString row = 'Hàng 1'.obs;
 
-  // Trạng thái cho phép chỉnh sửa
   final RxBool isEditingEnabled = true.obs;
+  final RxBool isLoading = false.obs;
 
-  // Danh sách dữ liệu mẫu cho các dropdown
+  final List<Color> _statusColorPalette = [
+    Colors.blue, // 1
+    Colors.green, // 2
+    Colors.teal, // 3
+    Colors.purple, // 4
+    Colors.orange, // 5
+    Colors.red, // 6
+    Colors.pink, // 7
+    Colors.brown, // 9
+    Colors.red[700]!, // 10
+    Colors.red[900]!, // 11
+  ];
+
   final RxList<String> farms =
       ['Nông trường 1', 'Nông trường 2', 'Nông trường 3'].obs;
   final RxList<String> lots = ['Lô A', 'Lô B', 'Lô C', 'Lô D'].obs;
@@ -84,24 +101,199 @@ class InventoryController extends GetxController {
     }
   }
 
-  // Map màu cho từng trạng thái
-  final RxMap<String, Color> statusColors = <String, Color>{}.obs;
-  final RxBool isLoading = false.obs;
+  void incrementStatus(String status) {
+    if (isEditingEnabled.value) {
+      final currentCount = statusCounts[status] ?? 0.obs;
+      currentCount.value++;
+    }
+  }
 
-  // List of predefined colors for statuses
-  final List<Color> _statusColorPalette = [
-    Colors.blue, // 1
-    Colors.green, // 2
-    Colors.teal, // 3
-    Colors.purple, // 4
-    Colors.orange, // 5
-    Colors.red, // 6
-    Colors.pink, // 7
-    Colors.grey, // 8
-    Colors.brown, // 9
-    Colors.red[700]!, // 10
-    Colors.red[900]!, // 11
-  ];
+  void decrementStatus(String status) {
+    if (isEditingEnabled.value) {
+      final currentCount = statusCounts[status] ?? 0.obs;
+      if (currentCount.value > 0) {
+        currentCount.value--;
+      }
+    }
+  }
+
+  int getCount(String status) {
+    return statusCounts[status]?.value ?? 0;
+  }
+
+  void updateNote(String value) {
+    note.value = value;
+  }
+
+  void saveLocalUpdate() {
+    // Get existing updates or initialize empty list
+    final String? existingUpdatesJson = storage.read('local_updates');
+    print('Existing updates: $existingUpdatesJson');
+
+    List<Map<String, dynamic>> updates = [];
+    if (existingUpdatesJson != null) {
+      updates =
+          List<Map<String, dynamic>>.from(jsonDecode(existingUpdatesJson));
+    }
+
+    // Create new update with non-zero status counts only
+    Map<String, int> nonZeroStatusCounts = {};
+    statusCounts.forEach((key, value) {
+      if (value.value > 0) {
+        nonZeroStatusCounts[key] = value.value;
+      }
+    });
+
+    // Only save if there are non-zero counts
+    if (nonZeroStatusCounts.isNotEmpty) {
+      final Map<String, dynamic> newUpdate = {
+        'farm': farm.value,
+        'lot': lot.value,
+        'team': productionTeam.value,
+        'row': row.value,
+        'statusCounts': nonZeroStatusCounts,
+        'tapAge': tappingAge.value,
+        'updatedAt': DateTime.now().toIso8601String(),
+      };
+
+      // Add new update
+      updates.add(newUpdate);
+
+      // Save back to storage
+      final updatesJson = jsonEncode(updates);
+      print('Saving updates: $updatesJson');
+      storage.write('local_updates', updatesJson);
+
+      // Refresh sync screen data if it exists
+      if (Get.isRegistered<SyncController>()) {
+        final syncController = Get.find<SyncController>();
+        syncController.loadPendingUpdates();
+      }
+    }
+  }
+
+  void submitInventory() {
+    showFinishDialog();
+  }
+
+  void showFinishDialog() {
+    Get.dialog(
+      AlertDialog(
+        title: const Row(
+          children: [
+            Icon(
+              Icons.warning_rounded,
+              color: Colors.orange,
+            ),
+            SizedBox(width: 8),
+            Text('Xác nhận'),
+          ],
+        ),
+        content: const Text(
+          'Bạn có chắc chắn muốn kết thúc không?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Get.back();
+              bool hasUpdates = false;
+              statusCounts.forEach((key, value) {
+                if (value.value > 0) {
+                  hasUpdates = true;
+                }
+              });
+
+              if (!hasUpdates) {
+                Get.dialog(
+                  AlertDialog(
+                    title: const Text('Thông báo'),
+                    content: const Text(
+                        'Không có trạng thái cây nào được cập nhật. Bạn có muốn qua hàng tiếp theo không?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Get.back();
+                        },
+                        child: const Text('Không'),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Get.back();
+                          // Increment row and reload trees
+                          row.value = getRowsForLot(lot.value)[
+                              (getRowsForLot(lot.value).indexOf(row.value) +
+                                      1) %
+                                  getRowsForLot(lot.value).length];
+                          statusCounts.forEach((key, value) {
+                            value.value = 0;
+                          });
+                          update(['row']);
+                          update(['status_counts']);
+                        },
+                        child: const Text('Có'),
+                      ),
+                    ],
+                  ),
+                );
+              } else {
+                saveLocalUpdate();
+                Get.delete<UpdateTreeController>();
+                Get.put(UpdateTreeController());
+
+                Map<String, int> finalCounts = {};
+                statusCounts.forEach((key, value) {
+                  if (value.value > 0) {
+                    finalCounts[key] = value.value;
+                  }
+                });
+
+                final result = await Get.to<Map<String, dynamic>>(
+                  () => UpdateTreeScreen(
+                    farm: farm.value,
+                    lot: lot.value,
+                    team: productionTeam.value,
+                    row: row.value,
+                    statusCounts: finalCounts,
+                  ),
+                );
+
+                if (result != null) {
+                  // Then update the UI
+                  statusCounts.forEach((key, value) {
+                    value.value = 0;
+                  });
+                  row.value = result['row'] as String;
+                  update(['row']);
+                  update(['status_counts']);
+
+                  // Show success message
+                  Get.snackbar(
+                    'Thành công',
+                    'Đã lưu dữ liệu kiểm kê',
+                    backgroundColor: Colors.green,
+                    colorText: Colors.white,
+                    snackPosition: SnackPosition.TOP,
+                  );
+
+                  // // Move to next row
+                  // final currentRowIndex =
+                  //     getRowsForLot(lot.value).indexOf(row.value);
+                  // if (currentRowIndex < getRowsForLot(lot.value).length - 1) {
+                  //   row.value = getRowsForLot(lot.value)[currentRowIndex + 1];
+                  // }
+                }
+              }
+            },
+            child: const Text('Đồng ý'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   void onInit() {
@@ -155,137 +347,5 @@ class InventoryController extends GetxController {
     } finally {
       isLoading.value = false;
     }
-  }
-
-  void incrementStatus(String status) {
-    if (isEditingEnabled.value) {
-      final currentCount = statusCounts[status] ?? 0.obs;
-      currentCount.value++;
-    }
-  }
-
-  void decrementStatus(String status) {
-    if (isEditingEnabled.value) {
-      final currentCount = statusCounts[status] ?? 0.obs;
-      if (currentCount.value > 0) {
-        currentCount.value--;
-      }
-    }
-  }
-
-  int getCount(String status) {
-    return statusCounts[status]?.value ?? 0;
-  }
-
-  void updateNote(String value) {
-    note.value = value;
-  }
-
-  void submitInventory() {
-    showFinishDialog();
-  }
-
-  void showFinishDialog() {
-    Get.dialog(
-      AlertDialog(
-        title: const Row(
-          children: [
-            Icon(
-              Icons.warning_rounded,
-              color: Colors.orange,
-            ),
-            SizedBox(width: 8),
-            Text('Xác nhận'),
-          ],
-        ),
-        content: const Text(
-          'Bạn có chắc chắn muốn kết thúc không?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Hủy'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Get.back();
-
-              // Check if any tree status was updated
-              bool hasUpdates = false;
-              statusCounts.forEach((key, value) {
-                if (value.value > 0) {
-                  hasUpdates = true;
-                }
-              });
-
-              if (!hasUpdates) {
-                // If no updates, show dialog to move to next row
-                Get.dialog(
-                  AlertDialog(
-                    title: const Text('Thông báo'),
-                    content: const Text(
-                        'Không có trạng thái cây nào được cập nhật. Bạn có muốn qua hàng tiếp theo không?'),
-                    actions: [
-                      TextButton(
-                        onPressed: () {
-                          Get.back();
-                        },
-                        child: const Text('Không'),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          Get.back();
-                          // Increment row and reload trees
-                          row.value = getRowsForLot(lot.value)[
-                              (getRowsForLot(lot.value).indexOf(row.value) +
-                                      1) %
-                                  getRowsForLot(lot.value).length];
-                          statusCounts.forEach((key, value) {
-                            value.value = 0;
-                          });
-                          update(['row']);
-                          update(['status_counts']);
-                        },
-                        child: const Text('Có'),
-                      ),
-                    ],
-                  ),
-                );
-              } else {
-                Get.delete<UpdateTreeController>();
-                Get.put(UpdateTreeController());
-
-                Map<String, int> finalCounts = {};
-                statusCounts.forEach((key, value) {
-                  if (value.value > 0) {
-                    finalCounts[key] = value.value;
-                  }
-                });
-
-                final result = await Get.to<Map<String, dynamic>>(
-                  () => UpdateTreeScreen(
-                    farm: farm.value,
-                    lot: lot.value,
-                    team: productionTeam.value,
-                    row: row.value,
-                    statusCounts: finalCounts,
-                  ),
-                );
-
-                if (result != null) {
-                  statusCounts.forEach((key, value) {
-                    value.value = 0;
-                  });
-                  row.value = result['row'] as String;
-                  update(['row']);
-                  update(['status_counts']);
-                }
-              }
-            },
-            child: const Text('Đồng ý'),
-          ),
-        ],
-      ),
-    );
   }
 }

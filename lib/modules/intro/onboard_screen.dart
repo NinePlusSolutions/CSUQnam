@@ -65,10 +65,10 @@ class _OnboardScreenState extends State<OnboardScreen> {
                 SmoothPageIndicator(
                   controller: _pageController,
                   count: 3,
-                  effect: WormEffect(
+                  effect: const WormEffect(
                     dotHeight: 12,
                     dotWidth: 12,
-                    activeDotColor: context.colors.primary,
+                    //  activeDotColor: context.colors.primary,
                   ),
                 ),
                 ButtonWidget(
@@ -112,9 +112,9 @@ class OnboardPage extends StatelessWidget {
         const SizedBox(height: 20),
         Text(
           title,
-          style: context.headline.copyWith(
-            fontSize: 28,
-          ),
+          // style: context.headline.copyWith(
+          //   fontSize: 28,
+          // ),
         ),
         const SizedBox(height: 20),
         Text(

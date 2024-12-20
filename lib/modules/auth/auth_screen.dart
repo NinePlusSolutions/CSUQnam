@@ -38,7 +38,8 @@ class AuthScreen extends GetView<AuthController> {
               child: Column(
                 children: [
                   Obx(() => TextField(
-                        controller: TextEditingController(text: controller.username.value),
+                        controller: TextEditingController(
+                            text: controller.username.value),
                         onChanged: (value) => controller.username.value = value,
                         decoration: const InputDecoration(
                           labelText: "Tài khoản",
@@ -65,7 +66,8 @@ class AuthScreen extends GetView<AuthController> {
                       )),
                   const SizedBox(height: 16),
                   Obx(() => TextField(
-                        controller: TextEditingController(text: controller.password.value),
+                        controller: TextEditingController(
+                            text: controller.password.value),
                         onChanged: (value) => controller.password.value = value,
                         obscureText: true,
                         decoration: const InputDecoration(
@@ -103,9 +105,9 @@ class AuthScreen extends GetView<AuthController> {
                               activeColor:
                                   const Color.fromRGBO(136, 216, 74, 1),
                             )),
-                        Text(
+                        const Text(
                           'Ghi nhớ thông tin đăng nhập',
-                          style: context.bodySmall,
+                          // style: context.bodySmall,
                         ),
                       ],
                     ),

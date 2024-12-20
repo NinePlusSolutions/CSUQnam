@@ -324,32 +324,39 @@ class UpdateTreeScreen extends GetView<UpdateTreeController> {
   }
 
   Color _getStatusColor(String status) {
-    switch (status) {
-      case 'N':
-        return Colors.blue;
-      case 'U':
-        return Colors.green;
-      case 'UN':
-        return Colors.purple;
-      case 'KB':
-        return Colors.orange;
-      case 'KG':
-        return Colors.red;
-      case 'KC':
-        return Colors.red[700]!;
-      case 'O':
-        return Colors.grey;
-      case 'M':
-        return Colors.indigo;
-      case 'B':
-        return Colors.orange[300]!;
-      case 'B4':
-        return Colors.brown;
-      case 'B5':
-        return Colors.brown[700]!;
-      default:
-        return Colors.grey;
+    final List<Color> statusColorPalette = [
+      Colors.blue, // 1
+      Colors.green, // 2
+      Colors.teal, // 3
+      Colors.purple, // 4
+      Colors.orange, // 5
+      Colors.red, // 6
+      Colors.pink, // 7
+      Colors.brown, // 9
+      Colors.red[700]!, // 10
+      Colors.red[900]!, // 11
+    ];
+
+    // Map status to index
+    final Map<String, int> statusIndices = {
+      'N': 0, // Blue
+      'U': 1, // Green
+      'UN': 3, // Purple
+      'KB': 4, // Orange
+      'KG': 5, // Red
+      'KC': 8, // Red[700]
+      'O': 6, // Pink
+      'M': 2, // Teal
+      'B': 4, // Orange
+      'B4': 7, // Brown
+      'B5': 9, // Red[900]
+    };
+
+    final index = statusIndices[status];
+    if (index != null && index < statusColorPalette.length) {
+      return statusColorPalette[index];
     }
+    return Colors.grey;
   }
 
   String _getStatusDescription(String status) {

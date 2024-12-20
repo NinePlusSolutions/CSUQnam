@@ -1,7 +1,13 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
+import 'dart:convert';
+import 'package:intl/intl.dart';
 
 class SyncController extends GetxController {
-  final RxList<Map<String, dynamic>> pendingUpdates = <Map<String, dynamic>>[].obs;
+  final storage = GetStorage();
+  final RxList<Map<String, dynamic>> pendingUpdates =
+      <Map<String, dynamic>>[].obs;
   final RxBool isLoading = false.obs;
 
   @override
@@ -13,27 +19,43 @@ class SyncController extends GetxController {
   Future<void> loadPendingUpdates() async {
     isLoading.value = true;
     try {
-      // TODO: Load từ local storage hoặc API
-      await Future.delayed(const Duration(seconds: 1));
-      // Mẫu dữ liệu
-      pendingUpdates.value = [
-        {
-          'farm': 'Nông trường 1',
-          'lot': 'Lô A',
-          'team': 'Tổ 1',
-          'row': 'Hàng 1',
-          'statusCounts': {'N': 2, 'KG': 3},
-          'updatedAt': DateTime.now().subtract(const Duration(hours: 1)),
-        },
-        {
-          'farm': 'Nông trường 1',
-          'lot': 'Lô A',
-          'team': 'Tổ 1',
-          'row': 'Hàng 2',
-          'statusCounts': {'U': 1, 'KC': 2},
-          'updatedAt': DateTime.now().subtract(const Duration(minutes: 30)),
-        },
-      ];
+      final String? updatesJson = storage.read('local_updates');
+      print('Loading updates from storage: $updatesJson');
+
+      if (updatesJson != null) {
+        final List<dynamic> updates = jsonDecode(updatesJson);
+        print('Decoded updates: $updates');
+
+        // Convert to List<Map<String, dynamic>> and ensure all fields are present
+        final List<Map<String, dynamic>> validUpdates = updates.map((update) {
+          return {
+            'farm': update['farm'] as String,
+            'lot': update['lot'] as String,
+            'team': update['team'] as String,
+            'row': update['row'] as String,
+            'statusCounts':
+                Map<String, int>.from(update['statusCounts'] as Map),
+            'tapAge': update['tapAge'] as String,
+            'updatedAt': update['updatedAt'] as String,
+          };
+        }).toList();
+
+        // Sort by most recent first
+        validUpdates.sort((a, b) {
+          final DateTime dateA = DateTime.parse(a['updatedAt'] as String);
+          final DateTime dateB = DateTime.parse(b['updatedAt'] as String);
+          return dateB.compareTo(dateA);
+        });
+
+        pendingUpdates.value = validUpdates;
+        print('Loaded ${pendingUpdates.length} updates');
+      } else {
+        print('No updates found in storage');
+        pendingUpdates.clear();
+      }
+    } catch (e) {
+      print('Error loading updates: $e');
+      pendingUpdates.clear();
     } finally {
       isLoading.value = false;
     }
@@ -42,12 +64,28 @@ class SyncController extends GetxController {
   Future<void> syncAll() async {
     isLoading.value = true;
     try {
-      // TODO: Gửi dữ liệu lên server
-      await Future.delayed(const Duration(seconds: 2));
+      // Here you would send the data to your server
+      await Future.delayed(const Duration(seconds: 2)); // Simulated API call
+
+      // Clear local storage after successful sync
+      await storage.write('local_updates', '[]');
       pendingUpdates.clear();
+
       Get.back(result: true);
+    } catch (e) {
+      print('Error syncing updates: $e');
+      Get.snackbar(
+        'Lỗi',
+        'Không thể đồng bộ dữ liệu. Vui lòng thử lại sau.',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     } finally {
       isLoading.value = false;
     }
+  }
+
+  String getFormattedDate(DateTime date) {
+    return DateFormat('HH:mm dd/MM/yyyy').format(date);
   }
 }

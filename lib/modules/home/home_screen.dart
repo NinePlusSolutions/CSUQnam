@@ -6,7 +6,7 @@ import '../sync/sync_controller.dart';
 import '../auth/auth_controller.dart';
 
 class HomeScreen extends GetView<HomeController> {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

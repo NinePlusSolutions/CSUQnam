@@ -8,10 +8,10 @@ class AuthController extends GetxController {
   final storage = GetStorage();
   final ApiProvider _apiProvider = ApiProvider();
 
-  final RxString username = ''.obs;
-  final RxString password = ''.obs;
+  final RxString username = 'superadmin'.obs;
+  final RxString password = 'Abc123!@#'.obs;
   final RxBool isLoading = false.obs;
-  final RxBool rememberLogin = false.obs;
+  final RxBool rememberLogin = true.obs;
 
   @override
   void onInit() {
@@ -80,7 +80,7 @@ class AuthController extends GetxController {
       }
     } catch (e) {
       Get.snackbar(
-        'Lỗi',
+        e.toString(),
         'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin',
         backgroundColor: Colors.red,
         colorText: Colors.white,

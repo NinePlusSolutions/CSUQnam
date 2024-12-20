@@ -18,7 +18,7 @@ android {
         }
         prod {
             dimension "flavor-type"
-            applicationId "com.example.getx"
+            applicationId "com.example.getx.dev"
             resValue "string", "app_name", "Cao Su QNam"
         }
     }

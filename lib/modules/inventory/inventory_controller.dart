@@ -22,13 +22,13 @@ class InventoryController extends GetxController {
   final RxMap<String, Color> statusColors = <String, Color>{}.obs;
   final RxMap<String, RxInt> statusCounts = <String, RxInt>{}.obs;
   final RxString note = ''.obs;
-  final RxString tappingAge = '1'.obs;
+  final RxString tappingAge = 'N/A'.obs;
   final List<String> tappingAges = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
 
-  final RxString farm = 'Nông trường 1'.obs;
-  final RxString productionTeam = 'Tổ 1'.obs;
-  final RxString lot = 'Lô A'.obs;
-  final RxString row = 'Hàng 1'.obs;
+  final RxString farm = 'N/A'.obs;
+  final RxString productionTeam = 'N/A'.obs;
+  final RxString lot = 'N/A'.obs;
+  final RxString row = 'N/A'.obs;
 
   final RxBool isEditingEnabled = true.obs;
   final RxBool isLoading = false.obs;
@@ -298,7 +298,25 @@ class InventoryController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    fetchProfile();
     fetchStatusData();
+  }
+
+  Future<void> fetchProfile() async {
+    try {
+      final response = await _apiProvider.getProfile();
+      
+      if (response.data?.farmByUserResponse.isNotEmpty == true) {
+        final farmData = response.data!.farmByUserResponse[0];
+        
+        farm.value = farmData.farmName;
+        lot.value = farmData.farmLotName;
+        productionTeam.value = farmData.productTeamName;
+        tappingAge.value = farmData.ageShaved?.toString() ?? 'N/A';
+      }
+    } catch (e) {
+      print('Error fetching profile: $e');
+    }
   }
 
   Future<void> fetchStatusData() async {

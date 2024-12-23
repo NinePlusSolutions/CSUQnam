@@ -4,7 +4,9 @@ class ApiConstants {
 
   static const String login = '/identity/token';
   static const String status = '/v1/common/status';
+  static const String profile = '/v1/common/profile';
 
   static String getLoginUrl() => '$baseUrlProd$login';
   static String getStatusUrl() => '$baseUrlProd$status';
+  static String getProfileUrl() => '$baseUrlProd$profile';
 }

@@ -1,11 +1,13 @@
-import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:flutter_getx_boilerplate/api/api_constants.dart';
+import 'package:flutter_getx_boilerplate/models/response/profile_response.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:logger/logger.dart';
 
 class ApiProvider {
   final Dio _dio;
   final _storage = GetStorage();
+  final _logger = Logger();
 
   ApiProvider() : _dio = Dio() {
     _dio.options = BaseOptions(
@@ -27,42 +29,30 @@ class ApiProvider {
           options.headers['Authorization'] = 'Bearer $token';
         }
 
-        // Log request
-        log(
-          """
+        _logger.i("""
           REQUEST:
           url(${options.method}): ${options.uri}
           headers: ${options.headers}
           data: ${options.data}
-          """,
-          name: 'API',
-        );
+          """);
 
         return handler.next(options);
       },
       onResponse: (response, handler) {
-        // Log response
-        log(
-          """
+        _logger.i("""
           RESPONSE:
           status: ${response.statusCode}
           data: ${response.data}
-          """,
-          name: 'API',
-        );
+          """);
         return handler.next(response);
       },
       onError: (error, handler) {
-        // Log error
-        log(
-          """
+        _logger.e("""
           ERROR:
           type: ${error.type}
           message: ${error.message}
           response: ${error.response}
-          """,
-          name: 'API',
-        );
+          """);
 
         if (error.type == DioExceptionType.connectionTimeout ||
             error.type == DioExceptionType.sendTimeout ||
@@ -88,15 +78,12 @@ class ApiProvider {
       );
       return response;
     } on DioException catch (e) {
-      log(
-        """
+      _logger.e("""
         LOGIN ERROR:
         type: ${e.type}
         message: ${e.message}
         response: ${e.response}
-        """,
-        name: 'API',
-      );
+        """);
       rethrow;
     }
   }
@@ -105,7 +92,28 @@ class ApiProvider {
     try {
       final response = await _dio.get(ApiConstants.getStatusUrl());
       return response;
-    } catch (e) {
+    } on DioException catch (e) {
+      _logger.e("""
+        STATUS ERROR:
+        type: ${e.type}
+        message: ${e.message}
+        response: ${e.response}
+        """);
+      rethrow;
+    }
+  }
+
+  Future<ProfileResponse> getProfile() async {
+    try {
+      final response = await _dio.get(ApiConstants.getProfileUrl());
+      return ProfileResponse.fromJson(response.data);
+    } on DioException catch (e) {
+      _logger.e("""
+        PROFILE ERROR:
+        type: ${e.type}
+        message: ${e.message}
+        response: ${e.response}
+        """);
       rethrow;
     }
   }

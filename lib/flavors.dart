@@ -1,3 +1,5 @@
+import 'package:flutter_getx_boilerplate/api/api_constants.dart';
+
 enum Flavor {
   dev,
   prod,
@@ -19,4 +21,14 @@ class F {
     }
   }
 
+  static String get toBaseurl {
+    switch (appFlavor) {
+      case Flavor.dev:
+        return ApiConstants.baseUrlDev;
+      case Flavor.prod:
+        return ApiConstants.baseUrlProd;
+      default:
+        return ApiConstants.baseUrlProd;
+    }
+  }
 }

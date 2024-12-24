@@ -26,24 +26,24 @@ class InventoryController extends GetxController {
   final RxMap<String, Color> statusColors = <String, Color>{}.obs;
   final RxMap<String, RxInt> statusCounts = <String, RxInt>{}.obs;
   final RxString note = ''.obs;
-  final RxString tappingAge = 'N/A'.obs;
-  final List<String> tappingAges = [
-    '1',
-    '2',
-    '3',
-    '4',
-    '5',
-    '6',
-    '7',
-    '8',
-    '9',
-    '10'
-  ];
+  final RxString tappingAge = ''.obs;
+  final RxInt yearShaved = 0.obs;
+  final RxString row = '1'.obs;
+  final totalRows = 50;
 
-  final RxString farm = 'N/A'.obs;
-  final RxString productionTeam = 'N/A'.obs;
-  final RxString lot = 'N/A'.obs;
-  final RxString row = 'N/A'.obs;
+  // Farm info
+  final RxString farm = ''.obs;
+  final RxInt farmId = 0.obs;
+  final RxString productionTeam = ''.obs;
+  final RxInt productTeamId = 0.obs;
+  final RxString lot = ''.obs;
+  final RxInt farmLotId = 0.obs;
+
+  // Lists for dropdown
+  final RxList<Map<String, dynamic>> farms = <Map<String, dynamic>>[].obs;
+  final RxList<Map<String, dynamic>> teams = <Map<String, dynamic>>[].obs;
+  final RxList<Map<String, dynamic>> lots = <Map<String, dynamic>>[].obs;
+  final RxList<Map<String, dynamic>> years = <Map<String, dynamic>>[].obs;
 
   final RxBool isEditingEnabled = true.obs;
   final RxBool isLoading = false.obs;
@@ -61,68 +61,28 @@ class InventoryController extends GetxController {
     Colors.red[900]!, // 11
   ];
 
-  final RxList<String> farms =
-      ['Nông trường 1', 'Nông trường 2', 'Nông trường 3'].obs;
-  final RxList<String> lots = ['Lô A', 'Lô B', 'Lô C', 'Lô D'].obs;
-  final RxList<String> teams = ['Tổ 1', 'Tổ 2', 'Tổ 3', 'Tổ 4'].obs;
-  final RxList<String> rows =
-      ['Hàng 1', 'Hàng 2', 'Hàng 3', 'Hàng 4', 'Hàng 5'].obs;
-
-  final Map<String, List<String>> lotsMap = {
-    'Nông trường 1': ['Lô A', 'Lô B', 'Lô C'],
-    'Nông trường 2': ['Lô D', 'Lô E', 'Lô F'],
-    'Nông trường 3': ['Lô G', 'Lô H', 'Lô I'],
-  };
-
-  final Map<String, List<String>> rowsMap = {
-    'Lô A': ['Hàng 1', 'Hàng 2', 'Hàng 3'],
-    'Lô B': ['Hàng 4', 'Hàng 5', 'Hàng 6'],
-    'Lô C': ['Hàng 7', 'Hàng 8', 'Hàng 9'],
-    'Lô D': ['Hàng 10', 'Hàng 11', 'Hàng 12'],
-    'Lô E': ['Hàng 13', 'Hàng 14', 'Hàng 15'],
-    'Lô F': ['Hàng 16', 'Hàng 17', 'Hàng 18'],
-    'Lô G': ['Hàng 19', 'Hàng 20', 'Hàng 21'],
-    'Lô H': ['Hàng 22', 'Hàng 23', 'Hàng 24'],
-    'Lô I': ['Hàng 25', 'Hàng 26', 'Hàng 27'],
-  };
-
   final ApiProvider _apiProvider = ApiProvider();
-
-  final farmId = 0.obs;
-  final productTeamId = 0.obs;
-  final farmLotId = 0.obs;
-  final shavedStatus = 0.obs;
 
   final Rxn<ShavedStatusData> shavedStatusData = Rxn<ShavedStatusData>();
   final Rxn<ShavedStatusItem> selectedShavedStatus = Rxn<ShavedStatusItem>();
   final RxString selectedType = RxString('');
 
-  List<String> getLotsForFarm(String farm) {
-    return lotsMap[farm] ?? [];
-  }
-
-  List<String> getRowsForLot(String lot) {
-    return rowsMap[lot] ?? [];
+  List<String> getRowNumbers() {
+    return List.generate(totalRows, (index) => (index + 1).toString());
   }
 
   void updateFarm(String newFarm) {
     farm.value = newFarm;
-    final lots = getLotsForFarm(newFarm);
-    if (lots.isNotEmpty) {
-      lot.value = lots.first;
-      final rows = getRowsForLot(lots.first);
-      if (rows.isNotEmpty) {
-        row.value = rows.first;
-      }
-    }
+    final farmData = farms.value.firstWhere((farm) => farm['name'] == newFarm);
+    farmId.value = farmData['id'];
+    fetchTeams(farmId.value);
   }
 
   void updateLot(String newLot) {
     lot.value = newLot;
-    final rows = getRowsForLot(newLot);
-    if (rows.isNotEmpty) {
-      row.value = rows.first;
-    }
+    final lotData = lots.value.firstWhere((lot) => lot['name'] == newLot);
+    farmLotId.value = lotData['id'];
+    fetchYears(farmLotId.value);
   }
 
   void incrementStatus(String status) {
@@ -175,11 +135,11 @@ class InventoryController extends GetxController {
       }
 
       final localUpdate = LocalTreeUpdate(
-        farmId: int.parse(farmId.value.toString()),
+        farmId: farmId.value,
         farmName: farm.value,
-        productTeamId: int.parse(productTeamId.value.toString()),
+        productTeamId: productTeamId.value,
         productTeamName: productionTeam.value,
-        farmLotId: int.parse(farmLotId.value.toString()),
+        farmLotId: farmLotId.value,
         farmLotName: lot.value,
         treeLineName: row.value,
         shavedStatusId: selectedShavedStatus.value!.id,
@@ -200,11 +160,13 @@ class InventoryController extends GetxController {
         'shavedStatusId': localUpdate.shavedStatusId,
         'shavedStatusName': localUpdate.shavedStatusName,
         'dateCheck': now.toIso8601String(),
-        'statusUpdates': statusUpdates.map((status) => {
-          'statusId': status.statusId,
-          'statusName': status.statusName,
-          'value': status.value,
-        }).toList(),
+        'statusUpdates': statusUpdates
+            .map((status) => {
+                  'statusId': status.statusId,
+                  'statusName': status.statusName,
+                  'value': status.value,
+                })
+            .toList(),
         'note': localUpdate.note,
       };
 
@@ -293,11 +255,11 @@ class InventoryController extends GetxController {
         statusCounts: convertedStatusCounts,
       ),
       arguments: {
-        'farmId': int.parse(farmId.value.toString()),
+        'farmId': farmId.value,
         'farmName': farm.value,
-        'productTeamId': int.parse(productTeamId.value.toString()),
+        'productTeamId': productTeamId.value,
         'productTeamName': productionTeam.value,
-        'farmLotId': int.parse(farmLotId.value.toString()),
+        'farmLotId': farmLotId.value,
         'farmLotName': lot.value,
         'treeLineName': row.value,
         'shavedStatusId': selectedShavedStatus.value!.id,
@@ -343,9 +305,29 @@ class InventoryController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchProfile();
-    fetchStatusData();
-    fetchShavedStatusData();
+    initData();
+  }
+
+  Future<void> initData() async {
+    try {
+      isLoading.value = true;
+      await Future.wait([
+        fetchProfile(),
+        fetchFarms(),
+        fetchStatusData(),
+        fetchShavedStatusData(),
+      ]);
+    } catch (e) {
+      print('Error initializing data: $e');
+      Get.snackbar(
+        'Lỗi',
+        'Không thể tải dữ liệu: $e',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   Future<void> fetchProfile() async {
@@ -365,10 +347,88 @@ class InventoryController extends GetxController {
         productTeamId.value = farmData.productTeam.productTeamId;
 
         tappingAge.value = farmData.ageShaved.toString();
-        shavedStatus.value = farmData.ageShaved;
+        yearShaved.value = farmData.ageShaved;
       }
     } catch (e) {
       print('Error fetching profile: $e');
+    }
+  }
+
+  Future<void> fetchFarms() async {
+    try {
+      final response = await _apiProvider.getFarms();
+      if (response.data?['status'] == true && response.data?['data'] != null) {
+        final farmList =
+            List<Map<String, dynamic>>.from(response.data?['data']);
+        farms.value = farmList;
+        if (farmList.isNotEmpty) {
+          final defaultFarm = farmList[0];
+          farm.value = defaultFarm['name'];
+          farmId.value = defaultFarm['id'];
+          await fetchTeams(defaultFarm['id']);
+        }
+      }
+    } catch (e) {
+      print('Error fetching farms: $e');
+      farms.clear();
+    }
+  }
+
+  Future<void> fetchTeams(int farmId) async {
+    try {
+      final response = await _apiProvider.getTeams(farmId);
+      if (response.data?['status'] == true && response.data?['data'] != null) {
+        final teamList =
+            List<Map<String, dynamic>>.from(response.data?['data']);
+        teams.value = teamList;
+        if (teamList.isNotEmpty) {
+          final defaultTeam = teamList[0];
+          productionTeam.value = defaultTeam['name'];
+          productTeamId.value = defaultTeam['id'];
+          await fetchLots(defaultTeam['id']);
+        }
+      }
+    } catch (e) {
+      print('Error fetching teams: $e');
+      teams.clear();
+    }
+  }
+
+  Future<void> fetchLots(int productTeamId) async {
+    try {
+      final response = await _apiProvider.getLots(productTeamId);
+      if (response.data?['status'] == true && response.data?['data'] != null) {
+        final lotList = List<Map<String, dynamic>>.from(response.data?['data']);
+        lots.value = lotList;
+        if (lotList.isNotEmpty) {
+          final defaultLot = lotList[0];
+          lot.value = defaultLot['name'];
+          farmLotId.value = defaultLot['id'];
+          await fetchYears(defaultLot['id']);
+        }
+      }
+    } catch (e) {
+      print('Error fetching lots: $e');
+      lots.clear();
+    }
+  }
+
+  Future<void> fetchYears(int farmLotId) async {
+    try {
+      final response = await _apiProvider.getYears(farmLotId);
+      if (response.data?['status'] == true && response.data?['data'] != null) {
+        final yearList =
+            List<Map<String, dynamic>>.from(response.data?['data']);
+        years.value = yearList;
+        if (yearList.isNotEmpty) {
+          final defaultYear = yearList[0];
+          yearShaved.value = defaultYear['yearShaved'];
+          tappingAge.value = defaultYear['yearShaved'].toString();
+        }
+      }
+    } catch (e) {
+      print('Error fetching years: $e');
+      years.clear();
     }
   }
 

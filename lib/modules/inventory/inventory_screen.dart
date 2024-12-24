@@ -203,88 +203,137 @@ class InventoryScreen extends GetView<InventoryController> {
             // Farm dropdown
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
+              margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: Colors.grey[300]!),
               ),
-              child: DropdownButton<String>(
-                value: controller.farm.value,
-                isExpanded: true,
-                underline: const SizedBox(),
-                items: controller.farms
-                    .map((farm) => DropdownMenuItem(
-                          value: farm,
-                          child: Text(farm),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    controller.farm.value = value;
-                    controller.lot.value =
-                        controller.getLotsForFarm(value).first;
-                    controller.row.value =
-                        controller.getRowsForLot(controller.lot.value).first;
-                  }
-                },
-              ),
+              child: Obx(() => DropdownButton<int>(
+                    value: controller.farmId.value == 0
+                        ? null
+                        : controller.farmId.value,
+                    isExpanded: true,
+                    underline: const SizedBox(),
+                    hint: const Text('Chọn nông trường'),
+                    items: controller.farms.map((farm) {
+                      return DropdownMenuItem<int>(
+                        value: farm['id'] as int,
+                        child: Text(farm['name'] as String),
+                      );
+                    }).toList(),
+                    onChanged: (value) async {
+                      if (value != null) {
+                        final selectedFarm = controller.farms.firstWhere(
+                          (farm) => farm['id'] == value,
+                        );
+                        controller.farmId.value = value;
+                        controller.farm.value = selectedFarm['name'] as String;
+                        await controller.fetchTeams(value);
+                      }
+                    },
+                  )),
             ),
-            const SizedBox(height: 16),
-            // Lot dropdown
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey[300]!),
-              ),
-              child: DropdownButton<String>(
-                value: controller.lot.value,
-                isExpanded: true,
-                underline: const SizedBox(),
-                items: controller
-                    .getLotsForFarm(controller.farm.value)
-                    .map((lot) => DropdownMenuItem(
-                          value: lot,
-                          child: Text(lot),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    controller.lot.value = value;
-                    controller.row.value =
-                        controller.getRowsForLot(value).first;
-                  }
-                },
-              ),
-            ),
-            const SizedBox(height: 16),
             // Team dropdown
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
+              margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: Colors.grey[300]!),
               ),
-              child: DropdownButton<String>(
-                value: controller.productionTeam.value,
-                isExpanded: true,
-                underline: const SizedBox(),
-                items: controller.teams
-                    .map((team) => DropdownMenuItem(
-                          value: team,
-                          child: Text(team),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    controller.productionTeam.value = value;
-                  }
-                },
-              ),
+              child: Obx(() => DropdownButton<int>(
+                    value: controller.productTeamId.value == 0
+                        ? null
+                        : controller.productTeamId.value,
+                    isExpanded: true,
+                    underline: const SizedBox(),
+                    hint: const Text('Chọn tổ'),
+                    items: controller.teams.map((team) {
+                      return DropdownMenuItem<int>(
+                        value: team['id'] as int,
+                        child: Text(team['name'] as String),
+                      );
+                    }).toList(),
+                    onChanged: (value) async {
+                      if (value != null) {
+                        final selectedTeam = controller.teams.firstWhere(
+                          (team) => team['id'] == value,
+                        );
+                        controller.productTeamId.value = value;
+                        controller.productionTeam.value =
+                            selectedTeam['name'] as String;
+                        await controller.fetchLots(value);
+                      }
+                    },
+                  )),
             ),
-            const SizedBox(height: 16),
-            // Row dropdown
+            // Lot dropdown
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey[300]!),
+              ),
+              child: Obx(() => DropdownButton<int>(
+                    value: controller.farmLotId.value == 0
+                        ? null
+                        : controller.farmLotId.value,
+                    isExpanded: true,
+                    underline: const SizedBox(),
+                    hint: const Text('Chọn lô'),
+                    items: controller.lots.map((lot) {
+                      return DropdownMenuItem<int>(
+                        value: lot['id'] as int,
+                        child: Text(lot['name'] as String),
+                      );
+                    }).toList(),
+                    onChanged: (value) async {
+                      if (value != null) {
+                        final selectedLot = controller.lots.firstWhere(
+                          (lot) => lot['id'] == value,
+                        );
+                        controller.farmLotId.value = value;
+                        controller.lot.value = selectedLot['name'] as String;
+                        await controller.fetchYears(value);
+                      }
+                    },
+                  )),
+            ),
+            // Year dropdown
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey[300]!),
+              ),
+              child: Obx(() => DropdownButton<int>(
+                    value: controller.yearShaved.value == 0
+                        ? null
+                        : controller.yearShaved.value,
+                    isExpanded: true,
+                    underline: const SizedBox(),
+                    hint: const Text('Chọn năm cạo'),
+                    items: controller.years.map((year) {
+                      final yearValue = year['yearShaved'] as int;
+                      return DropdownMenuItem<int>(
+                        value: yearValue,
+                        child: Text(yearValue.toString()),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        controller.yearShaved.value = value;
+                        controller.tappingAge.value = value.toString();
+                      }
+                    },
+                  )),
+            ),
+            // Row input
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: Colors.grey[300]!),
@@ -293,41 +342,16 @@ class InventoryScreen extends GetView<InventoryController> {
                 value: controller.row.value,
                 isExpanded: true,
                 underline: const SizedBox(),
-                items: controller
-                    .getRowsForLot(controller.lot.value)
-                    .map((row) => DropdownMenuItem(
-                          value: row,
-                          child: Text(row),
-                        ))
-                    .toList(),
+                hint: const Text('Chọn hàng'),
+                items: controller.getRowNumbers().map((row) {
+                  return DropdownMenuItem<String>(
+                    value: row,
+                    child: Text('Hàng $row'),
+                  );
+                }).toList(),
                 onChanged: (value) {
                   if (value != null) {
                     controller.row.value = value;
-                  }
-                },
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Tapping Age dropdown
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey[300]!),
-              ),
-              child: DropdownButton<String>(
-                value: controller.tappingAge.value,
-                isExpanded: true,
-                underline: const SizedBox(),
-                items: controller.tappingAges
-                    .map((age) => DropdownMenuItem(
-                          value: age,
-                          child: Text('Năm $age'),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    controller.tappingAge.value = value;
                   }
                 },
               ),
@@ -342,7 +366,7 @@ class InventoryScreen extends GetView<InventoryController> {
           TextButton(
             onPressed: () {
               Get.back();
-              controller.update(['farm', 'lot', 'team', 'row', 'tapping_age']);
+              controller.update();
             },
             child: Text(
               'Lưu',
@@ -675,7 +699,7 @@ class InventoryScreen extends GetView<InventoryController> {
         onPressed: () {
           controller.showShavedStatusBottomSheet();
         },
-        child: Text('Kết thúc'),
+        child: const Text('Kết thúc'),
       ),
     );
   }

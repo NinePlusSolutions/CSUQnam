@@ -9,9 +9,20 @@ class ApiConstants {
   static const String treeCondition = '/v1/tree-condition';
   static const String shavedStatus = '/v1/common/shaved-status';
 
+  // Farm endpoints
+  static const String farm = '/v1/common/farm';
+  static const String productTeam = '/v1/common/product-team';
+  static const String farmLot = '/v1/common/farm-lot';
+  static const String yearShaved = '/v1/common/year-shaved';
+
+  // URL getters
   static String getLoginUrl() => '$baseUrlProd$login';
   static String getStatusUrl() => '$baseUrlProd$status';
   static String getProfileUrl() => '$baseUrlProd$profile';
   static String getShavedStatusUrl() => '$baseUrlProd$shavedStatus';
+  static String getFarmUrl() => '$baseUrlProd$farm';
+  static String getProductTeamUrl() => '$baseUrlProd$productTeam';
+  static String getFarmLotUrl() => '$baseUrlProd$farmLot';
+  static String getYearShavedUrl() => '$baseUrlProd$yearShaved';
   static String getSyncTreeConditionUrl() => '$baseUrlProd$treeCondition';
 }

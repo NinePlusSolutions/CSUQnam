@@ -45,6 +45,11 @@ class InventoryController extends GetxController {
   final RxList<Map<String, dynamic>> lots = <Map<String, dynamic>>[].obs;
   final RxList<Map<String, dynamic>> years = <Map<String, dynamic>>[].obs;
 
+  // Visibility flags for dropdowns
+  final RxBool showTeamDropdown = false.obs;
+  final RxBool showLotDropdown = false.obs;
+  final RxBool showYearDropdown = false.obs;
+
   final RxBool isEditingEnabled = true.obs;
   final RxBool isLoading = false.obs;
 
@@ -71,18 +76,115 @@ class InventoryController extends GetxController {
     return List.generate(totalRows, (index) => (index + 1).toString());
   }
 
-  void updateFarm(String newFarm) {
-    farm.value = newFarm;
-    final farmData = farms.value.firstWhere((farm) => farm['name'] == newFarm);
-    farmId.value = farmData['id'];
-    fetchTeams(farmId.value);
+  void resetDropdowns() {
+    // Reset teams
+    teams.clear();
+    productTeamId.value = 0;
+    productionTeam.value = '';
+    showTeamDropdown.value = false;
+
+    // Reset lots
+    lots.clear();
+    farmLotId.value = 0;
+    lot.value = '';
+    showLotDropdown.value = false;
+
+    // Reset years
+    years.clear();
+    yearShaved.value = 0;
+    tappingAge.value = '';
+    showYearDropdown.value = false;
   }
 
-  void updateLot(String newLot) {
-    lot.value = newLot;
-    final lotData = lots.value.firstWhere((lot) => lot['name'] == newLot);
-    farmLotId.value = lotData['id'];
-    fetchYears(farmLotId.value);
+  Future<void> onFarmSelected(int farmId, String farmName) async {
+    try {
+      // Reset all dropdowns first
+      resetDropdowns();
+
+      // Update farm values
+      this.farmId.value = farmId;
+      farm.value = farmName;
+
+      // Fetch teams for selected farm
+      await fetchTeams(farmId);
+
+      // Show team dropdown
+      showTeamDropdown.value = true;
+    } catch (e) {
+      print('Error selecting farm: $e');
+      Get.snackbar(
+        'Lỗi',
+        'Không thể tải danh sách tổ: $e',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  Future<void> onTeamSelected(int teamId, String teamName) async {
+    try {
+      // Reset lot and year dropdowns
+      lots.clear();
+      farmLotId.value = 0;
+      lot.value = '';
+      showLotDropdown.value = false;
+
+      years.clear();
+      yearShaved.value = 0;
+      tappingAge.value = '';
+      showYearDropdown.value = false;
+
+      // Update team values
+      productTeamId.value = teamId;
+      productionTeam.value = teamName;
+
+      // Fetch lots for selected team
+      await fetchLots(teamId);
+
+      // Show lot dropdown
+      showLotDropdown.value = true;
+    } catch (e) {
+      print('Error selecting team: $e');
+      Get.snackbar(
+        'Lỗi',
+        'Không thể tải danh sách lô: $e',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  Future<void> onLotSelected(int lotId, String lotName) async {
+    try {
+      // Reset year dropdown
+      years.clear();
+      yearShaved.value = 0;
+      tappingAge.value = '';
+      showYearDropdown.value = false;
+
+      // Update lot values
+      farmLotId.value = lotId;
+      lot.value = lotName;
+
+      // Fetch years for selected lot
+      await fetchYears(lotId);
+
+      // Show year dropdown
+      showYearDropdown.value = true;
+    } catch (e) {
+      print('Error selecting lot: $e');
+      Get.snackbar(
+        'Lỗi',
+        'Không thể tải danh sách năm: $e',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  void onYearSelected(int year) {
+    yearShaved.value = year;
+    tappingAge.value = year.toString();
   }
 
   void incrementStatus(String status) {
@@ -365,7 +467,7 @@ class InventoryController extends GetxController {
           final defaultFarm = farmList[0];
           farm.value = defaultFarm['name'];
           farmId.value = defaultFarm['id'];
-          await fetchTeams(defaultFarm['id']);
+          await onFarmSelected(defaultFarm['id'], defaultFarm['name']);
         }
       }
     } catch (e) {
@@ -383,9 +485,7 @@ class InventoryController extends GetxController {
         teams.value = teamList;
         if (teamList.isNotEmpty) {
           final defaultTeam = teamList[0];
-          productionTeam.value = defaultTeam['name'];
-          productTeamId.value = defaultTeam['id'];
-          await fetchLots(defaultTeam['id']);
+          await onTeamSelected(defaultTeam['id'], defaultTeam['name']);
         }
       }
     } catch (e) {
@@ -402,9 +502,7 @@ class InventoryController extends GetxController {
         lots.value = lotList;
         if (lotList.isNotEmpty) {
           final defaultLot = lotList[0];
-          lot.value = defaultLot['name'];
-          farmLotId.value = defaultLot['id'];
-          await fetchYears(defaultLot['id']);
+          await onLotSelected(defaultLot['id'], defaultLot['name']);
         }
       }
     } catch (e) {
@@ -422,8 +520,7 @@ class InventoryController extends GetxController {
         years.value = yearList;
         if (yearList.isNotEmpty) {
           final defaultYear = yearList[0];
-          yearShaved.value = defaultYear['yearShaved'];
-          tappingAge.value = defaultYear['yearShaved'].toString();
+          onYearSelected(defaultYear['yearShaved']);
         }
       }
     } catch (e) {

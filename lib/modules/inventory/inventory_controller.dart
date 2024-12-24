@@ -365,7 +365,8 @@ class InventoryController extends GetxController {
         'tappingAge': tappingAge.value,
         'note': note.value,
       },
-    )!.then((value) {
+    )!
+        .then((value) {
       if (value != null && value is Map) {
         // If continuing to next row
         if (value['row'] != null) {
@@ -552,6 +553,24 @@ class InventoryController extends GetxController {
   }
 
   void showShavedStatusBottomSheet() {
+    // Check if any status is selected
+    bool hasSelectedStatus = false;
+    statusCounts.forEach((key, value) {
+      if (value.value > 0) {
+        hasSelectedStatus = true;
+      }
+    });
+
+    if (!hasSelectedStatus) {
+      Get.snackbar(
+        'Lỗi',
+        'Vui lòng chọn ít nhất 1 trạng thái',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
     Get.bottomSheet(
       Container(
         decoration: const BoxDecoration(

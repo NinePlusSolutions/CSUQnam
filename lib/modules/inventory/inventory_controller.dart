@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_getx_boilerplate/api/api_provider.dart';
+import 'package:flutter_getx_boilerplate/models/local/local_tree_update.dart';
 import 'package:flutter_getx_boilerplate/models/response/status_response.dart';
 import 'package:flutter_getx_boilerplate/modules/inventory/update_tree_controller.dart';
 import 'package:flutter_getx_boilerplate/modules/sync/sync_controller.dart';
@@ -10,10 +11,11 @@ import 'dart:convert';
 import 'update_tree_screen.dart';
 
 class StatusInfo {
-  final String code;
+  final String name;
   final String description;
+  int id;
 
-  StatusInfo(this.code, this.description);
+  StatusInfo(this.name, this.description, {this.id = 0});
 }
 
 class InventoryController extends GetxController {
@@ -84,6 +86,11 @@ class InventoryController extends GetxController {
 
   final ApiProvider _apiProvider = ApiProvider();
 
+  final farmId = 0.obs;
+  final productTeamId = 0.obs;
+  final farmLotId = 0.obs;
+  final shavedStatus = 0.obs;
+
   List<String> getLotsForFarm(String farm) {
     return lotsMap[farm] ?? [];
   }
@@ -136,50 +143,84 @@ class InventoryController extends GetxController {
     note.value = value;
   }
 
-  void saveLocalUpdate() {
-    // Get existing updates or initialize empty list
-    final String? existingUpdatesJson = storage.read('local_updates');
-    print('Existing updates: $existingUpdatesJson');
+  Future<void> saveLocalUpdate() async {
+    try {
+      final now = DateTime.now();
 
-    List<Map<String, dynamic>> updates = [];
-    if (existingUpdatesJson != null) {
-      updates =
-          List<Map<String, dynamic>>.from(jsonDecode(existingUpdatesJson));
-    }
-
-    // Create new update with non-zero status counts only
-    Map<String, int> nonZeroStatusCounts = {};
-    statusCounts.forEach((key, value) {
-      if (value.value > 0) {
-        nonZeroStatusCounts[key] = value.value;
+      final List<LocalStatusUpdate> statusUpdates = [];
+      for (var status in statusList) {
+        final count = statusCounts[status.name] ?? 0.obs;
+        if (count.value > 0) {
+          statusUpdates.add(LocalStatusUpdate(
+            statusId: int.parse(status.id.toString()),
+            statusName: status.name,
+            value: count.value.toString(),
+          ));
+        }
       }
-    });
 
-    // Only save if there are non-zero counts
-    if (nonZeroStatusCounts.isNotEmpty) {
-      final Map<String, dynamic> newUpdate = {
-        'farm': farm.value,
-        'lot': lot.value,
-        'team': productionTeam.value,
-        'row': row.value,
-        'statusCounts': nonZeroStatusCounts,
-        'tapAge': tappingAge.value,
-        'updatedAt': DateTime.now().toIso8601String(),
-      };
+      final localUpdate = LocalTreeUpdate(
+        farmId: int.parse(farmId.value.toString()),
+        farmName: farm.value,
+        productTeamId: int.parse(productTeamId.value.toString()),
+        productTeamName: productionTeam.value,
+        farmLotId: int.parse(farmLotId.value.toString()),
+        farmLotName: lot.value,
+        treeLineName: row.value,
+        shavedStatus: shavedStatus.value,
+        dateCheck: now,
+        statusUpdates: statusUpdates,
+        note: note.value,
+      );
 
-      // Add new update
-      updates.add(newUpdate);
+      // Chuyển đổi sang JSON và xử lý DateTime
+      final Map<String, dynamic> updateJson = localUpdate.toJson();
+      updateJson['dateCheck'] = now.toIso8601String(); // Chuyển DateTime sang String
 
-      // Save back to storage
-      final updatesJson = jsonEncode(updates);
-      print('Saving updates: $updatesJson');
-      storage.write('local_updates', updatesJson);
+      // Chuyển đổi statusUpdates sang JSON
+      updateJson['statusUpdates'] = statusUpdates.map((status) => status.toJson()).toList();
 
-      // Refresh sync screen data if it exists
-      if (Get.isRegistered<SyncController>()) {
-        final syncController = Get.find<SyncController>();
-        syncController.loadPendingUpdates();
+      print('Local update to save: $updateJson');
+
+      // Đọc updates hiện có
+      List<Map<String, dynamic>> existingUpdates = [];
+      final storedData = storage.read('local_updates');
+      if (storedData != null) {
+        if (storedData is List) {
+          existingUpdates = List<Map<String, dynamic>>.from(storedData);
+        } else if (storedData is String) {
+          // Xóa dữ liệu cũ nếu không đúng định dạng
+          await storage.remove('local_updates');
+        }
       }
+
+      // Thêm update mới
+      existingUpdates.add(updateJson);
+
+      // Lưu lại vào storage
+      await storage.write('local_updates', existingUpdates);
+      print('Saved updates: $existingUpdates');
+
+      // Refresh sync screen data
+      final syncController = Get.find<SyncController>();
+      syncController.loadPendingUpdates();
+
+      Get.back();
+      Get.snackbar(
+        'Thành công',
+        'Đã lưu cập nhật thành công',
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+    } catch (e, stackTrace) {
+      print('Error saving local update: $e');
+      print('Stack trace: $stackTrace');
+      Get.snackbar(
+        'Lỗi',
+        'Không thể lưu cập nhật. Vui lòng thử lại',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
 
@@ -234,7 +275,6 @@ class InventoryController extends GetxController {
                       TextButton(
                         onPressed: () {
                           Get.back();
-                          // Increment row and reload trees
                           row.value = getRowsForLot(lot.value)[
                               (getRowsForLot(lot.value).indexOf(row.value) +
                                       1) %
@@ -251,7 +291,7 @@ class InventoryController extends GetxController {
                   ),
                 );
               } else {
-                saveLocalUpdate();
+                await saveLocalUpdate();
                 Get.delete<UpdateTreeController>();
                 Get.put(UpdateTreeController());
 
@@ -273,7 +313,6 @@ class InventoryController extends GetxController {
                 );
 
                 if (result != null) {
-                  // Then update the UI
                   statusCounts.forEach((key, value) {
                     value.value = 0;
                   });
@@ -281,7 +320,6 @@ class InventoryController extends GetxController {
                   update(['row']);
                   update(['status_counts']);
 
-                  // Show success message
                   Get.snackbar(
                     'Thành công',
                     'Đã lưu dữ liệu kiểm kê',
@@ -290,12 +328,11 @@ class InventoryController extends GetxController {
                     snackPosition: SnackPosition.TOP,
                   );
 
-                  // // Move to next row
-                  // final currentRowIndex =
-                  //     getRowsForLot(lot.value).indexOf(row.value);
-                  // if (currentRowIndex < getRowsForLot(lot.value).length - 1) {
-                  //   row.value = getRowsForLot(lot.value)[currentRowIndex + 1];
-                  // }
+                  final currentRowIndex =
+                      getRowsForLot(lot.value).indexOf(row.value);
+                  if (currentRowIndex < getRowsForLot(lot.value).length - 1) {
+                    row.value = getRowsForLot(lot.value)[currentRowIndex + 1];
+                  }
                 }
               }
             },
@@ -321,9 +358,16 @@ class InventoryController extends GetxController {
         final farmData = response.data!.farmByUserResponse[0];
 
         farm.value = farmData.farm.farmName;
+        farmId.value = farmData.farm.farmId;
+
         lot.value = farmData.farmLot.farmLotName;
+        farmLotId.value = farmData.farmLot.farmLotId;
+
         productionTeam.value = farmData.productTeam.productTeamName;
+        productTeamId.value = farmData.productTeam.productTeamId;
+
         tappingAge.value = farmData.ageShaved.toString();
+        shavedStatus.value = farmData.ageShaved;
       }
     } catch (e) {
       print('Error fetching profile: $e');
@@ -340,39 +384,18 @@ class InventoryController extends GetxController {
       statusCounts.clear();
 
       final statuses = statusResponse.data
-          .map((item) => StatusInfo(item.name, item.description))
+          .map((item) => StatusInfo(item.name, item.description, id: item.id))
           .toList();
 
       statusList.addAll(statuses);
 
       for (var item in statusResponse.data) {
-        // Assign color based on item's ID (1-based index)
-        // If ID is out of range, use grey as default
         final colorIndex = (item.id - 1) % _statusColorPalette.length;
         statusColors[item.name] = _statusColorPalette[colorIndex];
         statusCounts[item.name] = 0.obs;
       }
     } catch (e) {
       print('Error fetching status data: $e');
-      // In case of error, initialize with default values
-      final defaultStatuses = [
-        StatusInfo('N', 'Cây cạo ngửa'),
-        StatusInfo('U', 'Cây cạo úp'),
-        StatusInfo('UN', 'Cây cạo úp ngửa'),
-        StatusInfo('KB', 'Cây khô miệng cạo'),
-        StatusInfo('KG', 'Cây cạo không hiệu quả'),
-        StatusInfo('K', 'Cây không phát triển'),
-        StatusInfo('O', 'Hố trống(cây chết)'),
-        StatusInfo('M', 'Hố bị mất do lấn chiếm'),
-        StatusInfo('B', 'Cây bênh'),
-        StatusInfo('B4,5', 'Cây bệnh 4,5'),
-      ];
-
-      statusList.addAll(defaultStatuses);
-      for (var status in statusList) {
-        statusCounts[status.code] = 0.obs;
-        statusColors[status.code] = Colors.grey;
-      }
     } finally {
       isLoading.value = false;
     }

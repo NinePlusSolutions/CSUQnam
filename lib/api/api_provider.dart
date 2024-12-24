@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_getx_boilerplate/api/api_constants.dart';
 import 'package:flutter_getx_boilerplate/models/profile/profile_response.dart';
+import 'package:flutter_getx_boilerplate/models/tree_condition/tree_condition_request.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:logger/logger.dart';
 
@@ -110,6 +111,24 @@ class ApiProvider {
     } on DioException catch (e) {
       _logger.e("""
         PROFILE ERROR:
+        type: ${e.type}
+        message: ${e.message}
+        response: ${e.response}
+        """);
+      rethrow;
+    }
+  }
+
+  Future<Response> syncTreeCondition(TreeConditionRequest request) async {
+    try {
+      final response = await _dio.post(
+        ApiConstants.getSyncTreeConditionUrl(),
+        data: request.toJson(),
+      );
+      return response;
+    } on DioException catch (e) {
+      _logger.e("""
+        SYNC ERROR:
         type: ${e.type}
         message: ${e.message}
         response: ${e.response}

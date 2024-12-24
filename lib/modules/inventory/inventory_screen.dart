@@ -451,7 +451,7 @@ class InventoryScreen extends GetView<InventoryController> {
               boxShadow: [
                 BoxShadow(
                   color: isEditing
-                      ? _getStatusColor(status.code).withOpacity(0.1)
+                      ? _getStatusColor(status.name).withOpacity(0.1)
                       : Colors.grey.withOpacity(0.1),
                   spreadRadius: 1,
                   blurRadius: 4,
@@ -459,7 +459,7 @@ class InventoryScreen extends GetView<InventoryController> {
               ],
               border: Border.all(
                 color: isEditing
-                    ? _getStatusColor(status.code).withOpacity(0.2)
+                    ? _getStatusColor(status.name).withOpacity(0.2)
                     : Colors.grey.withOpacity(0.2),
               ),
             ),
@@ -478,17 +478,17 @@ class InventoryScreen extends GetView<InventoryController> {
                         ),
                         decoration: BoxDecoration(
                           color: isEditing
-                              ? _getStatusColor(status.code).withOpacity(0.1)
+                              ? _getStatusColor(status.name).withOpacity(0.1)
                               : Colors.grey.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          status.code,
+                          status.name,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: isEditing
-                                ? _getStatusColor(status.code)
+                                ? _getStatusColor(status.name)
                                 : Colors.grey,
                           ),
                         ),
@@ -498,17 +498,17 @@ class InventoryScreen extends GetView<InventoryController> {
                 ),
                 const SizedBox(height: 8),
                 Obx(() {
-                  final count = controller.getCount(status.code);
+                  final count = controller.getCount(status.name);
                   return Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       _buildControlButton(
                         icon: Icons.remove,
                         onPressed: (count > 0 && isEditing)
-                            ? () => controller.decrementStatus(status.code)
+                            ? () => controller.decrementStatus(status.name)
                             : null,
                         color: isEditing
-                            ? _getStatusColor(status.code)
+                            ? _getStatusColor(status.name)
                             : Colors.grey,
                       ),
                       Container(
@@ -533,10 +533,10 @@ class InventoryScreen extends GetView<InventoryController> {
                       _buildControlButton(
                         icon: Icons.add,
                         onPressed: isEditing
-                            ? () => controller.incrementStatus(status.code)
+                            ? () => controller.incrementStatus(status.name)
                             : null,
                         color: isEditing
-                            ? _getStatusColor(status.code)
+                            ? _getStatusColor(status.name)
                             : Colors.grey,
                       ),
                     ],
@@ -609,10 +609,10 @@ class InventoryScreen extends GetView<InventoryController> {
               margin: const EdgeInsets.all(16),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: _getStatusColor(status.code).withOpacity(0.1),
+                color: _getStatusColor(status.name).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: _getStatusColor(status.code).withOpacity(0.2),
+                  color: _getStatusColor(status.name).withOpacity(0.2),
                 ),
               ),
               child: Row(
@@ -623,11 +623,11 @@ class InventoryScreen extends GetView<InventoryController> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: _getStatusColor(status.code),
+                      color: _getStatusColor(status.name),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      status.code,
+                      status.name,
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,

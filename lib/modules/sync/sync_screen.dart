@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_getx_boilerplate/models/local/local_tree_update.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'sync_controller.dart';
@@ -24,12 +25,31 @@ class SyncScreen extends GetView<SyncController> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Get.back(),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete_outline, color: Colors.white),
+            onPressed: _showClearConfirmation,
+          ),
+        ],
       ),
       body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(
-            child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+        if (controller.isSyncing.value) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Đang đồng bộ... ${(controller.syncProgress.value * 100).toInt()}%',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
             ),
           );
         }
@@ -60,7 +80,9 @@ class SyncScreen extends GetView<SyncController> {
         return Stack(
           children: [
             RefreshIndicator(
-              onRefresh: controller.loadPendingUpdates,
+              onRefresh: () async {
+                controller.loadPendingUpdates();
+              },
               child: ListView.builder(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
                 itemCount: controller.pendingUpdates.length,
@@ -73,9 +95,7 @@ class SyncScreen extends GetView<SyncController> {
                       children: [
                         _buildHeader(update),
                         const Divider(),
-                        _buildStatusGrid(
-                          Map<String, int>.from(update['statusCounts'] as Map),
-                        ),
+                        _buildStatusUpdates(update.statusUpdates),
                         Padding(
                           padding: const EdgeInsets.all(16),
                           child: Row(
@@ -88,7 +108,7 @@ class SyncScreen extends GetView<SyncController> {
                               const SizedBox(width: 8),
                               Text(
                                 DateFormat('HH:mm dd/MM/yyyy').format(
-                                  DateTime.parse(update['updatedAt'] as String),
+                                  update.dateCheck,
                                 ),
                                 style: TextStyle(
                                   fontSize: 14,
@@ -148,16 +168,9 @@ class SyncScreen extends GetView<SyncController> {
             child: const Text('Hủy'),
           ),
           TextButton(
-            onPressed: () async {
+            onPressed: () {
               Get.back();
-              await controller.syncAll();
-              Get.snackbar(
-                'Thành công',
-                'Đồng bộ dữ liệu thành công',
-                backgroundColor: Colors.green,
-                colorText: Colors.white,
-                snackPosition: SnackPosition.TOP,
-              );
+              controller.syncUpdates();
             },
             child: Text(
               'Đồng ý',
@@ -169,7 +182,40 @@ class SyncScreen extends GetView<SyncController> {
     );
   }
 
-  Widget _buildHeader(Map<String, dynamic> update) {
+  void _showClearConfirmation() {
+    Get.dialog(
+      AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.delete_outline, color: Colors.red[700], size: 24),
+            const SizedBox(width: 8),
+            const Text('Xác nhận xóa'),
+          ],
+        ),
+        content: const Text(
+          'Bạn có chắc chắn muốn xóa tất cả dữ liệu cập nhật không? Tác vụ này sẽ không được hoàn tác.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () {
+              Get.back();
+              controller.clearPendingUpdates();
+            },
+            child: Text(
+              'Đồng ý',
+              style: TextStyle(color: Colors.red[700]),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader(LocalTreeUpdate update) {
     return Container(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -180,7 +226,7 @@ class SyncScreen extends GetView<SyncController> {
               Icon(Icons.location_on, color: Colors.green[700], size: 20),
               const SizedBox(width: 8),
               Text(
-                update['farm'] as String,
+                update.farmName,
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -195,25 +241,43 @@ class SyncScreen extends GetView<SyncController> {
                 child: _buildInfoItem(
                   icon: Icons.grid_4x4,
                   label: 'Lô',
-                  value: update['lot'] as String,
+                  value: update.farmLotName,
                 ),
               ),
               Expanded(
                 child: _buildInfoItem(
-                  icon: Icons.groups,
+                  icon: Icons.group,
                   label: 'Tổ',
-                  value: update['team'] as String,
+                  value: update.productTeamName,
                 ),
               ),
               Expanded(
                 child: _buildInfoItem(
-                  icon: Icons.view_week,
+                  icon: Icons.straighten,
                   label: 'Hàng',
-                  value: update['row'] as String,
+                  value: update.treeLineName,
                 ),
               ),
             ],
           ),
+          if (update.note?.isNotEmpty == true) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.note, color: Colors.grey[600], size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    update.note!,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -224,134 +288,62 @@ class SyncScreen extends GetView<SyncController> {
     required String label,
     required String value,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
       children: [
-        Row(
-          children: [
-            Icon(icon, size: 16, color: Colors.grey[600]),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
+        Icon(icon, color: Colors.grey[600], size: 16),
+        const SizedBox(width: 4),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
         ),
       ],
     );
   }
 
-  Widget _buildStatusGrid(Map<String, int> statusCounts) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+  Widget _buildStatusUpdates(List<LocalStatusUpdate> statusUpdates) {
+    return Padding(
       padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        childAspectRatio: 1.5,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-      ),
-      itemCount: statusCounts.length,
-      itemBuilder: (context, index) {
-        final status = statusCounts.keys.elementAt(index);
-        final count = statusCounts[status]!;
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: _getStatusColor(status).withOpacity(0.2),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: statusUpdates.map((status) {
+          return Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 6,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Text(
+              '${status.statusName}: ${status.value}',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
               ),
-            ],
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: _getStatusColor(status).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  status,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: _getStatusColor(status),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                count.toString(),
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: _getStatusColor(status),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+            ),
+          );
+        }).toList(),
+      ),
     );
-  }
-
-  Color _getStatusColor(String status) {
-    final List<Color> statusColorPalette = [
-      Colors.blue, // 1
-      Colors.green, // 2
-      Colors.teal, // 3
-      Colors.purple, // 4
-      Colors.orange, // 5
-      Colors.red, // 6
-      Colors.pink, // 7
-      Colors.brown, // 9
-      Colors.red[700]!, // 10
-      Colors.red[900]!, // 11
-    ];
-
-    // Map status to index
-    final Map<String, int> statusIndices = {
-      'N': 0, // Blue
-      'U': 1, // Green
-      'UN': 3, // Purple
-      'KB': 4, // Orange
-      'KG': 5, // Red
-      'KC': 8, // Red[700]
-      'O': 6, // Pink
-      'M': 2, // Teal
-      'B': 4, // Orange
-      'B4': 7, // Brown
-      'B5': 9, // Red[900]
-    };
-
-    final index = statusIndices[status];
-    if (index != null && index < statusColorPalette.length) {
-      return statusColorPalette[index];
-    }
-    return Colors.grey;
   }
 }

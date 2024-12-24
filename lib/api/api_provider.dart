@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_getx_boilerplate/api/api_constants.dart';
 import 'package:flutter_getx_boilerplate/models/profile/profile_response.dart';
+import 'package:flutter_getx_boilerplate/models/response/api_response.dart';
 import 'package:flutter_getx_boilerplate/models/response/shaved_status_response.dart';
 import 'package:flutter_getx_boilerplate/models/tree_condition/tree_condition_request.dart';
 import 'package:get/get_connect/http/src/exceptions/exceptions.dart';
@@ -106,10 +107,13 @@ class ApiProvider {
     }
   }
 
-  Future<ProfileResponse> getProfile() async {
+  Future<ApiResponse<ProfileResponse>> getProfile() async {
     try {
       final response = await _dio.get(ApiConstants.getProfileUrl());
-      return ProfileResponse.fromJson(response.data);
+      return ApiResponse<ProfileResponse>.fromJson(
+        response.data,
+        (json) => ProfileResponse.fromJson(json),
+      );
     } on DioException catch (e) {
       _logger.e("""
         PROFILE ERROR:

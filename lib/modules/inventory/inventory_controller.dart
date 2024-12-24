@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_getx_boilerplate/api/api_provider.dart';
 import 'package:flutter_getx_boilerplate/models/local/local_tree_update.dart';
 import 'package:flutter_getx_boilerplate/models/local/shaved_status_update.dart';
+import 'package:flutter_getx_boilerplate/models/profile/profile_response.dart';
 import 'package:flutter_getx_boilerplate/models/response/shaved_status_response.dart';
 import 'package:flutter_getx_boilerplate/models/response/status_response.dart';
 import 'package:flutter_getx_boilerplate/modules/inventory/update_tree_controller.dart';
@@ -39,11 +40,11 @@ class InventoryController extends GetxController {
   final RxString lot = ''.obs;
   final RxInt farmLotId = 0.obs;
 
-  // Lists for dropdown
-  final RxList<Map<String, dynamic>> farms = <Map<String, dynamic>>[].obs;
-  final RxList<Map<String, dynamic>> teams = <Map<String, dynamic>>[].obs;
-  final RxList<Map<String, dynamic>> lots = <Map<String, dynamic>>[].obs;
-  final RxList<Map<String, dynamic>> years = <Map<String, dynamic>>[].obs;
+  // Local data
+  final Rx<List<FarmResponse>> farmResponses = Rx<List<FarmResponse>>([]);
+  final Rx<FarmResponse?> selectedFarm = Rx<FarmResponse?>(null);
+  final Rx<ProductTeamResponse?> selectedTeam = Rx<ProductTeamResponse?>(null);
+  final Rx<FarmLotResponse?> selectedLot = Rx<FarmLotResponse?>(null);
 
   // Visibility flags for dropdowns
   final RxBool showTeamDropdown = false.obs;
@@ -78,19 +79,16 @@ class InventoryController extends GetxController {
 
   void resetDropdowns() {
     // Reset teams
-    teams.clear();
     productTeamId.value = 0;
     productionTeam.value = '';
     showTeamDropdown.value = false;
 
     // Reset lots
-    lots.clear();
     farmLotId.value = 0;
     lot.value = '';
     showLotDropdown.value = false;
 
     // Reset years
-    years.clear();
     yearShaved.value = 0;
     tappingAge.value = '';
     showYearDropdown.value = false;
@@ -101,20 +99,23 @@ class InventoryController extends GetxController {
       // Reset all dropdowns first
       resetDropdowns();
 
-      // Update farm values
+      // Find selected farm from local data
+      selectedFarm.value = farmResponses.value.firstWhere(
+        (farm) => farm.farmId == farmId,
+      );
+
+      // Update values
       this.farmId.value = farmId;
       farm.value = farmName;
 
-      // Fetch teams for selected farm
-      await fetchTeams(farmId);
-
-      // Show team dropdown
-      showTeamDropdown.value = true;
+      // Show team dropdown if farm has teams
+      showTeamDropdown.value =
+          selectedFarm.value?.productTeamResponse.isNotEmpty ?? false;
     } catch (e) {
       print('Error selecting farm: $e');
       Get.snackbar(
         'Lỗi',
-        'Không thể tải danh sách tổ: $e',
+        'Không thể chọn nông trường: $e',
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
@@ -124,32 +125,26 @@ class InventoryController extends GetxController {
   Future<void> onTeamSelected(int teamId, String teamName) async {
     try {
       // Reset lot and year dropdowns
-      lots.clear();
-      farmLotId.value = 0;
-      lot.value = '';
-      showLotDropdown.value = false;
+      resetLotAndYearDropdowns();
 
-      years.clear();
-      yearShaved.value = 0;
-      tappingAge.value = '';
-      showYearDropdown.value = false;
+      // Find selected team from local data
+      selectedTeam.value = selectedFarm.value?.productTeamResponse.firstWhere(
+        (team) => team.productTeamId == teamId,
+      );
 
-      // Update team values
+      // Update values
       productTeamId.value = teamId;
       productionTeam.value = teamName;
 
-      // Fetch lots for selected team
-      await fetchLots(teamId);
-
-      // Show lot dropdown
-      showLotDropdown.value = true;
+      // Show lot dropdown if team has lots
+      showLotDropdown.value =
+          selectedTeam.value?.farmLotResponse.isNotEmpty ?? false;
     } catch (e) {
       print('Error selecting team: $e');
       Get.snackbar(
-        'Lỗi',
-        'Không thể tải danh sách lô: $e',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+        'Error',
+        'Failed to select team: $e',
+        snackPosition: SnackPosition.BOTTOM,
       );
     }
   }
@@ -157,27 +152,26 @@ class InventoryController extends GetxController {
   Future<void> onLotSelected(int lotId, String lotName) async {
     try {
       // Reset year dropdown
-      years.clear();
-      yearShaved.value = 0;
-      tappingAge.value = '';
-      showYearDropdown.value = false;
+      resetYearDropdown();
 
-      // Update lot values
+      // Find selected lot from local data
+      selectedLot.value = selectedTeam.value?.farmLotResponse.firstWhere(
+        (lot) => lot.farmLotId == lotId,
+      );
+
+      // Update values
       farmLotId.value = lotId;
       lot.value = lotName;
 
-      // Fetch years for selected lot
-      await fetchYears(lotId);
-
-      // Show year dropdown
-      showYearDropdown.value = true;
+      // Show year dropdown if lot has ages
+      showYearDropdown.value =
+          selectedLot.value?.ageShavedResponse.isNotEmpty ?? false;
     } catch (e) {
       print('Error selecting lot: $e');
       Get.snackbar(
-        'Lỗi',
-        'Không thể tải danh sách năm: $e',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+        'Error',
+        'Failed to select lot: $e',
+        snackPosition: SnackPosition.BOTTOM,
       );
     }
   }
@@ -408,17 +402,13 @@ class InventoryController extends GetxController {
   void onInit() {
     super.onInit();
     initData();
+    fetchStatusData();
   }
 
   Future<void> initData() async {
     try {
       isLoading.value = true;
-      await Future.wait([
-        fetchProfile(),
-        fetchFarms(),
-        fetchStatusData(),
-        fetchShavedStatusData(),
-      ]);
+      await fetchProfile();
     } catch (e) {
       print('Error initializing data: $e');
       Get.snackbar(
@@ -434,99 +424,86 @@ class InventoryController extends GetxController {
 
   Future<void> fetchProfile() async {
     try {
-      final response = await _apiProvider.getProfile();
+      final apiResponse = await _apiProvider.getProfile();
 
-      if (response.data?.farmByUserResponse.isNotEmpty == true) {
-        final farmData = response.data!.farmByUserResponse[0];
+      if (apiResponse.data != null) {
+        final profileData = apiResponse.data!;
+        if (profileData.farmByUserResponse.isNotEmpty) {
+          final farmByUser = profileData.farmByUserResponse[0];
+          if (farmByUser.farmResponse.isNotEmpty) {
+            farmResponses.value = farmByUser.farmResponse;
 
-        farm.value = farmData.farm.farmName;
-        farmId.value = farmData.farm.farmId;
+            final defaultFarm = farmByUser.farmResponse[0];
+            selectedFarm.value = defaultFarm;
+            farm.value = defaultFarm.farmName;
+            farmId.value = defaultFarm.farmId;
 
-        lot.value = farmData.farmLot.farmLotName;
-        farmLotId.value = farmData.farmLot.farmLotId;
+            if (defaultFarm.productTeamResponse.isNotEmpty) {
+              final defaultTeam = defaultFarm.productTeamResponse[0];
+              selectedTeam.value = defaultTeam;
+              productionTeam.value = defaultTeam.productTeamName;
+              productTeamId.value = defaultTeam.productTeamId;
+              showTeamDropdown.value = true;
 
-        productionTeam.value = farmData.productTeam.productTeamName;
-        productTeamId.value = farmData.productTeam.productTeamId;
+              if (defaultTeam.farmLotResponse.isNotEmpty) {
+                final defaultLot = defaultTeam.farmLotResponse[0];
+                selectedLot.value = defaultLot;
+                lot.value = defaultLot.farmLotName;
+                farmLotId.value = defaultLot.farmLotId;
+                showLotDropdown.value = true;
 
-        tappingAge.value = farmData.ageShaved.toString();
-        yearShaved.value = farmData.ageShaved;
+                if (defaultLot.ageShavedResponse.isNotEmpty) {
+                  final defaultAge = defaultLot.ageShavedResponse[0].value;
+                  if (defaultAge != null) {
+                    yearShaved.value = defaultAge;
+                    tappingAge.value = defaultAge.toString();
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     } catch (e) {
       print('Error fetching profile: $e');
+      rethrow;
     }
   }
 
-  Future<void> fetchFarms() async {
-    try {
-      final response = await _apiProvider.getFarms();
-      if (response.data?['status'] == true && response.data?['data'] != null) {
-        final farmList =
-            List<Map<String, dynamic>>.from(response.data?['data']);
-        farms.value = farmList;
-        if (farmList.isNotEmpty) {
-          final defaultFarm = farmList[0];
-          farm.value = defaultFarm['name'];
-          farmId.value = defaultFarm['id'];
-          await onFarmSelected(defaultFarm['id'], defaultFarm['name']);
-        }
-      }
-    } catch (e) {
-      print('Error fetching farms: $e');
-      farms.clear();
+  void updateHeaderValues() {
+    if (selectedFarm.value != null) {
+      farm.value = selectedFarm.value!.farmName;
+      farmId.value = selectedFarm.value!.farmId;
+    }
+
+    if (selectedTeam.value != null) {
+      productionTeam.value = selectedTeam.value!.productTeamName;
+      productTeamId.value = selectedTeam.value!.productTeamId;
+    }
+
+    if (selectedLot.value != null) {
+      lot.value = selectedLot.value!.farmLotName;
+      farmLotId.value = selectedLot.value!.farmLotId;
     }
   }
 
-  Future<void> fetchTeams(int farmId) async {
-    try {
-      final response = await _apiProvider.getTeams(farmId);
-      if (response.data?['status'] == true && response.data?['data'] != null) {
-        final teamList =
-            List<Map<String, dynamic>>.from(response.data?['data']);
-        teams.value = teamList;
-        if (teamList.isNotEmpty) {
-          final defaultTeam = teamList[0];
-          await onTeamSelected(defaultTeam['id'], defaultTeam['name']);
-        }
-      }
-    } catch (e) {
-      print('Error fetching teams: $e');
-      teams.clear();
-    }
+  void resetTeamDropdown() {
+    productTeamId.value = 0;
+    productionTeam.value = '';
+    showTeamDropdown.value = false;
   }
 
-  Future<void> fetchLots(int productTeamId) async {
-    try {
-      final response = await _apiProvider.getLots(productTeamId);
-      if (response.data?['status'] == true && response.data?['data'] != null) {
-        final lotList = List<Map<String, dynamic>>.from(response.data?['data']);
-        lots.value = lotList;
-        if (lotList.isNotEmpty) {
-          final defaultLot = lotList[0];
-          await onLotSelected(defaultLot['id'], defaultLot['name']);
-        }
-      }
-    } catch (e) {
-      print('Error fetching lots: $e');
-      lots.clear();
-    }
+  void resetLotAndYearDropdowns() {
+    farmLotId.value = 0;
+    lot.value = '';
+    showLotDropdown.value = false;
+    resetYearDropdown();
   }
 
-  Future<void> fetchYears(int farmLotId) async {
-    try {
-      final response = await _apiProvider.getYears(farmLotId);
-      if (response.data?['status'] == true && response.data?['data'] != null) {
-        final yearList =
-            List<Map<String, dynamic>>.from(response.data?['data']);
-        years.value = yearList;
-        if (yearList.isNotEmpty) {
-          final defaultYear = yearList[0];
-          onYearSelected(defaultYear['yearShaved']);
-        }
-      }
-    } catch (e) {
-      print('Error fetching years: $e');
-      years.clear();
-    }
+  void resetYearDropdown() {
+    yearShaved.value = 0;
+    tappingAge.value = '';
+    showYearDropdown.value = false;
   }
 
   Future<void> fetchStatusData() async {

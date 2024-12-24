@@ -153,7 +153,8 @@ class UpdateTreeScreen extends GetView<UpdateTreeController> {
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.green,
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 12),
                                 ),
                                 onPressed: () => controller.addNextRow(section),
                                 child: const Text(

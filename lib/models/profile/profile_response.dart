@@ -65,35 +65,23 @@ class ProfileData {
 
 @JsonSerializable()
 class FarmByUserResponse {
-  @JsonKey(name: 'farmId')
-  final int farmId;
-  @JsonKey(name: 'productTeamId')
-  final int productTeamId;
-  @JsonKey(name: 'farmLotId')
-  final int farmLotId;
+  @JsonKey(name: 'farm')
+  final Farm farm;
+  @JsonKey(name: 'productTeam')
+  final ProductTeam productTeam;
+  @JsonKey(name: 'farmLot')
+  final FarmLot farmLot;
   @JsonKey(name: 'ageShaved')
-  final int? ageShaved;
+  final int ageShaved;
   @JsonKey(name: 'userId')
   final String userId;
-  @JsonKey(name: 'farmName')
-  final String farmName;
-  @JsonKey(name: 'farmLotName')
-  final String farmLotName;
-  @JsonKey(name: 'productTeamName')
-  final String productTeamName;
-  @JsonKey(name: 'treeLineByFarmLotResponse')
-  final List<TreeLineByFarmLotResponse> treeLineByFarmLotResponse;
 
   FarmByUserResponse({
-    required this.farmId,
-    required this.productTeamId,
-    required this.farmLotId,
-    this.ageShaved,
+    required this.farm,
+    required this.productTeam,
+    required this.farmLot,
+    required this.ageShaved,
     required this.userId,
-    required this.farmName,
-    required this.farmLotName,
-    required this.productTeamName,
-    required this.treeLineByFarmLotResponse,
   });
 
   factory FarmByUserResponse.fromJson(Map<String, dynamic> json) =>
@@ -102,21 +90,50 @@ class FarmByUserResponse {
 }
 
 @JsonSerializable()
-class TreeLineByFarmLotResponse {
-  @JsonKey(name: 'id')
-  final int id;
-  @JsonKey(name: 'name')
-  final String name;
-  @JsonKey(name: 'rowNumber')
-  final int rowNumber;
+class Farm {
+  @JsonKey(name: 'farmId')
+  final int farmId;
+  @JsonKey(name: 'farmName')
+  final String farmName;
 
-  TreeLineByFarmLotResponse({
-    required this.id,
-    required this.name,
-    required this.rowNumber,
+  Farm({
+    required this.farmId,
+    required this.farmName,
   });
 
-  factory TreeLineByFarmLotResponse.fromJson(Map<String, dynamic> json) =>
-      _$TreeLineByFarmLotResponseFromJson(json);
-  Map<String, dynamic> toJson() => _$TreeLineByFarmLotResponseToJson(this);
+  factory Farm.fromJson(Map<String, dynamic> json) => _$FarmFromJson(json);
+  Map<String, dynamic> toJson() => _$FarmToJson(this);
+}
+
+@JsonSerializable()
+class ProductTeam {
+  @JsonKey(name: 'productTeamId')
+  final int productTeamId;
+  @JsonKey(name: 'productTeamName')
+  final String productTeamName;
+
+  ProductTeam({
+    required this.productTeamId,
+    required this.productTeamName,
+  });
+
+  factory ProductTeam.fromJson(Map<String, dynamic> json) =>
+      _$ProductTeamFromJson(json);
+  Map<String, dynamic> toJson() => _$ProductTeamToJson(this);
+}
+
+@JsonSerializable()
+class FarmLot {
+  @JsonKey(name: 'farmLotId')
+  final int farmLotId;
+  @JsonKey(name: 'farmLotName')
+  final String farmLotName;
+
+  FarmLot({
+    required this.farmLotId,
+    required this.farmLotName,
+  });
+
+  factory FarmLot.fromJson(Map<String, dynamic> json) => _$FarmLotFromJson(json);
+  Map<String, dynamic> toJson() => _$FarmLotToJson(this);
 }

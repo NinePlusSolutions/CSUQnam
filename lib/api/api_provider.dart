@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_getx_boilerplate/api/api_constants.dart';
-import 'package:flutter_getx_boilerplate/models/response/profile_response.dart';
+import 'package:flutter_getx_boilerplate/models/profile/profile_response.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:logger/logger.dart';
 

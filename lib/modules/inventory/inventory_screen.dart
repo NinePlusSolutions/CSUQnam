@@ -751,11 +751,24 @@ class InventoryScreen extends GetView<InventoryController> {
   Widget _buildFinishButton() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: ElevatedButton(
-        onPressed: () {
-          controller.showShavedStatusBottomSheet();
-        },
-        child: const Text('Kết thúc'),
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.green,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+          ),
+          onPressed: () {
+            controller.showShavedStatusBottomSheet();
+          },
+          child: const Text(
+            'Kết thúc',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.white,
+            ),
+          ),
+        ),
       ),
     );
   }

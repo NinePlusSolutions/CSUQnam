@@ -18,10 +18,16 @@ class _SyncScreenState extends State<SyncScreen> {
   @override
   void initState() {
     super.initState();
-    Get.put(InventoryController());
+    final inventoryController = Get.put(InventoryController());
+    inventoryController.fetchStatusData();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       controller.loadPendingUpdates();
     });
+  }
+
+  Color _getStatusColor(String status) {
+    final inventoryController = Get.find<InventoryController>();
+    return inventoryController.statusColors[status] ?? Colors.grey;
   }
 
   @override
@@ -340,10 +346,8 @@ class _SyncScreenState extends State<SyncScreen> {
   }
 
   Widget _buildStatusUpdates(List<LocalStatusUpdate> statusUpdates) {
-    final inventoryController = Get.find<InventoryController>();
-
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -361,37 +365,69 @@ class _SyncScreenState extends State<SyncScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: statusUpdates.map((status) {
-              final color =
-                  inventoryController.statusColors[status.statusName] ??
-                      Colors.grey;
+          const SizedBox(height: 12),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              childAspectRatio: 1.5,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+            ),
+            itemCount: statusUpdates.length,
+            itemBuilder: (context, index) {
+              final status = statusUpdates[index];
+              final color = _getStatusColor(status.statusName);
               return Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(16),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: color,
-                    width: 1,
+                    color: color.withOpacity(0.2),
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-                child: Text(
-                  '${status.statusName}: ${status.value}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: color.withOpacity(0.8),
-                  ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        status.statusName,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: color,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      status.value,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: color,
+                      ),
+                    ),
+                  ],
                 ),
               );
-            }).toList(),
+            },
           ),
         ],
       ),

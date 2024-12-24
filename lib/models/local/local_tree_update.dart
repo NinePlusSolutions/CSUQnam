@@ -23,6 +23,8 @@ class LocalTreeUpdate {
   final int shavedStatusId;
   @JsonKey(name: 'shavedStatusName')
   final String shavedStatusName;
+  @JsonKey(name: 'tappingAge')
+  final String? tappingAge;
   @JsonKey(name: 'dateCheck')
   final DateTime dateCheck;
   @JsonKey(name: 'statusUpdates')
@@ -42,6 +44,7 @@ class LocalTreeUpdate {
     required this.shavedStatusName,
     required this.dateCheck,
     required this.statusUpdates,
+    this.tappingAge,
     this.note,
   });
 

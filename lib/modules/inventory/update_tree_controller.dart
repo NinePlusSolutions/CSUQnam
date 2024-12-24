@@ -15,17 +15,24 @@ class UpdateTreeController extends GetxController {
 
   void addNextRow(InventorySection section) {
     final currentRow = section.row;
-    final rowNumber = int.parse(currentRow.split(' ')[1]);
-    final nextRow = 'Hàng ${rowNumber + 1}';
+    // Extract only the number from the row string
+    final rowNumber = int.tryParse(currentRow) ?? 1;
+    final nextRow = (rowNumber + 1).toString();
 
     final inventoryController = Get.find<InventoryController>();
     inventoryController.row.value = nextRow;
-    inventoryController.update(['row']);
 
-    Get.back(result: {
-      'row': nextRow,
-      'statusCounts': section.statusCounts,
+    // Reset status counts for the next row
+    inventoryController.statusCounts.forEach((key, value) {
+      value.value = 0;
     });
+
+    // Reset selected shaved status and note
+    inventoryController.selectedShavedStatus.value = null;
+    inventoryController.note.value = '';
+
+    // Return to inventory screen with next row number
+    Get.back(result: {'row': nextRow});
   }
 
   Future<void> syncData() async {

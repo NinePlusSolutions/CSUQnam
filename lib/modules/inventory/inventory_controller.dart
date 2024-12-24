@@ -240,6 +240,7 @@ class InventoryController extends GetxController {
         treeLineName: row.value,
         shavedStatusId: selectedShavedStatus.value!.id,
         shavedStatusName: selectedShavedStatus.value!.name,
+        tappingAge: tappingAge.value,
         statusUpdates: statusUpdates,
         note: note.value,
         dateCheck: now,
@@ -255,6 +256,7 @@ class InventoryController extends GetxController {
         'treeLineName': localUpdate.treeLineName,
         'shavedStatusId': localUpdate.shavedStatusId,
         'shavedStatusName': localUpdate.shavedStatusName,
+        'tappingAge': localUpdate.tappingAge,
         'dateCheck': now.toIso8601String(),
         'statusUpdates': statusUpdates
             .map((status) => {
@@ -360,21 +362,22 @@ class InventoryController extends GetxController {
         'treeLineName': row.value,
         'shavedStatusId': selectedShavedStatus.value!.id,
         'shavedStatusName': selectedShavedStatus.value!.name,
+        'tappingAge': tappingAge.value,
         'note': note.value,
       },
-    )!
-        .then((value) {
+    )!.then((value) {
       if (value != null && value is Map) {
-        // Nếu là chuyển sang hàng tiếp theo
+        // If continuing to next row
         if (value['row'] != null) {
           row.value = value['row'];
-          // Reset các giá trị
+          // Reset values for next row
           selectedShavedStatus.value = null;
-          statusCounts.clear();
+          statusCounts.forEach((key, value) {
+            value.value = 0;
+          });
           note.value = '';
-          update(['row']);
         } else {
-          // Nếu hoàn thành cập nhật
+          // If finished updating
           showFinishDialog();
         }
       }

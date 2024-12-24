@@ -24,6 +24,7 @@ class UpdateTreeScreen extends GetView<UpdateTreeController> {
   Widget build(BuildContext context) {
     final arguments = Get.arguments as Map<String, dynamic>;
     final shavedStatusName = arguments['shavedStatusName'] as String;
+    final tappingAge = arguments['tappingAge'] as String? ?? 'Chưa có';
 
     // Thêm section hiện tại
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -66,117 +67,154 @@ class UpdateTreeScreen extends GetView<UpdateTreeController> {
           ),
         ],
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.location_on, color: Colors.green[700], size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      farm,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildInfoItem(
-                        icon: Icons.grid_4x4,
-                        label: 'Lô',
-                        value: lot,
-                      ),
-                    ),
-                    Expanded(
-                      child: _buildInfoItem(
-                        icon: Icons.groups,
-                        label: 'Tổ',
-                        value: team,
-                      ),
-                    ),
-                    Expanded(
-                      child: _buildInfoItem(
-                        icon: Icons.view_week,
-                        label: 'Hàng',
-                        value: row,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Icon(Icons.face, color: Colors.blue[700], size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Trạng thái mặt cạo: $shavedStatusName',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1),
-          Expanded(
-            child: Obx(
-              () => ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: controller.sections.length,
-                itemBuilder: (context, index) {
-                  final section = controller.sections[index];
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 16),
+      body: Obx(
+        () => controller.hasData.value
+            ? Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildSectionHeader(section),
-                        const Divider(),
-                        _buildStatusGrid(section.statusCounts),
-                        if (index == controller.sections.length - 1)
-                          Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green,
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 12),
-                                ),
-                                onPressed: () => controller.addNextRow(section),
-                                child: const Text(
-                                  'Tiếp tục hàng tiếp theo',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.white,
-                                  ),
-                                ),
+                        _buildHeaderItem(
+                          icon: Icons.location_on,
+                          label: 'Nông trường',
+                          value: farm,
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildHeaderItem(
+                                icon: Icons.group,
+                                label: 'Đội sản xuất',
+                                value: team,
                               ),
                             ),
-                          ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: _buildHeaderItem(
+                                icon: Icons.grid_4x4,
+                                label: 'Lô',
+                                value: lot,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildHeaderItem(
+                                icon: Icons.format_list_numbered,
+                                label: 'Hàng',
+                                value: row,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: _buildHeaderItem(
+                                icon: Icons.calendar_today,
+                                label: 'Tuổi cạo',
+                                value: tappingAge,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        _buildHeaderItem(
+                          icon: Icons.local_offer,
+                          label: 'Trạng thái cạo',
+                          value: shavedStatusName,
+                        ),
                       ],
                     ),
-                  );
-                },
+                  ),
+                  const Divider(height: 1),
+                  Expanded(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: controller.sections.length,
+                      itemBuilder: (context, index) {
+                        final section = controller.sections[index];
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildSectionHeader(section),
+                              const Divider(),
+                              _buildStatusGrid(section.statusCounts),
+                              if (index == controller.sections.length - 1)
+                                Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: SizedBox(
+                                    width: double.infinity,
+                                    child: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.green,
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 12),
+                                      ),
+                                      onPressed: () =>
+                                          controller.addNextRow(section),
+                                      child: const Text(
+                                        'Tiếp tục hàng tiếp theo',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              )
+            : const Center(
+                child: CircularProgressIndicator(),
               ),
-            ),
-          ),
-        ],
       ),
+    );
+  }
+
+  Widget _buildHeaderItem({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, color: Colors.grey[600], size: 16),
+        const SizedBox(width: 4),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

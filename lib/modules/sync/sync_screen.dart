@@ -248,15 +248,27 @@ class _SyncScreenState extends State<SyncScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _buildInfoItem(
+            icon: Icons.location_on,
+            label: 'Nông trường',
+            value: update.farmName,
+          ),
+          const SizedBox(height: 8),
           Row(
             children: [
-              Icon(Icons.location_on, color: Colors.green[700], size: 20),
-              const SizedBox(width: 8),
-              Text(
-                update.farmName,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: _buildInfoItem(
+                  icon: Icons.group,
+                  label: 'Đội sản xuất',
+                  value: update.productTeamName,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildInfoItem(
+                  icon: Icons.grid_4x4,
+                  label: 'Lô',
+                  value: update.farmLotName,
                 ),
               ),
             ],
@@ -266,43 +278,33 @@ class _SyncScreenState extends State<SyncScreen> {
             children: [
               Expanded(
                 child: _buildInfoItem(
-                  icon: Icons.grid_4x4,
-                  label: 'Lô',
-                  value: update.farmLotName,
-                ),
-              ),
-              Expanded(
-                child: _buildInfoItem(
-                  icon: Icons.group,
-                  label: 'Tổ',
-                  value: update.productTeamName,
-                ),
-              ),
-              Expanded(
-                child: _buildInfoItem(
-                  icon: Icons.straighten,
+                  icon: Icons.format_list_numbered,
                   label: 'Hàng',
                   value: update.treeLineName,
                 ),
               ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildInfoItem(
+                  icon: Icons.calendar_today,
+                  label: 'Tuổi cạo',
+                  value: update.tappingAge ?? 'Chưa có',
+                ),
+              ),
             ],
           ),
-          if (update.note?.isNotEmpty == true) ...[
+          const SizedBox(height: 8),
+          _buildInfoItem(
+            icon: Icons.local_offer,
+            label: 'Trạng thái cạo',
+            value: update.shavedStatusName,
+          ),
+          if (update.note?.isNotEmpty ?? false) ...[
             const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(Icons.note, color: Colors.grey[600], size: 20),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    update.note!,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ),
-              ],
+            _buildInfoItem(
+              icon: Icons.note,
+              label: 'Ghi chú',
+              value: update.note!,
             ),
           ],
         ],
@@ -381,38 +383,21 @@ class _SyncScreenState extends State<SyncScreen> {
               final color = _getStatusColor(status.statusName);
               return Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: color.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: color.withOpacity(0.2),
+                    color: color.withOpacity(0.3),
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: color.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        status.statusName,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: color,
-                        ),
+                    Text(
+                      status.statusName,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: color,
                       ),
                     ),
                     const SizedBox(height: 4),

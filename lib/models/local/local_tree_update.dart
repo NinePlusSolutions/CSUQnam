@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:flutter_getx_boilerplate/models/local/shaved_status_update.dart';
 
 part 'local_tree_update.g.dart';
 
@@ -19,7 +20,9 @@ class LocalTreeUpdate {
   @JsonKey(name: 'treeLineName')
   final String treeLineName;
   @JsonKey(name: 'shavedStatus')
-  final int shavedStatus;
+  final int shavedStatusId;
+  @JsonKey(name: 'shavedStatusName')
+  final String shavedStatusName;
   @JsonKey(name: 'dateCheck')
   final DateTime dateCheck;
   @JsonKey(name: 'statusUpdates')
@@ -35,7 +38,8 @@ class LocalTreeUpdate {
     required this.farmLotId,
     required this.farmLotName,
     required this.treeLineName,
-    required this.shavedStatus,
+    required this.shavedStatusId,
+    required this.shavedStatusName,
     required this.dateCheck,
     required this.statusUpdates,
     this.note,

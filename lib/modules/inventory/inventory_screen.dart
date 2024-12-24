@@ -46,44 +46,7 @@ class InventoryScreen extends GetView<InventoryController> {
                     _buildStatusGrid(),
                     const SizedBox(height: 24),
                     _buildNoteSection(),
-                    Container(
-                      margin: const EdgeInsets.symmetric(vertical: 20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.green.withOpacity(0.15),
-                            spreadRadius: 1,
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                        border:
-                            Border.all(color: Colors.green.withOpacity(0.5)),
-                      ),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: controller.submitInventory,
-                          borderRadius: BorderRadius.circular(20),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 15),
-                            child: Center(
-                              child: Text(
-                                'Kết thúc',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.green[700],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+                    _buildFinishButton(),
                   ],
                 ),
               ),
@@ -702,6 +665,18 @@ class InventoryScreen extends GetView<InventoryController> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildFinishButton() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: ElevatedButton(
+        onPressed: () {
+          controller.showShavedStatusBottomSheet();
+        },
+        child: Text('Kết thúc'),
+      ),
     );
   }
 }

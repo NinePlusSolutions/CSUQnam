@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_getx_boilerplate/api/api_constants.dart';
 import 'package:flutter_getx_boilerplate/models/profile/profile_response.dart';
+import 'package:flutter_getx_boilerplate/models/response/shaved_status_response.dart';
 import 'package:flutter_getx_boilerplate/models/tree_condition/tree_condition_request.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:logger/logger.dart';
@@ -133,6 +134,17 @@ class ApiProvider {
         message: ${e.message}
         response: ${e.response}
         """);
+      rethrow;
+    }
+  }
+
+  Future<ShavedStatusResponse> fetchShavedStatus() async {
+    try {
+      final response = await _dio.get(
+        ApiConstants.getShavedStatusUrl(),
+      );
+      return ShavedStatusResponse.fromJson(response.data);
+    } catch (e) {
       rethrow;
     }
   }

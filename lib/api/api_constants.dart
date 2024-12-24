@@ -7,9 +7,11 @@ class ApiConstants {
   static const String status = '/v1/common/status';
   static const String profile = '/v1/common/profile';
   static const String treeCondition = '/v1/tree-condition';
+  static const String shavedStatus = '/v1/common/shaved-status';
 
   static String getLoginUrl() => '$baseUrlProd$login';
   static String getStatusUrl() => '$baseUrlProd$status';
   static String getProfileUrl() => '$baseUrlProd$profile';
+  static String getShavedStatusUrl() => '$baseUrlProd$shavedStatus';
   static String getSyncTreeConditionUrl() => '$baseUrlProd$treeCondition';
 }

@@ -1,11 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_getx_boilerplate/models/local/local_tree_update.dart';
+import 'package:flutter_getx_boilerplate/modules/inventory/inventory_controller.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'sync_controller.dart';
 
-class SyncScreen extends GetView<SyncController> {
+class SyncScreen extends StatefulWidget {
   const SyncScreen({super.key});
+
+  @override
+  State<SyncScreen> createState() => _SyncScreenState();
+}
+
+class _SyncScreenState extends State<SyncScreen> {
+  final SyncController controller = Get.find<SyncController>();
+
+  @override
+  void initState() {
+    super.initState();
+    Get.put(InventoryController());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller.loadPendingUpdates();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -88,39 +105,7 @@ class SyncScreen extends GetView<SyncController> {
                 itemCount: controller.pendingUpdates.length,
                 itemBuilder: (context, index) {
                   final update = controller.pendingUpdates[index];
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildHeader(update),
-                        const Divider(),
-                        _buildStatusUpdates(update.statusUpdates),
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.access_time,
-                                size: 16,
-                                color: Colors.grey[600],
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                DateFormat('HH:mm dd/MM/yyyy').format(
-                                  update.dateCheck,
-                                ),
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
+                  return _buildUpdateItem(update);
                 },
               ),
             ),
@@ -208,6 +193,42 @@ class SyncScreen extends GetView<SyncController> {
             child: Text(
               'Đồng ý',
               style: TextStyle(color: Colors.red[700]),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUpdateItem(LocalTreeUpdate update) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeader(update),
+          const Divider(height: 1),
+          _buildStatusUpdates(update.statusUpdates),
+          const Divider(height: 1),
+          _buildShavedStatus(update),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.access_time,
+                  size: 16,
+                  color: Colors.grey[600],
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  DateFormat('HH:mm dd/MM/yyyy').format(update.dateCheck),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -319,30 +340,107 @@ class SyncScreen extends GetView<SyncController> {
   }
 
   Widget _buildStatusUpdates(List<LocalStatusUpdate> statusUpdates) {
+    final inventoryController = Get.find<InventoryController>();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.check_circle_outline,
+                  color: Colors.green[700], size: 20),
+              const SizedBox(width: 8),
+              const Text(
+                'Cập nhật:',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: statusUpdates.map((status) {
+              final color =
+                  inventoryController.statusColors[status.statusName] ??
+                      Colors.grey;
+              return Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: color,
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  '${status.statusName}: ${status.value}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: color.withOpacity(0.8),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShavedStatus(LocalTreeUpdate update) {
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: statusUpdates.map((status) {
-          return Container(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.face, color: Colors.blue[700], size: 20),
+              const SizedBox(width: 8),
+              const Text(
+                'Trạng thái mặt cạo:',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Container(
             padding: const EdgeInsets.symmetric(
               horizontal: 12,
               vertical: 6,
             ),
             decoration: BoxDecoration(
-              color: Colors.grey[200],
+              color: Colors.blue[50],
               borderRadius: BorderRadius.circular(16),
-            ),
-            child: Text(
-              '${status.statusName}: ${status.value}',
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
+              border: Border.all(
+                color: Colors.blue[200]!,
+                width: 1,
               ),
             ),
-          );
-        }).toList(),
+            child: Text(
+              update.shavedStatusName,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Colors.blue[700],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

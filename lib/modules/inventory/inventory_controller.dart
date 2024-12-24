@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_getx_boilerplate/api/api_provider.dart';
 import 'package:flutter_getx_boilerplate/models/local/local_tree_update.dart';
+import 'package:flutter_getx_boilerplate/models/local/shaved_status_update.dart';
+import 'package:flutter_getx_boilerplate/models/response/shaved_status_response.dart';
 import 'package:flutter_getx_boilerplate/models/response/status_response.dart';
 import 'package:flutter_getx_boilerplate/modules/inventory/update_tree_controller.dart';
 import 'package:flutter_getx_boilerplate/modules/sync/sync_controller.dart';
@@ -91,6 +93,10 @@ class InventoryController extends GetxController {
   final farmLotId = 0.obs;
   final shavedStatus = 0.obs;
 
+  final Rxn<ShavedStatusData> shavedStatusData = Rxn<ShavedStatusData>();
+  final Rxn<ShavedStatusItem> selectedShavedStatus = Rxn<ShavedStatusItem>();
+  final RxString selectedType = RxString('');
+
   List<String> getLotsForFarm(String farm) {
     return lotsMap[farm] ?? [];
   }
@@ -146,17 +152,26 @@ class InventoryController extends GetxController {
   Future<void> saveLocalUpdate() async {
     try {
       final now = DateTime.now();
-
       final List<LocalStatusUpdate> statusUpdates = [];
       for (var status in statusList) {
         final count = statusCounts[status.name] ?? 0.obs;
         if (count.value > 0) {
           statusUpdates.add(LocalStatusUpdate(
-            statusId: status.id, // Sử dụng id trực tiếp từ API
+            statusId: status.id,
             statusName: status.name,
-            value: status.name, // Sử dụng name từ API làm value (N, UN, etc.)
+            value: count.value.toString(),
           ));
         }
+      }
+
+      if (statusUpdates.isEmpty) {
+        Get.snackbar(
+          'Lỗi',
+          'Vui lòng cập nhật ít nhất một trạng thái',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return;
       }
 
       final localUpdate = LocalTreeUpdate(
@@ -167,176 +182,158 @@ class InventoryController extends GetxController {
         farmLotId: int.parse(farmLotId.value.toString()),
         farmLotName: lot.value,
         treeLineName: row.value,
-        shavedStatus: shavedStatus.value,
-        dateCheck: now,
+        shavedStatusId: selectedShavedStatus.value!.id,
+        shavedStatusName: selectedShavedStatus.value!.name,
         statusUpdates: statusUpdates,
         note: note.value,
+        dateCheck: now,
       );
 
-      // Chuyển đổi sang JSON và xử lý DateTime
-      final Map<String, dynamic> updateJson = localUpdate.toJson();
-      updateJson['dateCheck'] = now.toIso8601String(); // Chuyển DateTime sang String
-
-      // Chuyển đổi statusUpdates sang JSON
-      updateJson['statusUpdates'] = statusUpdates.map((status) => status.toJson()).toList();
+      final Map<String, dynamic> updateJson = {
+        'farmId': localUpdate.farmId,
+        'farmName': localUpdate.farmName,
+        'productTeamId': localUpdate.productTeamId,
+        'productTeamName': localUpdate.productTeamName,
+        'farmLotId': localUpdate.farmLotId,
+        'farmLotName': localUpdate.farmLotName,
+        'treeLineName': localUpdate.treeLineName,
+        'shavedStatusId': localUpdate.shavedStatusId,
+        'shavedStatusName': localUpdate.shavedStatusName,
+        'dateCheck': now.toIso8601String(),
+        'statusUpdates': statusUpdates.map((status) => {
+          'statusId': status.statusId,
+          'statusName': status.statusName,
+          'value': status.value,
+        }).toList(),
+        'note': localUpdate.note,
+      };
 
       print('Local update to save: $updateJson');
 
-      // Đọc updates hiện có
       List<Map<String, dynamic>> existingUpdates = [];
       final storedData = storage.read('local_updates');
-      if (storedData != null) {
-        if (storedData is List) {
-          existingUpdates = List<Map<String, dynamic>>.from(storedData);
-        } else if (storedData is String) {
-          // Xóa dữ liệu cũ nếu không đúng định dạng
-          await storage.remove('local_updates');
-        }
+      if (storedData != null && storedData is List) {
+        existingUpdates = List<Map<String, dynamic>>.from(storedData);
       }
 
-      // Thêm update mới
       existingUpdates.add(updateJson);
-
-      // Lưu lại vào storage
       await storage.write('local_updates', existingUpdates);
       print('Saved updates: $existingUpdates');
 
-      // Refresh sync screen data
-      final syncController = Get.find<SyncController>();
-      syncController.loadPendingUpdates();
+      // Cập nhật lại danh sách trong SyncController
+      if (Get.isRegistered<SyncController>()) {
+        final syncController = Get.find<SyncController>();
+        await syncController.loadPendingUpdates();
+      }
 
-      Get.back();
       Get.snackbar(
         'Thành công',
-        'Đã lưu cập nhật thành công',
+        'Đã lưu dữ liệu kiểm kê',
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
-    } catch (e, stackTrace) {
+    } catch (e) {
       print('Error saving local update: $e');
-      print('Stack trace: $stackTrace');
       Get.snackbar(
         'Lỗi',
-        'Không thể lưu cập nhật. Vui lòng thử lại',
+        'Không thể lưu dữ liệu kiểm kê: $e',
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
     }
   }
 
-  void submitInventory() {
-    showFinishDialog();
-  }
-
-  void showFinishDialog() {
+  void _showConfirmDialog() {
     Get.dialog(
       AlertDialog(
-        title: const Row(
-          children: [
-            Icon(
-              Icons.warning_rounded,
-              color: Colors.orange,
-            ),
-            SizedBox(width: 8),
-            Text('Xác nhận'),
-          ],
-        ),
-        content: const Text(
-          'Bạn có chắc chắn muốn kết thúc không?',
-        ),
+        title: const Text('Xác nhận'),
+        content: const Text('Bạn có chắc chắn muốn lưu cập nhật này?'),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
             child: const Text('Hủy'),
           ),
-          TextButton(
+          ElevatedButton(
             onPressed: () async {
               Get.back();
-              bool hasUpdates = false;
-              statusCounts.forEach((key, value) {
-                if (value.value > 0) {
-                  hasUpdates = true;
-                }
-              });
-
-              if (!hasUpdates) {
-                Get.dialog(
-                  AlertDialog(
-                    title: const Text('Thông báo'),
-                    content: const Text(
-                        'Không có trạng thái cây nào được cập nhật. Bạn có muốn qua hàng tiếp theo không?'),
-                    actions: [
-                      TextButton(
-                        onPressed: () {
-                          Get.back();
-                        },
-                        child: const Text('Không'),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          Get.back();
-                          row.value = getRowsForLot(lot.value)[
-                              (getRowsForLot(lot.value).indexOf(row.value) +
-                                      1) %
-                                  getRowsForLot(lot.value).length];
-                          statusCounts.forEach((key, value) {
-                            value.value = 0;
-                          });
-                          update(['row']);
-                          update(['status_counts']);
-                        },
-                        child: const Text('Có'),
-                      ),
-                    ],
-                  ),
-                );
-              } else {
-                await saveLocalUpdate();
-                Get.delete<UpdateTreeController>();
-                Get.put(UpdateTreeController());
-
-                Map<String, int> finalCounts = {};
-                statusCounts.forEach((key, value) {
-                  if (value.value > 0) {
-                    finalCounts[key] = value.value;
-                  }
-                });
-
-                final result = await Get.to<Map<String, dynamic>>(
-                  () => UpdateTreeScreen(
-                    farm: farm.value,
-                    lot: lot.value,
-                    team: productionTeam.value,
-                    row: row.value,
-                    statusCounts: finalCounts,
-                  ),
-                );
-
-                if (result != null) {
-                  statusCounts.forEach((key, value) {
-                    value.value = 0;
-                  });
-                  row.value = result['row'] as String;
-                  update(['row']);
-                  update(['status_counts']);
-
-                  Get.snackbar(
-                    'Thành công',
-                    'Đã lưu dữ liệu kiểm kê',
-                    backgroundColor: Colors.green,
-                    colorText: Colors.white,
-                    snackPosition: SnackPosition.TOP,
-                  );
-
-                  final currentRowIndex =
-                      getRowsForLot(lot.value).indexOf(row.value);
-                  if (currentRowIndex < getRowsForLot(lot.value).length - 1) {
-                    row.value = getRowsForLot(lot.value)[currentRowIndex + 1];
-                  }
-                }
-              }
+              await saveLocalUpdate();
+              submitInventory();
             },
-            child: const Text('Đồng ý'),
+            child: const Text('Xác nhận'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void submitInventory() {
+    if (selectedShavedStatus.value == null) {
+      Get.snackbar(
+        'Lỗi',
+        'Vui lòng chọn trạng thái cạo',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    // Convert RxInt to int for statusCounts
+    final Map<String, int> convertedStatusCounts = {};
+    statusCounts.forEach((key, value) {
+      convertedStatusCounts[key] = value.value;
+    });
+
+    Get.put(UpdateTreeController());
+    Get.to(
+      () => UpdateTreeScreen(
+        farm: farm.value,
+        lot: lot.value,
+        team: productionTeam.value,
+        row: row.value,
+        statusCounts: convertedStatusCounts,
+      ),
+      arguments: {
+        'farmId': int.parse(farmId.value.toString()),
+        'farmName': farm.value,
+        'productTeamId': int.parse(productTeamId.value.toString()),
+        'productTeamName': productionTeam.value,
+        'farmLotId': int.parse(farmLotId.value.toString()),
+        'farmLotName': lot.value,
+        'treeLineName': row.value,
+        'shavedStatusId': selectedShavedStatus.value!.id,
+        'shavedStatusName': selectedShavedStatus.value!.name,
+        'note': note.value,
+      },
+    )!
+        .then((value) {
+      if (value != null && value is Map) {
+        // Nếu là chuyển sang hàng tiếp theo
+        if (value['row'] != null) {
+          row.value = value['row'];
+          // Reset các giá trị
+          selectedShavedStatus.value = null;
+          statusCounts.clear();
+          note.value = '';
+          update(['row']);
+        } else {
+          // Nếu hoàn thành cập nhật
+          showFinishDialog();
+        }
+      }
+    });
+  }
+
+  void showFinishDialog() {
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Thành công'),
+        content: const Text('Bạn đã cập nhật thành công!'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Get.back();
+            },
+            child: const Text('Đóng'),
           ),
         ],
       ),
@@ -348,6 +345,7 @@ class InventoryController extends GetxController {
     super.onInit();
     fetchProfile();
     fetchStatusData();
+    fetchShavedStatusData();
   }
 
   Future<void> fetchProfile() async {
@@ -399,5 +397,205 @@ class InventoryController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  Future<void> fetchShavedStatusData() async {
+    try {
+      final response = await _apiProvider.fetchShavedStatus();
+      shavedStatusData.value = response.data;
+    } catch (e) {
+      print('Error fetching shaved status: $e');
+      Get.snackbar(
+        'Lỗi',
+        'Không thể tải dữ liệu trạng thái cạo',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  void showShavedStatusBottomSheet() {
+    Get.bottomSheet(
+      Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.blue[50],
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Chọn trạng thái cạo',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Get.back(),
+                  ),
+                ],
+              ),
+            ),
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildShavedStatusGroup('BO1', [
+                      _buildStatusItem('BO1', 'BO1'),
+                      _buildStatusItem('BO1.1', 'BO1.1'),
+                      _buildStatusItem('BO1.2', 'BO1.2'),
+                      _buildStatusItem('BO1.3', 'BO1.3'),
+                      _buildStatusItem('BO1.4', 'BO1.4'),
+                      _buildStatusItem('BO1.5', 'BO1.5'),
+                      _buildStatusItem('BO1.6', 'BO1.6'),
+                    ]),
+                    const SizedBox(height: 16),
+                    _buildShavedStatusGroup('BO2', [
+                      _buildStatusItem('BO2', 'BO2'),
+                      _buildStatusItem('BO2.7', 'BO2.7'),
+                      _buildStatusItem('BO2.8', 'BO2.8'),
+                      _buildStatusItem('BO2.9', 'BO2.9'),
+                      _buildStatusItem('BO2.10', 'BO2.10'),
+                      _buildStatusItem('BO2.11', 'BO2.11'),
+                      _buildStatusItem('BO2.12', 'BO2.12'),
+                    ]),
+                    const SizedBox(height: 16),
+                    _buildShavedStatusGroup('HO', [
+                      _buildStatusItem('HO', 'HO'),
+                      _buildStatusItem('HO.1', 'HO.1'),
+                      _buildStatusItem('HO.2', 'HO.2'),
+                      _buildStatusItem('HO.3', 'HO.3'),
+                      _buildStatusItem('HO.4', 'HO.4'),
+                      _buildStatusItem('HO.5', 'HO.5'),
+                      _buildStatusItem('HO.6', 'HO.6'),
+                      _buildStatusItem('HO.7', 'HO.7'),
+                      _buildStatusItem('HO.8', 'HO.8'),
+                    ]),
+                  ],
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Get.back(),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text('Hủy'),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Obx(() => ElevatedButton(
+                          onPressed: selectedShavedStatus.value != null
+                              ? () {
+                                  Get.back();
+                                  _showConfirmDialog();
+                                }
+                              : null,
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          child: const Text('Xác nhận'),
+                        )),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      isScrollControlled: true,
+    );
+  }
+
+  Widget _buildShavedStatusGroup(String title, List<Widget> items) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+          decoration: BoxDecoration(
+            color: Colors.grey[200],
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: items,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatusItem(String id, String label) {
+    final item = ShavedStatusItem(id: 1, name: label);
+    return Obx(() {
+      final isSelected = selectedShavedStatus.value?.name == label;
+      return InkWell(
+        onTap: () {
+          if (isSelected) {
+            selectedShavedStatus.value = null;
+          } else {
+            selectedShavedStatus.value = item;
+          }
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.blue : Colors.blue[50],
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isSelected ? Colors.blue : Colors.blue[100]!,
+            ),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? Colors.white : Colors.black87,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        ),
+      );
+    });
   }
 }

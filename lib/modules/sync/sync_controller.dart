@@ -8,75 +8,68 @@ import 'package:get_storage/get_storage.dart';
 
 class SyncController extends GetxController {
   final _apiProvider = Get.find<ApiProvider>();
-  final _storage = GetStorage();
+  final GetStorage _storage = GetStorage();
 
-  final pendingUpdates = <LocalTreeUpdate>[].obs;
+  final RxList<LocalTreeUpdate> pendingUpdates = <LocalTreeUpdate>[].obs;
   final isSyncing = false.obs;
   final syncProgress = 0.0.obs;
 
-  @override
-  void onInit() {
-    super.onInit();
-    loadPendingUpdates();
-  }
-
-  void loadPendingUpdates() {
+  Future<void> loadPendingUpdates() async {
     try {
-      final List<dynamic> storedData = _storage.read('local_updates') ?? [];
+      final storedData = _storage.read('local_updates');
       print('Loaded data from storage: $storedData');
 
-      if (storedData.isEmpty) {
-        pendingUpdates.clear();
-        return;
-      }
+      if (storedData != null && storedData is List) {
+        final List<LocalTreeUpdate> updates = [];
 
-      final List<LocalTreeUpdate> updates = storedData.map((json) {
-        if (json is! Map<String, dynamic>) {
-          print('Invalid data format: $json');
-          throw const FormatException('Invalid data format');
-        }
+        for (var item in storedData) {
+          try {
+            if (item is Map<String, dynamic>) {
+              final dateCheck = DateTime.parse(item['dateCheck']);
+              final List<LocalStatusUpdate> statusUpdates = [];
 
-        try {
-          // Convert statusUpdates from List<dynamic> to List<Map<String, dynamic>>
-          if (json['statusUpdates'] is List) {
-            final List<dynamic> statusList = json['statusUpdates'];
-            json['statusUpdates'] = statusList.map((status) {
-              if (status is! Map<String, dynamic>) {
-                print('Invalid status format: $status');
-                throw const FormatException('Invalid status format');
+              if (item['statusUpdates'] is List) {
+                for (var status in item['statusUpdates']) {
+                  if (status is Map<String, dynamic>) {
+                    statusUpdates.add(LocalStatusUpdate(
+                      statusId: status['statusId'],
+                      statusName: status['statusName'],
+                      value: status['value'],
+                    ));
+                  }
+                }
               }
-              // Đảm bảo các trường có kiểu dữ liệu đúng
-              return {
-                'statusId': int.parse(status['statusId'].toString()),
-                'statusName': status['statusName'].toString(),
-                'value': status['value'].toString(),
-              };
-            }).toList();
+
+              updates.add(LocalTreeUpdate(
+                farmId: item['farmId'],
+                farmName: item['farmName'],
+                productTeamId: item['productTeamId'],
+                productTeamName: item['productTeamName'],
+                farmLotId: item['farmLotId'],
+                farmLotName: item['farmLotName'],
+                treeLineName: item['treeLineName'],
+                shavedStatusId: item['shavedStatusId'],
+                shavedStatusName: item['shavedStatusName'],
+                dateCheck: dateCheck,
+                statusUpdates: statusUpdates,
+                note: item['note'],
+              ));
+            }
+          } catch (e) {
+            print('Error parsing item: $e');
+            print('Problematic item: $item');
           }
-
-          print('Converting JSON to LocalTreeUpdate: $json');
-          return LocalTreeUpdate.fromJson(json);
-        } catch (e) {
-          print('Error converting JSON: $e');
-          print('Problematic JSON: $json');
-          rethrow;
         }
-      }).toList();
 
-      pendingUpdates.value = updates;
-      print('Successfully loaded ${updates.length} updates');
-    } catch (e, stackTrace) {
+        print('Successfully loaded ${updates.length} updates');
+        pendingUpdates.value = updates;
+      } else {
+        print('No valid data found in storage');
+        pendingUpdates.clear();
+      }
+    } catch (e) {
       print('Error loading pending updates: $e');
-      print('Stack trace: $stackTrace');
       pendingUpdates.clear();
-      SchedulerBinding.instance.addPostFrameCallback((_) {
-        Get.snackbar(
-          'Lỗi',
-          'Không thể tải dữ liệu cập nhật',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
-      });
     }
   }
 
@@ -111,7 +104,7 @@ class SyncController extends GetxController {
           productTeamId: update.productTeamId,
           farmLotId: update.farmLotId,
           treeLineName: update.treeLineName,
-          shavedStatus: update.shavedStatus,
+          shavedStatus: update.shavedStatusId,
           dateCheck: update.dateCheck,
           treeConditionDetails: details,
         );

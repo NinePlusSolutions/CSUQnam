@@ -14,6 +14,12 @@ class SyncController extends GetxController {
   final isSyncing = false.obs;
   final syncProgress = 0.0.obs;
 
+  @override
+  void onInit() {
+    super.onInit();
+    loadPendingUpdates();
+  }
+
   Future<void> loadPendingUpdates() async {
     try {
       final storedData = _storage.read('local_updates');

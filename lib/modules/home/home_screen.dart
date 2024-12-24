@@ -55,7 +55,7 @@ class HomeScreen extends GetView<HomeController> {
   }
 
   Widget _buildBody() {
-    final syncController = Get.find<SyncController>();
+    final syncController = Get.put(SyncController());
 
     return Padding(
       padding: const EdgeInsets.all(24.0),

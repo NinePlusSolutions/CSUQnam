@@ -142,8 +142,7 @@ class UpdateTreeScreen extends GetView<UpdateTreeController> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildSectionHeader(section),
-                              const Divider(),
+                              // _buildSectionHeader(section),
                               _buildStatusGrid(section.statusCounts),
                               if (index == controller.sections.length - 1)
                                 Padding(
@@ -256,67 +255,47 @@ class UpdateTreeScreen extends GetView<UpdateTreeController> {
   Widget _buildSectionHeader(InventorySection section) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: const BorderRadius.vertical(
+        borderRadius: BorderRadius.vertical(
           top: Radius.circular(12),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
-      child: Column(
+      child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              Icon(Icons.location_on, color: Colors.green[700], size: 20),
-              const SizedBox(width: 8),
               Text(
-                section.farm,
-                style: const TextStyle(
+                'C',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.purple,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                '1',
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _buildInfoItem(
-                  icon: Icons.grid_4x4,
-                  label: 'Lô',
-                  value: section.lot,
+              SizedBox(width: 20),
+              Text(
+                'Kg',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.pink,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              Container(
-                width: 1,
-                height: 24,
-                color: Colors.grey[300],
-              ),
-              Expanded(
-                child: _buildInfoItem(
-                  icon: Icons.groups,
-                  label: 'Tổ',
-                  value: section.team,
-                ),
-              ),
-              Container(
-                width: 1,
-                height: 24,
-                color: Colors.grey[300],
-              ),
-              Expanded(
-                child: _buildInfoItem(
-                  icon: Icons.view_week,
-                  label: 'Hàng',
-                  value: section.row,
+              Text(
+                '1',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ],

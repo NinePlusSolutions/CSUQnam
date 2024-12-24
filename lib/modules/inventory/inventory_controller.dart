@@ -152,9 +152,9 @@ class InventoryController extends GetxController {
         final count = statusCounts[status.name] ?? 0.obs;
         if (count.value > 0) {
           statusUpdates.add(LocalStatusUpdate(
-            statusId: int.parse(status.id.toString()),
+            statusId: status.id, // Sử dụng id trực tiếp từ API
             statusName: status.name,
-            value: count.value.toString(),
+            value: status.name, // Sử dụng name từ API làm value (N, UN, etc.)
           ));
         }
       }

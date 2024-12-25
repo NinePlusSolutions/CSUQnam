@@ -428,6 +428,26 @@ class _SyncScreenState extends State<SyncScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Date and time
+                  Row(
+                    children: [
+                      Icon(Icons.calendar_today,
+                          color: Colors.green[700], size: 18),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          DateFormat('dd/MM/yyyy HH:mm')
+                              .format(update.dateCheck),
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green[700],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
                   // Farm name with icon
                   Row(
                     children: [
@@ -438,8 +458,7 @@ class _SyncScreenState extends State<SyncScreen> {
                         child: Text(
                           update.farmName,
                           style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
                             color: Colors.green[700],
                           ),
                         ),

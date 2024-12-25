@@ -348,9 +348,12 @@ class _SyncScreenState extends State<SyncScreen> {
             runSpacing: 8,
             children: statusUpdates.map((status) {
               return Obx(() {
-                final color = inventoryController.statusColors[status.statusName] ?? Colors.grey;
+                final color =
+                    inventoryController.statusColors[status.statusName] ??
+                        Colors.grey;
                 return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: color.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(16),
@@ -428,7 +431,8 @@ class _SyncScreenState extends State<SyncScreen> {
                   // Farm name with icon
                   Row(
                     children: [
-                      Icon(Icons.location_on, color: Colors.green[700], size: 18),
+                      Icon(Icons.location_on,
+                          color: Colors.green[700], size: 18),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
@@ -445,7 +449,8 @@ class _SyncScreenState extends State<SyncScreen> {
                   const SizedBox(height: 8),
                   // Location details
                   Container(
-                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(8),
@@ -514,7 +519,8 @@ class _SyncScreenState extends State<SyncScreen> {
                   ),
                   const SizedBox(height: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
                     decoration: BoxDecoration(
                       color: Colors.green[50],
                       borderRadius: BorderRadius.circular(8),

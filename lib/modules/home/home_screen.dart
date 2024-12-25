@@ -49,11 +49,6 @@ class HomeScreen extends GetView<HomeController> {
       elevation: 0,
       actions: [
         IconButton(
-          icon: const Icon(Icons.history, color: Colors.white),
-          onPressed: () => Get.toNamed(Routes.history),
-          tooltip: 'Lịch sử đồng bộ',
-        ),
-        IconButton(
           icon: const Icon(Icons.logout, color: Colors.white),
           onPressed: _handleLogout,
         ),
@@ -160,6 +155,14 @@ class HomeScreen extends GetView<HomeController> {
                 hasBadge: syncController.pendingUpdates.isNotEmpty,
                 onTap: () => Get.toNamed('/sync'),
               )),
+          const SizedBox(height: 16),
+          _buildActionButton(
+            icon: Icons.history_rounded,
+            label: 'Lịch sử đồng bộ',
+            color: Colors.purple,
+            description: 'Xem lịch sử đồng bộ dữ liệu',
+            onTap: () => Get.toNamed('/history'),
+          ),
         ],
       ),
     );
@@ -171,6 +174,7 @@ class HomeScreen extends GetView<HomeController> {
     required Color color,
     required VoidCallback onTap,
     bool hasBadge = false,
+    String? description,
   }) {
     Widget iconWidget = Icon(
       icon,
@@ -245,9 +249,10 @@ class HomeScreen extends GetView<HomeController> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        label == 'Kiểm kê'
-                            ? 'Cập nhật thông tin cây'
-                            : 'Đồng bộ dữ liệu mới nhất',
+                        description ??
+                            (label == 'Kiểm kê'
+                                ? 'Cập nhật thông tin cây'
+                                : 'Đồng bộ dữ liệu mới nhất'),
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey[600],

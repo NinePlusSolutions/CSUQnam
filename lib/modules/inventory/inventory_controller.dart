@@ -1099,17 +1099,15 @@ class InventoryController extends GetxController {
               child: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildShavedStatusGroup('BO1', shavedStatusData.value!.bo1),
-                    const SizedBox(height: 16),
-                    _buildShavedStatusGroup('BO2', shavedStatusData.value!.bo2),
-                    const SizedBox(height: 16),
-                    _buildShavedStatusGroup('HO', shavedStatusData.value!.ho),
-                    if (shavedStatusData.value!.tt.isNotEmpty) ...[
-                      const SizedBox(height: 16),
-                      _buildShavedStatusGroup('TT', shavedStatusData.value!.tt),
-                    ],
-                  ],
+                  children:
+                      shavedStatusData.value!.toJson().entries.map((entry) {
+                    return Column(
+                      children: [
+                        _buildShavedStatusGroup(entry.key, entry.value),
+                        const SizedBox(height: 16),
+                      ],
+                    );
+                  }).toList(),
                 ),
               ),
             ),

@@ -12,4 +12,5 @@ abstract class Routes {
   static const inventory = '/inventory';
   static const updateTree = '/update-tree';
   static const sync = '/sync';
+  static const history = '/history';
 }

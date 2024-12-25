@@ -4,6 +4,7 @@ import 'package:flutter_getx_boilerplate/models/profile/profile_response.dart';
 import 'package:flutter_getx_boilerplate/models/response/api_response.dart';
 import 'package:flutter_getx_boilerplate/models/response/shaved_status_response.dart';
 import 'package:flutter_getx_boilerplate/models/tree_condition/tree_condition_request.dart';
+import 'package:flutter_getx_boilerplate/models/tree_condition_history.dart';
 import 'package:get/get_connect/http/src/exceptions/exceptions.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:logger/logger.dart';
@@ -149,6 +150,17 @@ class ApiProvider {
         ApiConstants.getShavedStatusUrl(),
       );
       return ShavedStatusResponse.fromJson(response.data);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<TreeConditionHistoryResponse> getTreeConditionHistory() async {
+    try {
+      final response = await _dio.get(
+        ApiConstants.getHistoryTreeConditionUrl(),
+      );
+      return TreeConditionHistoryResponse.fromJson(response.data);
     } catch (e) {
       rethrow;
     }

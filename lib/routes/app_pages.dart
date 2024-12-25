@@ -7,6 +7,8 @@ import 'package:flutter_getx_boilerplate/modules/inventory/update_tree_binding.d
 import 'package:flutter_getx_boilerplate/modules/inventory/update_tree_screen.dart';
 import 'package:flutter_getx_boilerplate/modules/sync/sync_binding.dart';
 import 'package:flutter_getx_boilerplate/modules/sync/sync_screen.dart';
+import 'package:flutter_getx_boilerplate/modules/history/history_controller.dart';
+import 'package:flutter_getx_boilerplate/modules/history/history_screen.dart';
 import 'package:get/get.dart';
 
 part 'app_routes.dart';
@@ -61,6 +63,13 @@ class AppPages {
       name: Routes.sync,
       page: () => const SyncScreen(),
       binding: SyncBinding(),
+    ),
+    GetPage(
+      name: Routes.history,
+      page: () => const HistoryScreen(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut(() => HistoryController());
+      }),
     ),
   ];
 }

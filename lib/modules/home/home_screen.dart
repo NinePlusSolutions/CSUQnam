@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_getx_boilerplate/modules/home/home.dart';
+import 'package:flutter_getx_boilerplate/routes/app_pages.dart';
 import 'package:get/get.dart';
 import 'package:badges/badges.dart' as badges;
 import '../sync/sync_controller.dart';
@@ -48,10 +49,12 @@ class HomeScreen extends GetView<HomeController> {
       elevation: 0,
       actions: [
         IconButton(
-          icon: const Icon(
-            Icons.logout,
-            color: Colors.white,
-          ),
+          icon: const Icon(Icons.history, color: Colors.white),
+          onPressed: () => Get.toNamed(Routes.history),
+          tooltip: 'Lịch sử đồng bộ',
+        ),
+        IconButton(
+          icon: const Icon(Icons.logout, color: Colors.white),
           onPressed: _handleLogout,
         ),
       ],

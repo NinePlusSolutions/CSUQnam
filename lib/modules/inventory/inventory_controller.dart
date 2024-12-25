@@ -116,12 +116,7 @@ class InventoryController extends GetxController {
           selectedFarm.value?.productTeamResponse.isNotEmpty ?? false;
     } catch (e) {
       print('Error selecting farm: $e');
-      Get.snackbar(
-        'Lỗi',
-        'Không thể chọn nông trường: $e',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      _showErrorMessage('Lỗi', 'Không thể chọn nông trường: $e');
     }
   }
 
@@ -144,11 +139,7 @@ class InventoryController extends GetxController {
           selectedTeam.value?.farmLotResponse.isNotEmpty ?? false;
     } catch (e) {
       print('Error selecting team: $e');
-      Get.snackbar(
-        'Error',
-        'Failed to select team: $e',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      _showErrorMessage('Error', 'Failed to select team: $e');
     }
   }
 
@@ -188,11 +179,7 @@ class InventoryController extends GetxController {
       }
     } catch (e) {
       print('Error selecting lot: $e');
-      Get.snackbar(
-        'Error',
-        'Failed to select lot: $e',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      _showErrorMessage('Error', 'Failed to select lot: $e');
     }
   }
 
@@ -242,12 +229,7 @@ class InventoryController extends GetxController {
       }
 
       if (statusUpdates.isEmpty) {
-        Get.snackbar(
-          'Lỗi',
-          'Vui lòng cập nhật ít nhất một trạng thái',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        _showErrorMessage('Lỗi', 'Vui lòng cập nhật ít nhất một trạng thái');
         return;
       }
 
@@ -307,82 +289,42 @@ class InventoryController extends GetxController {
         await syncController.loadPendingUpdates();
       }
 
-      Get.snackbar(
-        'Thành công',
-        'Đã lưu dữ liệu kiểm kê',
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
+      _showSuccessMessage('Thành công', 'Đã lưu dữ liệu kiểm kê');
     } catch (e) {
       print('Error saving local update: $e');
-      Get.snackbar(
-        'Lỗi',
-        'Không thể lưu dữ liệu kiểm kê: $e',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      _showErrorMessage('Lỗi', 'Không thể lưu dữ liệu kiểm kê: $e');
     }
   }
 
   void _showConfirmDialog() {
     // Kiểm tra các trường bắt buộc
     if (farmId.value == 0 || farm.value.isEmpty) {
-      Get.snackbar(
-        'Thiếu thông tin',
-        'Vui lòng chọn nông trường',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      _showErrorMessage('Thiếu thông tin', 'Vui lòng chọn nông trường');
       return;
     }
 
     if (productTeamId.value == 0 || productionTeam.value.isEmpty) {
-      Get.snackbar(
-        'Thiếu thông tin',
-        'Vui lòng chọn tổ sản xuất',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      _showErrorMessage('Thiếu thông tin', 'Vui lòng chọn tổ sản xuất');
       return;
     }
 
     if (farmLotId.value == 0 || lot.value.isEmpty) {
-      Get.snackbar(
-        'Thiếu thông tin',
-        'Vui lòng chọn lô',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      _showErrorMessage('Thiếu thông tin', 'Vui lòng chọn lô');
       return;
     }
 
     if (tappingAge.value.isEmpty) {
-      Get.snackbar(
-        'Thiếu thông tin',
-        'Vui lòng chọn tuổi cạo',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      _showErrorMessage('Thiếu thông tin', 'Vui lòng chọn tuổi cạo');
       return;
     }
 
     if (row.value.isEmpty) {
-      Get.snackbar(
-        'Thiếu thông tin',
-        'Vui lòng chọn hàng',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      _showErrorMessage('Thiếu thông tin', 'Vui lòng chọn hàng');
       return;
     }
 
     if (selectedShavedStatus.value == null) {
-      Get.snackbar(
-        'Thiếu thông tin',
-        'Vui lòng chọn trạng thái cạo',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      _showErrorMessage('Thiếu thông tin', 'Vui lòng chọn trạng thái cạo');
       return;
     }
 
@@ -395,12 +337,7 @@ class InventoryController extends GetxController {
     });
 
     if (!hasStatusUpdate) {
-      Get.snackbar(
-        'Thiếu thông tin',
-        'Vui lòng cập nhật ít nhất một trạng thái cây',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      _showErrorMessage('Thiếu thông tin', 'Vui lòng cập nhật ít nhất một trạng thái cây');
       return;
     }
 
@@ -607,12 +544,7 @@ class InventoryController extends GetxController {
 
   void submitInventory() {
     if (selectedShavedStatus.value == null) {
-      Get.snackbar(
-        'Lỗi',
-        'Vui lòng chọn trạng thái cạo',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      _showErrorMessage('Lỗi', 'Vui lòng chọn trạng thái cạo');
       return;
     }
 
@@ -752,12 +684,7 @@ class InventoryController extends GetxController {
               Get.back();
               try {
                 await saveLocalUpdate();
-                Get.snackbar(
-                  'Thành công',
-                  'Đã lưu thông tin cập nhật',
-                  backgroundColor: Colors.green,
-                  colorText: Colors.white,
-                );
+                _showSuccessMessage('Thành công', 'Đã lưu thông tin cập nhật');
                 // Reset values
                 selectedShavedStatus.value = null;
                 statusCounts.forEach((key, value) {
@@ -770,12 +697,7 @@ class InventoryController extends GetxController {
                   row.value = (currentRow + 1).toString();
                 }
               } catch (e) {
-                Get.snackbar(
-                  'Lỗi',
-                  'Không thể lưu thông tin cập nhật. Vui lòng thử lại.',
-                  backgroundColor: Colors.red,
-                  colorText: Colors.white,
-                );
+                _showErrorMessage('Lỗi', 'Không thể lưu thông tin cập nhật. Vui lòng thử lại.');
               }
             },
             child: const Text('Xác nhận'),
@@ -783,6 +705,196 @@ class InventoryController extends GetxController {
         ],
       ),
     );
+  }
+
+  void _showSuccessMessage(String title, String message) {
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.0, end: 1.0),
+                duration: const Duration(milliseconds: 800),
+                curve: Curves.elasticOut,
+                builder: (context, value, child) {
+                  return Transform.scale(
+                    scale: value,
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: Colors.green[50],
+                        shape: BoxShape.circle,
+                      ),
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          TweenAnimationBuilder<double>(
+                            tween: Tween(begin: 0.0, end: 1.0),
+                            duration: const Duration(milliseconds: 600),
+                            curve: Curves.easeInOut,
+                            builder: (context, value, child) {
+                              return Transform.scale(
+                                scale: value,
+                                child: Icon(
+                                  Icons.check_circle,
+                                  color: Colors.green[700],
+                                  size: 60,
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 20),
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.0, end: 1.0),
+                duration: const Duration(milliseconds: 600),
+                curve: Curves.easeOut,
+                builder: (context, value, child) {
+                  return Transform.translate(
+                    offset: Offset(0, 20 * (1 - value)),
+                    child: Opacity(
+                      opacity: value,
+                      child: Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 10),
+              Text(
+                message,
+                style: const TextStyle(fontSize: 16),
+              ),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: true,
+    );
+
+    // Tự động đóng popup sau 1.5 giây
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      Get.back();
+    });
+  }
+
+  void _showErrorMessage(String title, String message) {
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.0, end: 1.0),
+                duration: const Duration(milliseconds: 800),
+                curve: Curves.elasticOut,
+                builder: (context, value, child) {
+                  return Transform.scale(
+                    scale: value,
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: Colors.red[50],
+                        shape: BoxShape.circle,
+                      ),
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          TweenAnimationBuilder<double>(
+                            tween: Tween(begin: 0.0, end: 1.0),
+                            duration: const Duration(milliseconds: 600),
+                            curve: Curves.easeInOut,
+                            builder: (context, value, child) {
+                              return Transform.scale(
+                                scale: value,
+                                child: Icon(
+                                  Icons.error,
+                                  color: Colors.red[700],
+                                  size: 60,
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 20),
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.0, end: 1.0),
+                duration: const Duration(milliseconds: 600),
+                curve: Curves.easeOut,
+                builder: (context, value, child) {
+                  return Transform.translate(
+                    offset: Offset(0, 20 * (1 - value)),
+                    child: Opacity(
+                      opacity: value,
+                      child: Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 10),
+              Text(
+                message,
+                style: const TextStyle(fontSize: 16),
+              ),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: true,
+    );
+
+    // Tự động đóng popup sau 1.5 giây
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      Get.back();
+    });
   }
 
   @override
@@ -833,35 +945,20 @@ class InventoryController extends GetxController {
           } catch (e) {
             print('Error fetching data from API: $e');
             if (!hasStoredData) {
-              Get.snackbar(
-                'Lỗi',
-                'Không thể tải dữ liệu từ máy chủ. Vui lòng thử lại sau.',
-                backgroundColor: Colors.red,
-                colorText: Colors.white,
-              );
+              _showErrorMessage('Lỗi', 'Không thể tải dữ liệu từ máy chủ. Vui lòng thử lại sau.');
             }
           }
         }
       } on SocketException catch (_) {
         // No internet connection
         if (!hasStoredData) {
-          Get.snackbar(
-            'Lỗi kết nối',
-            'Không có kết nối mạng. Vui lòng kiểm tra lại kết nối của bạn.',
-            backgroundColor: Colors.red,
-            colorText: Colors.white,
-          );
+          _showErrorMessage('Lỗi kết nối', 'Không có kết nối mạng. Vui lòng kiểm tra lại kết nối của bạn.');
         }
       }
     } catch (e) {
       print('Error in initData: $e');
       if (!hasStoredData) {
-        Get.snackbar(
-          'Lỗi',
-          'Không thể tải dữ liệu. Vui lòng thử lại sau.',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        _showErrorMessage('Lỗi', 'Không thể tải dữ liệu. Vui lòng thử lại sau.');
       }
     } finally {
       isLoading.value = false;
@@ -978,12 +1075,7 @@ class InventoryController extends GetxController {
       shavedStatusData.value = response.data;
     } catch (e) {
       print('Error fetching shaved status: $e');
-      Get.snackbar(
-        'Lỗi',
-        'Không thể tải dữ liệu trạng thái cạo',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      _showErrorMessage('Lỗi', 'Không thể tải dữ liệu trạng thái cạo');
     }
   }
 
@@ -1068,52 +1160,27 @@ class InventoryController extends GetxController {
   void showShavedStatusBottomSheet() {
     // Kiểm tra các trường bắt buộc trước
     if (farmId.value == 0 || farm.value.isEmpty) {
-      Get.snackbar(
-        'Thiếu thông tin',
-        'Vui lòng chọn nông trường',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      _showErrorMessage('Thiếu thông tin', 'Vui lòng chọn nông trường');
       return;
     }
 
     if (productTeamId.value == 0 || productionTeam.value.isEmpty) {
-      Get.snackbar(
-        'Thiếu thông tin',
-        'Vui lòng chọn tổ sản xuất',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      _showErrorMessage('Thiếu thông tin', 'Vui lòng chọn tổ sản xuất');
       return;
     }
 
     if (farmLotId.value == 0 || lot.value.isEmpty) {
-      Get.snackbar(
-        'Thiếu thông tin',
-        'Vui lòng chọn lô',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      _showErrorMessage('Thiếu thông tin', 'Vui lòng chọn lô');
       return;
     }
 
     if (tappingAge.value.isEmpty) {
-      Get.snackbar(
-        'Thiếu thông tin',
-        'Vui lòng chọn tuổi cạo',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      _showErrorMessage('Thiếu thông tin', 'Vui lòng chọn tuổi cạo');
       return;
     }
 
     if (row.value.isEmpty) {
-      Get.snackbar(
-        'Thiếu thông tin',
-        'Vui lòng chọn hàng',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      _showErrorMessage('Thiếu thông tin', 'Vui lòng chọn hàng');
       return;
     }
 
@@ -1126,12 +1193,7 @@ class InventoryController extends GetxController {
     });
 
     if (!hasStatusUpdate) {
-      Get.snackbar(
-        'Thiếu thông tin',
-        'Vui lòng cập nhật ít nhất một trạng thái cây',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      _showErrorMessage('Thiếu thông tin', 'Vui lòng cập nhật ít nhất một trạng thái cây');
       return;
     }
 

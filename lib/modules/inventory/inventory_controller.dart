@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_getx_boilerplate/api/api_provider.dart';
 import 'package:flutter_getx_boilerplate/models/local/local_tree_update.dart';
@@ -407,24 +409,179 @@ class InventoryController extends GetxController {
   void onInit() {
     super.onInit();
     initData();
-    fetchStatusData();
   }
 
   Future<void> initData() async {
+    bool hasStoredData = false;
     try {
       isLoading.value = true;
-      await fetchProfile();
+
+      // Try to get data from local storage first
+      final storedStatusData = storage.read('status_data');
+      final storedProfileData = storage.read('profile_data');
+
+      // Try to use stored data first
+      if (storedStatusData != null && storedProfileData != null) {
+        try {
+          final statusData = jsonDecode(storedStatusData);
+          final profileData = jsonDecode(storedProfileData);
+
+          processStatusData(statusData);
+          processProfileData(profileData);
+          hasStoredData = true;
+        } catch (e) {
+          print('Error processing stored data: $e');
+        }
+      }
+
+      // Check network connection before making API calls
+      try {
+        final result = await InternetAddress.lookup('google.com');
+        if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+          // We have network connection, try API calls
+          try {
+            await fetchProfile();
+            await fetchStatusData();
+            return; // Exit if API calls are successful
+          } catch (e) {
+            print('Error fetching data from API: $e');
+            if (!hasStoredData) {
+              Get.snackbar(
+                'Lỗi',
+                'Không thể tải dữ liệu từ máy chủ. Vui lòng thử lại sau.',
+                backgroundColor: Colors.red,
+                colorText: Colors.white,
+              );
+            }
+          }
+        }
+      } on SocketException catch (_) {
+        // No internet connection
+        if (!hasStoredData) {
+          Get.snackbar(
+            'Lỗi kết nối',
+            'Không có kết nối mạng. Vui lòng kiểm tra lại kết nối của bạn.',
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+          );
+        }
+      }
     } catch (e) {
-      print('Error initializing data: $e');
-      Get.snackbar(
-        'Lỗi',
-        'Không thể tải dữ liệu: $e',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      print('Error in initData: $e');
+      if (!hasStoredData) {
+        Get.snackbar(
+          'Lỗi',
+          'Không thể tải dữ liệu. Vui lòng thử lại sau.',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
     } finally {
       isLoading.value = false;
     }
+  }
+
+  void processStatusData(dynamic data) {
+    try {
+      final statusResponse = StatusResponse.fromJson(data);
+
+      statusList.clear();
+      statusCounts.clear();
+
+      final statuses = statusResponse.data
+          .map((item) => StatusInfo(item.name, item.description, id: item.id))
+          .toList();
+
+      statusList.addAll(statuses);
+
+      for (var item in statusResponse.data) {
+        final colorIndex = (item.id - 1) % _statusColorPalette.length;
+        statusColors[item.name] = _statusColorPalette[colorIndex];
+        statusCounts[item.name] = 0.obs;
+      }
+    } catch (e) {
+      print('Error processing status data: $e');
+    }
+  }
+
+  void processProfileData(dynamic data) {
+    try {
+      final profileData = ProfileResponse.fromJson(data);
+
+      if (profileData.farmByUserResponse.isNotEmpty) {
+        final farmByUser = profileData.farmByUserResponse[0];
+        if (farmByUser.farmResponse.isNotEmpty) {
+          farmResponses.value = farmByUser.farmResponse;
+
+          final defaultFarm = farmByUser.farmResponse[0];
+          selectedFarm.value = defaultFarm;
+          farm.value = defaultFarm.farmName;
+          farmId.value = defaultFarm.farmId;
+
+          if (defaultFarm.productTeamResponse.isNotEmpty) {
+            final defaultTeam = defaultFarm.productTeamResponse[0];
+            selectedTeam.value = defaultTeam;
+            productionTeam.value = defaultTeam.productTeamName;
+            productTeamId.value = defaultTeam.productTeamId;
+            showTeamDropdown.value = true;
+
+            if (defaultTeam.farmLotResponse.isNotEmpty) {
+              final defaultLot = defaultTeam.farmLotResponse[0];
+              selectedLot.value = defaultLot;
+              lot.value = defaultLot.farmLotName;
+              farmLotId.value = defaultLot.farmLotId;
+              showLotDropdown.value = true;
+
+              if (defaultLot.ageShavedResponse.isNotEmpty) {
+                final defaultAge = defaultLot.ageShavedResponse[0].value;
+                if (defaultAge != null) {
+                  yearShaved.value = defaultAge;
+                  tappingAge.value = defaultAge.toString();
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      print('Error processing profile data: $e');
+    }
+  }
+
+  void updateHeaderValues() {
+    if (selectedFarm.value != null) {
+      farm.value = selectedFarm.value!.farmName;
+      farmId.value = selectedFarm.value!.farmId;
+    }
+
+    if (selectedTeam.value != null) {
+      productionTeam.value = selectedTeam.value!.productTeamName;
+      productTeamId.value = selectedTeam.value!.productTeamId;
+    }
+
+    if (selectedLot.value != null) {
+      lot.value = selectedLot.value!.farmLotName;
+      farmLotId.value = selectedLot.value!.farmLotId;
+    }
+  }
+
+  void resetTeamDropdown() {
+    productTeamId.value = 0;
+    productionTeam.value = '';
+    showTeamDropdown.value = false;
+  }
+
+  void resetLotAndYearDropdowns() {
+    farmLotId.value = 0;
+    lot.value = '';
+    showLotDropdown.value = false;
+    resetYearDropdown();
+  }
+
+  void resetYearDropdown() {
+    yearShaved.value = 0;
+    tappingAge.value = '';
+    showYearDropdown.value = false;
   }
 
   Future<void> fetchProfile() async {
@@ -473,42 +630,6 @@ class InventoryController extends GetxController {
       print('Error fetching profile: $e');
       rethrow;
     }
-  }
-
-  void updateHeaderValues() {
-    if (selectedFarm.value != null) {
-      farm.value = selectedFarm.value!.farmName;
-      farmId.value = selectedFarm.value!.farmId;
-    }
-
-    if (selectedTeam.value != null) {
-      productionTeam.value = selectedTeam.value!.productTeamName;
-      productTeamId.value = selectedTeam.value!.productTeamId;
-    }
-
-    if (selectedLot.value != null) {
-      lot.value = selectedLot.value!.farmLotName;
-      farmLotId.value = selectedLot.value!.farmLotId;
-    }
-  }
-
-  void resetTeamDropdown() {
-    productTeamId.value = 0;
-    productionTeam.value = '';
-    showTeamDropdown.value = false;
-  }
-
-  void resetLotAndYearDropdowns() {
-    farmLotId.value = 0;
-    lot.value = '';
-    showLotDropdown.value = false;
-    resetYearDropdown();
-  }
-
-  void resetYearDropdown() {
-    yearShaved.value = 0;
-    tappingAge.value = '';
-    showYearDropdown.value = false;
   }
 
   Future<void> fetchStatusData() async {

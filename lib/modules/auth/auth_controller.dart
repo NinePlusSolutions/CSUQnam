@@ -3,6 +3,7 @@ import 'package:flutter_getx_boilerplate/api/api_provider.dart';
 import 'package:flutter_getx_boilerplate/routes/app_pages.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'dart:convert';
 
 class AuthController extends GetxController {
   final _apiProvider = Get.find<ApiProvider>();
@@ -23,13 +24,14 @@ class AuthController extends GetxController {
     try {
       final savedRemember = storage.read('remember_login') ?? true;
       rememberLogin.value = savedRemember;
-      
+
       if (savedRemember) {
         final savedUsername = storage.read('username');
         final savedPassword = storage.read('password');
-        
-        print('Loading saved credentials: $savedUsername, $savedPassword'); // Debug log
-        
+
+        print(
+            'Loading saved credentials: $savedUsername, $savedPassword'); // Debug log
+
         if (savedUsername != null && savedPassword != null) {
           username.value = savedUsername;
           password.value = savedPassword;
@@ -44,7 +46,7 @@ class AuthController extends GetxController {
     if (value != null) {
       rememberLogin.value = value;
       storage.write('remember_login', value);
-      
+
       if (!value) {
         // If remember login is turned off, clear saved credentials
         storage.remove('username');
@@ -90,10 +92,23 @@ class AuthController extends GetxController {
           await storage.write('password', password.value.trim());
           await storage.write('remember_login', true);
         }
-        
+
         await storage.write('token', token);
-        print('Saved credentials after login: ${username.value}, ${password.value}, remember: ${rememberLogin.value}'); // Debug log
-        
+        print(
+            'Saved credentials after login: ${username.value}, ${password.value}, remember: ${rememberLogin.value}'); // Debug log
+
+        // Fetch and save profile data
+        final profileResponse = await _apiProvider.getProfile();
+        if (profileResponse.status) {
+          await storage.write('profile_data', jsonEncode(profileResponse.data));
+        }
+
+        // Fetch and save status data
+        final statusResponse = await _apiProvider.getStatus();
+        if (statusResponse.statusCode == 200) {
+          await storage.write('status_data', jsonEncode(statusResponse.data));
+        }
+
         Get.offAllNamed('/home');
       } else {
         Get.snackbar(
@@ -119,19 +134,20 @@ class AuthController extends GetxController {
   Future<void> onLogout() async {
     try {
       final shouldRemember = rememberLogin.value;
-      
+
       if (!shouldRemember) {
         // If remember login is off, clear credentials
         await storage.remove('username');
         await storage.remove('password');
         await storage.remove('remember_login');
       }
-      
+
       // Always remove token
       await storage.remove('token');
-      
-      print('Credentials after logout - remember: $shouldRemember, username: ${storage.read('username')}, password: ${storage.read('password')}'); // Debug log
-      
+
+      print(
+          'Credentials after logout - remember: $shouldRemember, username: ${storage.read('username')}, password: ${storage.read('password')}'); // Debug log
+
       Get.offAllNamed('/auth');
     } catch (e) {
       print('Logout error: $e');

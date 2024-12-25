@@ -1,5 +1,9 @@
+import 'dart:ui';
+
+import 'package:flutter/material.dart';
 import 'package:flutter_getx_boilerplate/api/api_provider.dart';
 import 'package:flutter_getx_boilerplate/models/tree_condition_history.dart';
+import 'package:flutter_getx_boilerplate/modules/inventory/inventory_controller.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
@@ -32,5 +36,10 @@ class HistoryController extends GetxController {
 
   String formatDateTime(DateTime dateTime) {
     return DateFormat('dd/MM/yyyy HH:mm').format(dateTime);
+  }
+
+  Color getStatusColor(String status) {
+    final inventoryController = Get.find<InventoryController>();
+    return inventoryController.statusColors[status] ?? Colors.grey;
   }
 }

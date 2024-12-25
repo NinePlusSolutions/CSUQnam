@@ -95,6 +95,12 @@ class AuthController extends GetxController {
 
   Future<void> _updateSyncStep(int index, SyncStatus status,
       [String? error]) async {
+    // Add a small delay for visual feedback
+    if (status == SyncStatus.inProgress) {
+      await Future.delayed(const Duration(milliseconds: 500));
+    } else {
+      await Future.delayed(const Duration(milliseconds: 300));
+    }
     syncSteps[index] = syncSteps[index].copyWith(
       status: status,
       errorMessage: error,
@@ -104,37 +110,38 @@ class AuthController extends GetxController {
   Future<void> _syncData() async {
     try {
       // Sync profile data
-      _updateSyncStep(0, SyncStatus.inProgress);
+      await _updateSyncStep(0, SyncStatus.inProgress);
       final profileResponse = await _apiProvider.getProfile();
       if (profileResponse.status) {
         await storage.write('profile_data', jsonEncode(profileResponse.data));
-        _updateSyncStep(0, SyncStatus.completed);
+        await _updateSyncStep(0, SyncStatus.completed);
       } else {
-        _updateSyncStep(
+        await _updateSyncStep(
             0, SyncStatus.error, 'Không thể đồng bộ thông tin cá nhân');
         return;
       }
 
       // Sync status data
-      _updateSyncStep(1, SyncStatus.inProgress);
+      await _updateSyncStep(1, SyncStatus.inProgress);
       final statusResponse = await _apiProvider.getStatus();
       if (statusResponse.statusCode == 200) {
         await storage.write('status_data', jsonEncode(statusResponse.data));
-        _updateSyncStep(1, SyncStatus.completed);
+        await _updateSyncStep(1, SyncStatus.completed);
       } else {
-        _updateSyncStep(1, SyncStatus.error, 'Không thể đồng bộ trạng thái');
+        await _updateSyncStep(
+            1, SyncStatus.error, 'Không thể đồng bộ trạng thái');
         return;
       }
 
       // Sync shaved status data
-      _updateSyncStep(2, SyncStatus.inProgress);
+      await _updateSyncStep(2, SyncStatus.inProgress);
       final shavedStatusResponse = await _apiProvider.fetchShavedStatus();
       if (shavedStatusResponse.status) {
         await storage.write(
             'shaved_status_data', jsonEncode(shavedStatusResponse.data));
-        _updateSyncStep(2, SyncStatus.completed);
+        await _updateSyncStep(2, SyncStatus.completed);
       } else {
-        _updateSyncStep(
+        await _updateSyncStep(
             2, SyncStatus.error, 'Không thể đồng bộ trạng thái cạo');
         return;
       }

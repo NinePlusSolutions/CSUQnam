@@ -46,7 +46,7 @@ class InventoryScreen extends GetView<InventoryController> {
                     _buildStatusGrid(),
                     const SizedBox(height: 24),
                     //    _buildNoteSection(),
-                    _buildFinishButton(),
+                    // _buildFinishButton(),
                   ],
                 ),
               ),
@@ -54,6 +54,7 @@ class InventoryScreen extends GetView<InventoryController> {
           ],
         ),
       ),
+      bottomNavigationBar: _buildBottomBar(),
     );
   }
 
@@ -728,30 +729,57 @@ class InventoryScreen extends GetView<InventoryController> {
     );
   }
 
-  Widget _buildFinishButton() {
+  Widget _buildBottomBar() {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      child: ElevatedButton(
-        onPressed: () {
-          controller.showShavedStatusBottomSheet();
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.green,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-        child: const Text(
-          'Kết thúc',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        bottom: MediaQuery.of(Get.context!).padding.bottom + 16,
+        top: 16,
       ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: Obx(() => ElevatedButton(
+            onPressed: controller.isEditingEnabled.value
+                ? () {
+                    controller.showShavedStatusBottomSheet();
+                  }
+                : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              disabledBackgroundColor: Colors.grey[300],
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                //     const Icon(Icons.check_circle_outline, size: 20),
+                //   const SizedBox(width: 8),
+                Text(
+                  'Kết thúc kiểm kê',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: controller.isEditingEnabled.value
+                        ? Colors.white
+                        : Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          )),
     );
   }
 }

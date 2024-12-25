@@ -27,7 +27,7 @@ class AppPages {
     ),
     GetPage(
       name: Routes.auth,
-      page: () => const AuthScreen(),
+      page: () => AuthScreen(),
       binding: AuthBinding(),
     ),
     GetPage(
@@ -37,7 +37,7 @@ class AppPages {
     ),
     GetPage(
       name: Routes.inventory,
-      page: () =>  InventoryScreen(),
+      page: () => const InventoryScreen(),
       binding: BindingsBuilder(() {
         Get.lazyPut(() => InventoryController());
       }),

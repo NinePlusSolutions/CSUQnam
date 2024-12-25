@@ -208,52 +208,84 @@ class _SyncScreenState extends State<SyncScreen> {
 
   Widget _buildUpdateItem(LocalTreeUpdate update) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildHeader(update),
-          const Divider(height: 1),
-          _buildStatusUpdates(update.statusUpdates),
-          const Divider(height: 1),
-          _buildShavedStatus(update),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.access_time,
-                  size: 16,
-                  color: Colors.grey[600],
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  DateFormat('HH:mm dd/MM/yyyy').format(update.dateCheck),
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
+      margin: const EdgeInsets.only(bottom: 8),
+      elevation: 4,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(20)),
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey[200]!),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.green,
+                border: Border(
+                  bottom: BorderSide(
+                    color: Colors.grey[300]!,
+                    width: 1,
                   ),
                 ),
-              ],
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.location_on, color: Colors.white, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      update.farmName,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+            // Other info
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.green[50],
+                border: Border(
+                  bottom: BorderSide(
+                    color: Colors.grey[300]!,
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: _buildHeader(update),
+            ),
+            // Status updates
+            Container(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildStatusUpdates(update.statusUpdates),
+                  const SizedBox(height: 16),
+                  _buildShavedStatus(update),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildHeader(LocalTreeUpdate update) {
     return Container(
-      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildInfoItem(
-            icon: Icons.location_on,
-            label: 'Nông trường',
-            value: update.farmName,
-          ),
-          const SizedBox(height: 8),
           Row(
             children: [
               Expanded(
@@ -312,33 +344,37 @@ class _SyncScreenState extends State<SyncScreen> {
     required String label,
     required String value,
   }) {
-    return Row(
-      children: [
-        Icon(icon, color: Colors.grey[600], size: 16),
-        const SizedBox(width: 4),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
+    return Container(
+      margin: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18, color: Colors.grey[600]),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey[600],
+                  ),
                 ),
-              ),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

@@ -199,10 +199,10 @@ class HistoryScreen extends GetView<HistoryController> {
                             ),
                           ),
                           if (history.treeConditionDetails.isNotEmpty) ...[
-                            const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 16),
-                              child: Divider(thickness: 1),
-                            ),
+                            // const Padding(
+                            //   padding: EdgeInsets.symmetric(vertical: 16),
+                            //   child: Divider(thickness: 1),
+                            // ),
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(

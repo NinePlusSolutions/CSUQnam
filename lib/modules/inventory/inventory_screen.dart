@@ -355,26 +355,29 @@ class InventoryScreen extends GetView<InventoryController> {
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: Colors.grey[300]!),
                       ),
-                      child: DropdownButton<int>(
-                        value: controller.yearShaved.value == 0
+                      child: DropdownButton<String>(
+                        value: controller.tappingAge.value.isEmpty
                             ? null
-                            : controller.yearShaved.value,
+                            : controller.tappingAge.value,
                         isExpanded: true,
                         underline: const SizedBox(),
-                        hint: const Text('Chọn năm cạo'),
+                        hint: const Text('Chọn tuổi cạo'),
                         items: controller.selectedLot.value?.ageShavedResponse
                                 .where((age) => age.value != null)
-                                .map((age) {
-                              return DropdownMenuItem<int>(
-                                value: age.value,
-                                child: Text(age.value.toString()),
+                                .map((age) => age.value.toString())
+                                .toSet() // Remove duplicates
+                                .toList()
+                                .map((ageStr) {
+                              return DropdownMenuItem<String>(
+                                value: ageStr,
+                                child: Text('$ageStr tuổi'),
                               );
                             }).toList() ??
                             [],
                         onChanged: (value) {
                           if (value != null) {
-                            controller.yearShaved.value = value;
-                            controller.tappingAge.value = value.toString();
+                            controller.tappingAge.value = value;
+                            controller.yearShaved.value = int.parse(value);
                           }
                         },
                       ),
@@ -749,24 +752,26 @@ class InventoryScreen extends GetView<InventoryController> {
   }
 
   Widget _buildFinishButton() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.green,
-            padding: const EdgeInsets.symmetric(vertical: 12),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      child: ElevatedButton(
+        onPressed: () {
+          controller.showShavedStatusBottomSheet();
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.green,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
           ),
-          onPressed: () {
-            controller.showShavedStatusBottomSheet();
-          },
-          child: const Text(
-            'Kết thúc',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.white,
-            ),
+        ),
+        child: const Text(
+          'Kết thúc',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
           ),
         ),
       ),

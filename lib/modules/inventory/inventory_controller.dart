@@ -307,6 +307,85 @@ class InventoryController extends GetxController {
   }
 
   void _showConfirmDialog() {
+    // Kiểm tra các trường bắt buộc
+    if (farmId.value == 0 || farm.value.isEmpty) {
+      Get.snackbar(
+        'Thiếu thông tin',
+        'Vui lòng chọn nông trường',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    if (productTeamId.value == 0 || productionTeam.value.isEmpty) {
+      Get.snackbar(
+        'Thiếu thông tin',
+        'Vui lòng chọn tổ sản xuất',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    if (farmLotId.value == 0 || lot.value.isEmpty) {
+      Get.snackbar(
+        'Thiếu thông tin',
+        'Vui lòng chọn lô',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    if (tappingAge.value.isEmpty) {
+      Get.snackbar(
+        'Thiếu thông tin',
+        'Vui lòng chọn tuổi cạo',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    if (row.value.isEmpty) {
+      Get.snackbar(
+        'Thiếu thông tin',
+        'Vui lòng chọn hàng',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    if (selectedShavedStatus.value == null) {
+      Get.snackbar(
+        'Thiếu thông tin',
+        'Vui lòng chọn trạng thái cạo',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    // Kiểm tra xem có ít nhất một trạng thái được cập nhật
+    bool hasStatusUpdate = false;
+    statusCounts.forEach((_, count) {
+      if (count.value > 0) {
+        hasStatusUpdate = true;
+      }
+    });
+
+    if (!hasStatusUpdate) {
+      Get.snackbar(
+        'Thiếu thông tin',
+        'Vui lòng cập nhật ít nhất một trạng thái cây',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
     // Build status summary text
     String statusSummary = '';
     int totalTrees = 0;
@@ -958,60 +1037,108 @@ class InventoryController extends GetxController {
   }
 
   void showShavedStatusBottomSheet() {
-    // Check if any status is selected
-    bool hasSelectedStatus = false;
-    statusCounts.forEach((key, value) {
-      if (value.value > 0) {
-        hasSelectedStatus = true;
-      }
-    });
-
-    if (!hasSelectedStatus) {
+    // Kiểm tra các trường bắt buộc trước
+    if (farmId.value == 0 || farm.value.isEmpty) {
       Get.snackbar(
-        'Lỗi',
-        'Vui lòng chọn ít nhất 1 trạng thái',
+        'Thiếu thông tin',
+        'Vui lòng chọn nông trường',
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
       return;
     }
 
+    if (productTeamId.value == 0 || productionTeam.value.isEmpty) {
+      Get.snackbar(
+        'Thiếu thông tin',
+        'Vui lòng chọn tổ sản xuất',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    if (farmLotId.value == 0 || lot.value.isEmpty) {
+      Get.snackbar(
+        'Thiếu thông tin',
+        'Vui lòng chọn lô',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    if (tappingAge.value.isEmpty) {
+      Get.snackbar(
+        'Thiếu thông tin',
+        'Vui lòng chọn tuổi cạo',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    if (row.value.isEmpty) {
+      Get.snackbar(
+        'Thiếu thông tin',
+        'Vui lòng chọn hàng',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    // Kiểm tra xem có ít nhất một trạng thái được cập nhật
+    bool hasStatusUpdate = false;
+    statusCounts.forEach((_, count) {
+      if (count.value > 0) {
+        hasStatusUpdate = true;
+      }
+    });
+
+    if (!hasStatusUpdate) {
+      Get.snackbar(
+        'Thiếu thông tin',
+        'Vui lòng cập nhật ít nhất một trạng thái cây',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    // Nếu tất cả điều kiện đã thỏa mãn, hiển thị bottom sheet
     Get.bottomSheet(
       Container(
+        padding: const EdgeInsets.all(16),
         decoration: const BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(20),
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.blue[50],
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(20)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Chọn trạng thái cạo',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Chọn trạng thái cạo',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Get.back(),
-                  ),
-                ],
-              ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Get.back(),
+                ),
+              ],
             ),
-            Flexible(
+            const SizedBox(height: 16),
+            Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -1096,6 +1223,7 @@ class InventoryController extends GetxController {
         ),
       ),
       isScrollControlled: true,
+      backgroundColor: Colors.transparent,
     );
   }
 

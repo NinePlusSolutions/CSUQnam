@@ -137,11 +137,7 @@ class SyncController extends GetxController {
           treeConditionDetails: details,
         );
       }).toList();
-
-      // Create request
       final request = TreeConditionRequest(treeConditionList: treeConditions);
-
-      // Send to server
       final response = await _apiProvider.syncTreeCondition(request);
 
       if (response.statusCode == 200 && response.data['status'] == true) {

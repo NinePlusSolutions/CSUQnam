@@ -4,6 +4,7 @@ import 'package:flutter_getx_boilerplate/routes/app_pages.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'dart:convert';
+import 'dart:io';
 
 class AuthController extends GetxController {
   final _apiProvider = Get.find<ApiProvider>();
@@ -131,8 +132,45 @@ class AuthController extends GetxController {
     }
   }
 
+  Future<bool> checkInternetConnection() async {
+    try {
+      final result = await InternetAddress.lookup('google.com');
+      return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+    } on SocketException catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> hasUnsyncedData() async {
+    final storedData = storage.read('local_updates');
+    return storedData != null && (storedData as List).isNotEmpty;
+  }
+
   Future<void> onLogout() async {
     try {
+      // Kiểm tra dữ liệu chưa đồng bộ
+      if (await hasUnsyncedData()) {
+        Get.snackbar(
+          'Cảnh báo',
+          'Vui lòng đồng bộ dữ liệu trước khi đăng xuất',
+          backgroundColor: Colors.orange,
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      // Kiểm tra kết nối mạng
+      final hasInternet = await checkInternetConnection();
+      if (!hasInternet) {
+        Get.snackbar(
+          'Lỗi kết nối',
+          'Vui lòng kiểm tra kết nối mạng trước khi đăng xuất',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return;
+      }
+
       final shouldRemember = rememberLogin.value;
 
       if (!shouldRemember) {
@@ -142,8 +180,10 @@ class AuthController extends GetxController {
         await storage.remove('remember_login');
       }
 
-      // Always remove token
+      // Always remove token and cached data
       await storage.remove('token');
+      await storage.remove('profile_data');
+      await storage.remove('status_data');
 
       print(
           'Credentials after logout - remember: $shouldRemember, username: ${storage.read('username')}, password: ${storage.read('password')}'); // Debug log
@@ -151,6 +191,12 @@ class AuthController extends GetxController {
       Get.offAllNamed('/auth');
     } catch (e) {
       print('Logout error: $e');
+      Get.snackbar(
+        'Lỗi',
+        'Đã có lỗi xảy ra khi đăng xuất. Vui lòng thử lại.',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
 }

@@ -189,7 +189,6 @@ class InventoryScreen extends GetView<InventoryController> {
   }
 
   void _showEditDialog() {
-    // Đảm bảo hiển thị dropdown tuổi cạo nếu lô đã được chọn
     if (controller.selectedLot.value != null) {
       final hasValidAges = controller.selectedLot.value?.ageShavedResponse
               .where((age) => age.value != null)
@@ -397,7 +396,35 @@ class InventoryScreen extends GetView<InventoryController> {
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton(
-                    onPressed: () => Get.back(),
+                    onPressed: () {
+                      // Validate required fields
+                      if (controller.productTeamId.value == 0) {
+                        Get.snackbar(
+                          'Thông báo',
+                          'Vui lòng chọn tổ',
+                          backgroundColor: Colors.red[100],
+                        );
+                        return;
+                      }
+                      if (controller.farmLotId.value == 0) {
+                        Get.snackbar(
+                          'Thông báo',
+                          'Vui lòng chọn lô',
+                          backgroundColor: Colors.red[100],
+                        );
+                        return;
+                      }
+                      if (controller.tappingAge.value.isEmpty) {
+                        Get.snackbar(
+                          'Thông báo',
+                          'Vui lòng chọn tuổi cạo',
+                          backgroundColor: Colors.red[100],
+                        );
+                        return;
+                      }
+
+                      Get.back(); // Close dialog if all validations pass
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
                     ),

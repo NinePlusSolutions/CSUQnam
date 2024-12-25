@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_getx_boilerplate/api/api_provider.dart';
@@ -994,6 +995,84 @@ class InventoryController extends GetxController {
     }
   }
 
+  Widget _buildShavedStatusGroup(String title, List<ShavedStatusItem> items) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 2.5,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+        ),
+        itemCount: items.length,
+        itemBuilder: (context, index) {
+          final item = items[index];
+          return Obx(() => Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    if (selectedShavedStatus.value?.id == item.id) {
+                      selectedShavedStatus.value = null;
+                      selectedType.value = '';
+                    } else {
+                      selectedShavedStatus.value = item;
+                      selectedType.value = title;
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: selectedShavedStatus.value?.id == item.id
+                          ? Theme.of(Get.context!).primaryColor.withOpacity(0.1)
+                          : Colors.white,
+                      border: Border.all(
+                        color: selectedShavedStatus.value?.id == item.id
+                            ? Theme.of(Get.context!).primaryColor
+                            : Colors.grey[200]!,
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Stack(
+                      children: [
+                        Center(
+                          child: Text(
+                            item.name,
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: selectedShavedStatus.value?.id == item.id
+                                  ? Theme.of(Get.context!).primaryColor
+                                  : Colors.black87,
+                              fontWeight:
+                                  selectedShavedStatus.value?.id == item.id
+                                      ? FontWeight.w600
+                                      : FontWeight.normal,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        if (selectedShavedStatus.value?.id == item.id)
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: Icon(
+                              Icons.check_circle,
+                              color: Theme.of(Get.context!).primaryColor,
+                              size: 18,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ));
+        },
+      ),
+    );
+  }
+
   void showShavedStatusBottomSheet() {
     // Kiểm tra các trường bắt buộc trước
     if (farmId.value == 0 || farm.value.isEmpty) {
@@ -1067,88 +1146,158 @@ class InventoryController extends GetxController {
     // Show bottom sheet
     Get.bottomSheet(
       Container(
-        padding: const EdgeInsets.all(16),
+        height: Get.height * 0.8,
         decoration: const BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(20),
-          ),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
         ),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Chọn trạng thái cạo',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+            // Header
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Theme.of(Get.context!).primaryColor.withOpacity(0.05),
+                border: Border(
+                  bottom: BorderSide(color: Colors.grey[200]!),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Chọn trạng thái cạo',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(Get.context!).primaryColor,
+                    ),
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Get.back(),
-                ),
-              ],
+                  IconButton(
+                    onPressed: () => Get.back(),
+                    icon: Icon(
+                      Icons.close,
+                      color: Theme.of(Get.context!).primaryColor,
+                    ),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 16),
+            // Content
             Expanded(
               child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children:
                       shavedStatusData.value!.toJson().entries.map((entry) {
-                    return Column(
-                      children: [
-                        _buildShavedStatusGroup(entry.key, entry.value),
-                        const SizedBox(height: 16),
-                      ],
+                    return Container(
+                      margin: const EdgeInsets.only(top: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey[200]!),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Theme.of(Get.context!)
+                                  .primaryColor
+                                  .withOpacity(0.05),
+                              borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(8),
+                              ),
+                            ),
+                            child: Text(
+                              entry.key,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Theme.of(Get.context!).primaryColor,
+                              ),
+                            ),
+                          ),
+                          _buildShavedStatusGroup(entry.key, entry.value),
+                        ],
+                      ),
                     );
                   }).toList(),
                 ),
               ),
             ),
+            // Bottom buttons
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                bottom: MediaQuery.of(Get.context!).padding.bottom + 16,
+                top: 16,
+              ),
               decoration: BoxDecoration(
                 color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 4,
-                    offset: const Offset(0, -2),
-                  ),
-                ],
+                border: Border(
+                  top: BorderSide(color: Colors.grey[200]!),
+                ),
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   Expanded(
-                    child: TextButton(
+                    child: OutlinedButton(
                       onPressed: () => Get.back(),
-                      style: TextButton.styleFrom(
+                      style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 12),
+                        side: BorderSide(
+                            color: Theme.of(Get.context!)
+                                .primaryColor
+                                .withOpacity(0.5)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
-                      child: const Text('Hủy'),
+                      child: Text(
+                        'Hủy',
+                        style: TextStyle(
+                          color: Theme.of(Get.context!).primaryColor,
+                        ),
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   Expanded(
-                    child: Obx(() => ElevatedButton(
-                          onPressed: selectedShavedStatus.value != null
-                              ? () {
-                                  Get.back();
-                                  _showConfirmDialog();
-                                }
-                              : null,
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Obx(
+                      () => ElevatedButton(
+                        onPressed: selectedShavedStatus.value != null
+                            ? () {
+                                Get.back();
+                                _showConfirmDialog();
+                              }
+                            : null,
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          backgroundColor: Theme.of(Get.context!).primaryColor,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Text('Xác nhận'),
-                        )),
+                          elevation: 0,
+                          disabledBackgroundColor: Colors.grey[300],
+                          disabledForegroundColor: Colors.grey[600],
+                        ),
+                        child: const Text(
+                          'Xác nhận',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -1158,63 +1307,9 @@ class InventoryController extends GetxController {
       ),
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      isDismissible: true,
+      enableDrag: true,
     );
-  }
-
-  Widget _buildShavedStatusGroup(String title, List<ShavedStatusItem> items) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-          decoration: BoxDecoration(
-            color: Colors.grey[200],
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            title,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: items.map((item) => _buildStatusItem(item)).toList(),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatusItem(ShavedStatusItem item) {
-    return Obx(() {
-      final isSelected = selectedShavedStatus.value?.id == item.id;
-      return InkWell(
-        onTap: () {
-          selectedShavedStatus.value = isSelected ? null : item;
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: isSelected ? Colors.blue : Colors.blue[50],
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: isSelected ? Colors.blue : Colors.blue[100]!,
-            ),
-          ),
-          child: Text(
-            item.name,
-            style: TextStyle(
-              color: isSelected ? Colors.white : Colors.black87,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-        ),
-      );
-    });
   }
 
   Future<void> fetchProfile() async {

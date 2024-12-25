@@ -208,6 +208,7 @@ class InventoryController extends GetxController {
   Future<void> saveLocalUpdate() async {
     try {
       final now = DateTime.now();
+      print('Current tapping age: ${tappingAge.value}'); // Debug log
       final List<LocalStatusUpdate> statusUpdates = [];
       for (var status in statusList) {
         final count = statusCounts[status.name] ?? 0.obs;

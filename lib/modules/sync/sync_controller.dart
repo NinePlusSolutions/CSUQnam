@@ -56,10 +56,12 @@ class SyncController extends GetxController {
                 treeLineName: item['treeLineName'],
                 shavedStatusId: item['shavedStatusId'],
                 shavedStatusName: item['shavedStatusName'],
+                tappingAge: item['tappingAge'],
                 dateCheck: dateCheck,
                 statusUpdates: statusUpdates,
                 note: item['note'],
               ));
+              print('Loaded update with tapping age: ${item['tappingAge']}');
             }
           } catch (e) {
             print('Error parsing item: $e');

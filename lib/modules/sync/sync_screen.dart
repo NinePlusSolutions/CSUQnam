@@ -294,11 +294,6 @@ class _SyncScreenState extends State<SyncScreen> {
             ],
           ),
           const SizedBox(height: 8),
-          _buildInfoItem(
-            icon: Icons.local_offer,
-            label: 'Trạng thái cạo',
-            value: update.shavedStatusName,
-          ),
           if (update.note?.isNotEmpty ?? false) ...[
             const SizedBox(height: 8),
             _buildInfoItem(

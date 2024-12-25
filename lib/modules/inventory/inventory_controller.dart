@@ -798,15 +798,21 @@ class InventoryController extends GetxController {
       // Try to get data from local storage first
       final storedStatusData = storage.read('status_data');
       final storedProfileData = storage.read('profile_data');
+      final storedShavedStatusData = storage.read('shaved_status_data');
 
       // Try to use stored data first
-      if (storedStatusData != null && storedProfileData != null) {
+      if (storedStatusData != null &&
+          storedProfileData != null &&
+          storedShavedStatusData != null) {
         try {
           final statusData = jsonDecode(storedStatusData);
           final profileData = jsonDecode(storedProfileData);
+          final shavedStatusData = jsonDecode(storedShavedStatusData);
 
           processStatusData(statusData);
           processProfileData(profileData);
+          this.shavedStatusData.value =
+              ShavedStatusData.fromJson(shavedStatusData);
           hasStoredData = true;
         } catch (e) {
           print('Error processing stored data: $e');
@@ -821,6 +827,7 @@ class InventoryController extends GetxController {
           try {
             await fetchProfile();
             await fetchStatusData();
+            await fetchShavedStatusData();
             return; // Exit if API calls are successful
           } catch (e) {
             print('Error fetching data from API: $e');
@@ -963,85 +970,19 @@ class InventoryController extends GetxController {
     showYearDropdown.value = false;
   }
 
-  Future<void> fetchProfile() async {
-    try {
-      final apiResponse = await _apiProvider.getProfile();
-
-      if (apiResponse.data != null) {
-        final profileData = apiResponse.data!;
-        if (profileData.farmByUserResponse.isNotEmpty) {
-          final farmByUser = profileData.farmByUserResponse[0];
-          if (farmByUser.farmResponse.isNotEmpty) {
-            farmResponses.value = farmByUser.farmResponse;
-
-            final defaultFarm = farmByUser.farmResponse[0];
-            selectedFarm.value = defaultFarm;
-            farm.value = defaultFarm.farmName;
-            farmId.value = defaultFarm.farmId;
-
-            if (defaultFarm.productTeamResponse.isNotEmpty) {
-              final defaultTeam = defaultFarm.productTeamResponse[0];
-              selectedTeam.value = defaultTeam;
-              productionTeam.value = defaultTeam.productTeamName;
-              productTeamId.value = defaultTeam.productTeamId;
-              showTeamDropdown.value = true;
-
-              if (defaultTeam.farmLotResponse.isNotEmpty) {
-                final defaultLot = defaultTeam.farmLotResponse[0];
-                selectedLot.value = defaultLot;
-                lot.value = defaultLot.farmLotName;
-                farmLotId.value = defaultLot.farmLotId;
-                showLotDropdown.value = true;
-
-                if (defaultLot.ageShavedResponse.isNotEmpty) {
-                  final defaultAge = defaultLot.ageShavedResponse[0].value;
-                  if (defaultAge != null) {
-                    yearShaved.value = defaultAge;
-                    tappingAge.value = defaultAge.toString();
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    } catch (e) {
-      print('Error fetching profile: $e');
-      rethrow;
-    }
-  }
-
-  Future<void> fetchStatusData() async {
-    try {
-      isLoading.value = true;
-      final response = await _apiProvider.getStatus();
-      final statusResponse = StatusResponse.fromJson(response.data);
-
-      statusList.clear();
-      statusCounts.clear();
-
-      final statuses = statusResponse.data
-          .map((item) => StatusInfo(item.name, item.description, id: item.id))
-          .toList();
-
-      statusList.addAll(statuses);
-
-      for (var item in statusResponse.data) {
-        final colorIndex = (item.id - 1) % _statusColorPalette.length;
-        statusColors[item.name] = _statusColorPalette[colorIndex];
-        statusCounts[item.name] = 0.obs;
-      }
-    } catch (e) {
-      print('Error fetching status data: $e');
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
   Future<void> fetchShavedStatusData() async {
     try {
-      final response = await _apiProvider.fetchShavedStatus();
-      shavedStatusData.value = response.data;
+      final storage = Get.find<GetStorage>();
+      final localData = await storage.read('shaved_status_data');
+
+      if (localData != null) {
+        final response = ShavedStatusResponse.fromJson(jsonDecode(localData));
+        shavedStatusData.value = response.data;
+      } else {
+        final response = await _apiProvider.fetchShavedStatus();
+        await storage.write('shaved_status_data', jsonEncode(response));
+        shavedStatusData.value = response.data;
+      }
     } catch (e) {
       print('Error fetching shaved status: $e');
       Get.snackbar(
@@ -1123,114 +1064,103 @@ class InventoryController extends GetxController {
       return;
     }
 
-    // Fetch shaved status data first
-    fetchShavedStatusData().then((_) {
-      if (shavedStatusData.value == null) {
-        Get.snackbar(
-          'Lỗi',
-          'Không thể tải dữ liệu trạng thái cạo',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
-        return;
-      }
-
-      // Show bottom sheet with fetched data
-      Get.bottomSheet(
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(
-              top: Radius.circular(20),
-            ),
+    // Show bottom sheet
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.all(16),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(20),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Chọn trạng thái cạo',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Chọn trạng thái cạo',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Get.back(),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Get.back(),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildShavedStatusGroup('BO1', shavedStatusData.value!.bo1),
+                    const SizedBox(height: 16),
+                    _buildShavedStatusGroup('BO2', shavedStatusData.value!.bo2),
+                    const SizedBox(height: 16),
+                    _buildShavedStatusGroup('HO', shavedStatusData.value!.ho),
+                    if (shavedStatusData.value!.tt.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      _buildShavedStatusGroup('TT', shavedStatusData.value!.tt),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, -2),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children:
-                        shavedStatusData.value!.toJson().entries.map((entry) {
-                      return Column(
-                        children: [
-                          _buildShavedStatusGroup(entry.key, entry.value),
-                          const SizedBox(height: 16),
-                        ],
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 4,
-                      offset: const Offset(0, -2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () => Get.back(),
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: const Text('Hủy'),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Get.back(),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
+                      child: const Text('Hủy'),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Obx(() => ElevatedButton(
-                            onPressed: selectedShavedStatus.value != null
-                                ? () {
-                                    Get.back();
-                                    _showConfirmDialog();
-                                  }
-                                : null,
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                            ),
-                            child: const Text('Xác nhận'),
-                          )),
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Obx(() => ElevatedButton(
+                          onPressed: selectedShavedStatus.value != null
+                              ? () {
+                                  Get.back();
+                                  _showConfirmDialog();
+                                }
+                              : null,
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          child: const Text('Xác nhận'),
+                        )),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-      );
-    });
+      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+    );
   }
 
   Widget _buildShavedStatusGroup(String title, List<ShavedStatusItem> items) {
@@ -1287,5 +1217,80 @@ class InventoryController extends GetxController {
         ),
       );
     });
+  }
+
+  Future<void> fetchProfile() async {
+    try {
+      final apiResponse = await _apiProvider.getProfile();
+
+      if (apiResponse.data != null) {
+        final profileData = apiResponse.data!;
+        if (profileData.farmByUserResponse.isNotEmpty) {
+          final farmByUser = profileData.farmByUserResponse[0];
+          if (farmByUser.farmResponse.isNotEmpty) {
+            farmResponses.value = farmByUser.farmResponse;
+
+            final defaultFarm = farmByUser.farmResponse[0];
+            selectedFarm.value = defaultFarm;
+            farm.value = defaultFarm.farmName;
+            farmId.value = defaultFarm.farmId;
+
+            if (defaultFarm.productTeamResponse.isNotEmpty) {
+              final defaultTeam = defaultFarm.productTeamResponse[0];
+              selectedTeam.value = defaultTeam;
+              productionTeam.value = defaultTeam.productTeamName;
+              productTeamId.value = defaultTeam.productTeamId;
+              showTeamDropdown.value = true;
+
+              if (defaultTeam.farmLotResponse.isNotEmpty) {
+                final defaultLot = defaultTeam.farmLotResponse[0];
+                selectedLot.value = defaultLot;
+                lot.value = defaultLot.farmLotName;
+                farmLotId.value = defaultLot.farmLotId;
+                showLotDropdown.value = true;
+
+                if (defaultLot.ageShavedResponse.isNotEmpty) {
+                  final defaultAge = defaultLot.ageShavedResponse[0].value;
+                  if (defaultAge != null) {
+                    yearShaved.value = defaultAge;
+                    tappingAge.value = defaultAge.toString();
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      print('Error fetching profile: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> fetchStatusData() async {
+    try {
+      isLoading.value = true;
+      final response = await _apiProvider.getStatus();
+      final statusResponse = StatusResponse.fromJson(response.data);
+
+      statusList.clear();
+      statusCounts.clear();
+
+      final statuses = statusResponse.data
+          .map((item) => StatusInfo(item.name, item.description, id: item.id))
+          .toList();
+
+      statusList.addAll(statuses);
+
+      for (var item in statusResponse.data) {
+        final colorIndex = (item.id - 1) % _statusColorPalette.length;
+        statusColors[item.name] = _statusColorPalette[colorIndex];
+        statusCounts[item.name] = 0.obs;
+      }
+    } catch (e) {
+      print('Error fetching status data: $e');
+    } finally {
+      isLoading.value = false;
+    }
   }
 }

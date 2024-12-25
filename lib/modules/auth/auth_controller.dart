@@ -110,6 +110,13 @@ class AuthController extends GetxController {
           await storage.write('status_data', jsonEncode(statusResponse.data));
         }
 
+        // Fetch and save shaved status data
+        final shavedStatusResponse = await _apiProvider.fetchShavedStatus();
+        if (shavedStatusResponse.status) {
+          await storage.write(
+              'shaved_status_data', jsonEncode(shavedStatusResponse.data));
+        }
+
         Get.offAllNamed('/home');
       } else {
         Get.snackbar(

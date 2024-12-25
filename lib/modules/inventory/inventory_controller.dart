@@ -974,7 +974,7 @@ class InventoryController extends GetxController {
   Future<void> fetchShavedStatusData() async {
     try {
       final response = await _apiProvider.fetchShavedStatus();
-      await storage.write('shaved_status_data', jsonEncode(response));
+      await storage.write('shaved_status_data', jsonEncode(response.data));
       shavedStatusData.value = response.data;
     } catch (e) {
       print('Error fetching shaved status: $e');
@@ -1307,7 +1307,7 @@ class InventoryController extends GetxController {
   Future<void> fetchProfile() async {
     try {
       final apiResponse = await _apiProvider.getProfile();
-
+      await storage.write('profile_data', jsonEncode(apiResponse.data));
       if (apiResponse.data != null) {
         final profileData = apiResponse.data!;
         if (profileData.farmByUserResponse.isNotEmpty) {
@@ -1357,7 +1357,7 @@ class InventoryController extends GetxController {
       isLoading.value = true;
       final response = await _apiProvider.getStatus();
       final statusResponse = StatusResponse.fromJson(response.data);
-
+      await storage.write('status_data', jsonEncode(response.data));
       statusList.clear();
       statusCounts.clear();
 

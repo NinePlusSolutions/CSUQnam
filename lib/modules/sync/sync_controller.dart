@@ -133,13 +133,13 @@ class SyncController extends GetxController {
           farmLotId: update.farmLotId,
           treeLineName: "Hàng ${update.treeLineName}",
           shavedStatus: update.shavedStatusId,
+          description: update.note,
           dateCheck: update.dateCheck,
           treeConditionDetails: details,
         );
       }).toList();
       final request = TreeConditionRequest(
         treeConditionList: treeConditions,
-        description: pendingUpdates.first.note,
       );
       final response = await _apiProvider.syncTreeCondition(request);
 
@@ -193,6 +193,7 @@ class SyncController extends GetxController {
         farmLotId: update.farmLotId,
         treeLineName: "Hàng ${update.treeLineName}",
         shavedStatus: update.shavedStatusId,
+        description: update.note,
         dateCheck: update.dateCheck,
         treeConditionDetails: details,
       );
@@ -200,7 +201,6 @@ class SyncController extends GetxController {
       // Create request with single item
       final request = TreeConditionRequest(
         treeConditionList: [treeCondition],
-        description: update.note,
       );
 
       // Check internet connection first

@@ -6,18 +6,15 @@ part 'tree_condition_request.g.dart';
 class TreeConditionRequest {
   @JsonKey(name: 'treeConditionList')
   final List<TreeCondition> treeConditionList;
-  final String? description;
 
   TreeConditionRequest({
     required this.treeConditionList,
-    this.description,
   });
 
   factory TreeConditionRequest.fromJson(Map<String, dynamic> json) =>
       _$TreeConditionRequestFromJson(json);
   Map<String, dynamic> toJson() => {
         'treeConditionList': treeConditionList.map((x) => x.toJson()).toList(),
-        'description': description,
       };
 }
 
@@ -33,6 +30,8 @@ class TreeCondition {
   final String treeLineName;
   @JsonKey(name: 'shavedStatus')
   final int shavedStatus;
+  @JsonKey(name: 'description')
+  final String? description;
   @JsonKey(name: 'dateCheck')
   final DateTime dateCheck;
   @JsonKey(name: 'treeConditionDetails')
@@ -44,18 +43,21 @@ class TreeCondition {
     required this.farmLotId,
     required this.treeLineName,
     required this.shavedStatus,
+    this.description,
     required this.dateCheck,
     required this.treeConditionDetails,
   });
 
   factory TreeCondition.fromJson(Map<String, dynamic> json) =>
       _$TreeConditionFromJson(json);
+
   Map<String, dynamic> toJson() => {
         'farmId': farmId,
         'productTeamId': productTeamId,
         'farmLotId': farmLotId,
         'treeLineName': treeLineName,
         'shavedStatus': shavedStatus,
+        'description': description,
         'dateCheck': dateCheck.toIso8601String(),
         'treeConditionDetails':
             treeConditionDetails.map((x) => x.toJson()).toList(),

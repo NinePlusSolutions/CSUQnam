@@ -4,14 +4,14 @@ part 'profile_response.g.dart';
 
 @JsonSerializable()
 class ProfileResponse {
-  final String id;
+  final String? id;
   final String email;
   final String phoneNumber;
   final String fullName;
   final String? avatarUrl;
   final bool isActive;
   final String? address;
-  final String? status;
+  final int? status;
   final String? dateOfBirth;
   final List<FarmByUserResponse> farmByUserResponse;
 

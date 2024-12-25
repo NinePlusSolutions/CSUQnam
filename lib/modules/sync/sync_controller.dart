@@ -81,18 +81,6 @@ class SyncController extends GetxController {
     }
   }
 
-  // Helper method to map status ID to code
-  String _getStatusCode(int statusId) {
-    switch (statusId) {
-      case 1:
-        return 'U'; // Ví dụ: statusId 1 -> U
-      case 2:
-        return 'UN'; // Ví dụ: statusId 2 -> UN
-      default:
-        return 'N'; // Default code
-    }
-  }
-
   Future<void> syncUpdates() async {
     if (pendingUpdates.isEmpty) {
       SchedulerBinding.instance.addPostFrameCallback((_) {
@@ -115,8 +103,7 @@ class SyncController extends GetxController {
         final details = update.statusUpdates
             .map((statusUpdate) => TreeConditionDetail(
                   statusId: statusUpdate.statusId,
-                  value: _getStatusCode(statusUpdate
-                      .statusId), // Use status code instead of value
+                  value: statusUpdate.statusName, // Use statusName directly
                 ))
             .toList();
 
@@ -177,8 +164,7 @@ class SyncController extends GetxController {
       final details = update.statusUpdates
           .map((statusUpdate) => TreeConditionDetail(
                 statusId: statusUpdate.statusId,
-                value: _getStatusCode(
-                    statusUpdate.statusId), // Use status code instead of value
+                value: statusUpdate.statusName, // Use statusName directly
               ))
           .toList();
 

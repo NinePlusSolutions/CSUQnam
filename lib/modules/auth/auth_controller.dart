@@ -8,8 +8,8 @@ class AuthController extends GetxController {
   final storage = GetStorage();
   final ApiProvider _apiProvider = ApiProvider();
 
-  final RxString username = 'superadmin'.obs;
-  final RxString password = 'Abc123!@#'.obs;
+  final RxString username = ''.obs;
+  final RxString password = ''.obs;
   final RxBool isLoading = false.obs;
   final RxBool rememberLogin = true.obs;
 

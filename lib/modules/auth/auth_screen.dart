@@ -40,7 +40,7 @@ class AuthScreen extends GetView<AuthController> {
                   Obx(() => TextField(
                         controller: TextEditingController(
                             text: controller.username.value),
-                        // onChanged: (value) => controller.username.value = value,
+                        onChanged: (value) => controller.username.value = value,
                         decoration: const InputDecoration(
                           labelText: "Tài khoản",
                           hintText: "Nhập tài khoản",

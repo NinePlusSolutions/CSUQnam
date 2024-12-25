@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_getx_boilerplate/api/api_provider.dart';
 import 'package:flutter_getx_boilerplate/routes/app_pages.dart';
+import 'package:flutter_getx_boilerplate/widgets/sync_progress_dialog.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'dart:convert';
@@ -14,11 +15,30 @@ class AuthController extends GetxController {
   final password = ''.obs;
   final rememberLogin = true.obs;
   final isLoading = false.obs;
+  final syncSteps = <SyncStep>[].obs;
 
   @override
   void onInit() {
     super.onInit();
     _loadSavedCredentials();
+    _initSyncSteps();
+  }
+
+  void _initSyncSteps() {
+    syncSteps.value = [
+      SyncStep(
+        title: 'Đồng bộ thông tin cá nhân',
+        status: SyncStatus.waiting,
+      ),
+      SyncStep(
+        title: 'Đồng bộ trạng thái',
+        status: SyncStatus.waiting,
+      ),
+      SyncStep(
+        title: 'Đồng bộ trạng thái cạo',
+        status: SyncStatus.waiting,
+      ),
+    ];
   }
 
   void _loadSavedCredentials() {
@@ -65,6 +85,69 @@ class AuthController extends GetxController {
     }
   }
 
+  Future<void> _showSyncProgress() async {
+    Get.dialog(
+      SyncProgressDialog(steps: syncSteps),
+      barrierDismissible: false,
+    );
+  }
+
+  Future<void> _updateSyncStep(int index, SyncStatus status, [String? error]) async {
+    syncSteps[index] = syncSteps[index].copyWith(
+      status: status,
+      errorMessage: error,
+    );
+  }
+
+  Future<void> _syncData() async {
+    try {
+      // Sync profile data
+      _updateSyncStep(0, SyncStatus.inProgress);
+      final profileResponse = await _apiProvider.getProfile();
+      if (profileResponse.status) {
+        await storage.write('profile_data', jsonEncode(profileResponse.data));
+        _updateSyncStep(0, SyncStatus.completed);
+      } else {
+        _updateSyncStep(0, SyncStatus.error, 'Không thể đồng bộ thông tin cá nhân');
+        return;
+      }
+
+      // Sync status data
+      _updateSyncStep(1, SyncStatus.inProgress);
+      final statusResponse = await _apiProvider.getStatus();
+      if (statusResponse.statusCode == 200) {
+        await storage.write('status_data', jsonEncode(statusResponse.data));
+        _updateSyncStep(1, SyncStatus.completed);
+      } else {
+        _updateSyncStep(1, SyncStatus.error, 'Không thể đồng bộ trạng thái');
+        return;
+      }
+
+      // Sync shaved status data
+      _updateSyncStep(2, SyncStatus.inProgress);
+      final shavedStatusResponse = await _apiProvider.fetchShavedStatus();
+      if (shavedStatusResponse.status) {
+        await storage.write('shaved_status_data', jsonEncode(shavedStatusResponse.data));
+        _updateSyncStep(2, SyncStatus.completed);
+      } else {
+        _updateSyncStep(2, SyncStatus.error, 'Không thể đồng bộ trạng thái cạo');
+        return;
+      }
+
+      // Wait a bit to show completion
+      await Future.delayed(const Duration(milliseconds: 500));
+      Get.back(); // Close dialog
+      Get.offAllNamed('/home');
+    } catch (e) {
+      print('Sync error: $e');
+      // Find the first in-progress step and mark it as error
+      final inProgressIndex = syncSteps.indexWhere((step) => step.status == SyncStatus.inProgress);
+      if (inProgressIndex != -1) {
+        _updateSyncStep(inProgressIndex, SyncStatus.error, 'Đã có lỗi xảy ra');
+      }
+    }
+  }
+
   Future<void> onLogin() async {
     if (username.isEmpty || password.isEmpty) {
       Get.snackbar(
@@ -95,29 +178,11 @@ class AuthController extends GetxController {
         }
 
         await storage.write('token', token);
-        print(
-            'Saved credentials after login: ${username.value}, ${password.value}, remember: ${rememberLogin.value}'); // Debug log
 
-        // Fetch and save profile data
-        final profileResponse = await _apiProvider.getProfile();
-        if (profileResponse.status) {
-          await storage.write('profile_data', jsonEncode(profileResponse.data));
-        }
-
-        // Fetch and save status data
-        final statusResponse = await _apiProvider.getStatus();
-        if (statusResponse.statusCode == 200) {
-          await storage.write('status_data', jsonEncode(statusResponse.data));
-        }
-
-        // Fetch and save shaved status data
-        final shavedStatusResponse = await _apiProvider.fetchShavedStatus();
-        if (shavedStatusResponse.status) {
-          await storage.write(
-              'shaved_status_data', jsonEncode(shavedStatusResponse.data));
-        }
-
-        Get.offAllNamed('/home');
+        // Reset sync steps and show progress
+        _initSyncSteps();
+        await _showSyncProgress();
+        await _syncData();
       } else {
         Get.snackbar(
           'Lỗi',
@@ -205,5 +270,86 @@ class AuthController extends GetxController {
         colorText: Colors.white,
       );
     }
+  }
+}
+
+class SyncStep {
+  final String title;
+  final SyncStatus status;
+  final String? errorMessage;
+
+  SyncStep({
+    required this.title,
+    required this.status,
+    this.errorMessage,
+  });
+
+  SyncStep copyWith({
+    String? title,
+    SyncStatus? status,
+    String? errorMessage,
+  }) {
+    return SyncStep(
+      title: title ?? this.title,
+      status: status ?? this.status,
+      errorMessage: errorMessage ?? this.errorMessage,
+    );
+  }
+}
+
+enum SyncStatus {
+  waiting,
+  inProgress,
+  completed,
+  error,
+}
+
+class SyncProgressDialog extends StatelessWidget {
+  final List<SyncStep> steps;
+
+  const SyncProgressDialog({
+    Key? key,
+    required this.steps,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Đồng bộ dữ liệu',
+              style: TextStyle(fontSize: 18),
+            ),
+            SizedBox(height: 16),
+            ...steps.map((step) {
+              return Row(
+                children: [
+                  Text(step.title),
+                  SizedBox(width: 8),
+                  Icon(
+                    step.status == SyncStatus.waiting
+                        ? Icons.timer
+                        : step.status == SyncStatus.inProgress
+                            ? Icons.sync
+                            : step.status == SyncStatus.completed
+                                ? Icons.check
+                                : Icons.error,
+                  ),
+                  if (step.errorMessage != null)
+                    Text(
+                      step.errorMessage!,
+                      style: TextStyle(color: Colors.red),
+                    ),
+                ],
+              );
+            }).toList(),
+          ],
+        ),
+      ),
+    );
   }
 }

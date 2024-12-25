@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_getx_boilerplate/api/api_provider.dart';
 import 'package:flutter_getx_boilerplate/routes/app_pages.dart';
 import 'package:flutter_getx_boilerplate/widgets/sync_progress_dialog.dart';
+import 'package:flutter_getx_boilerplate/models/sync_step.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'dart:convert';
@@ -26,15 +27,15 @@ class AuthController extends GetxController {
 
   void _initSyncSteps() {
     syncSteps.value = [
-      SyncStep(
+      const SyncStep(
         title: 'Đồng bộ thông tin cá nhân',
         status: SyncStatus.waiting,
       ),
-      SyncStep(
+      const SyncStep(
         title: 'Đồng bộ trạng thái',
         status: SyncStatus.waiting,
       ),
-      SyncStep(
+      const SyncStep(
         title: 'Đồng bộ trạng thái cạo',
         status: SyncStatus.waiting,
       ),
@@ -92,7 +93,8 @@ class AuthController extends GetxController {
     );
   }
 
-  Future<void> _updateSyncStep(int index, SyncStatus status, [String? error]) async {
+  Future<void> _updateSyncStep(int index, SyncStatus status,
+      [String? error]) async {
     syncSteps[index] = syncSteps[index].copyWith(
       status: status,
       errorMessage: error,
@@ -108,7 +110,8 @@ class AuthController extends GetxController {
         await storage.write('profile_data', jsonEncode(profileResponse.data));
         _updateSyncStep(0, SyncStatus.completed);
       } else {
-        _updateSyncStep(0, SyncStatus.error, 'Không thể đồng bộ thông tin cá nhân');
+        _updateSyncStep(
+            0, SyncStatus.error, 'Không thể đồng bộ thông tin cá nhân');
         return;
       }
 
@@ -127,10 +130,12 @@ class AuthController extends GetxController {
       _updateSyncStep(2, SyncStatus.inProgress);
       final shavedStatusResponse = await _apiProvider.fetchShavedStatus();
       if (shavedStatusResponse.status) {
-        await storage.write('shaved_status_data', jsonEncode(shavedStatusResponse.data));
+        await storage.write(
+            'shaved_status_data', jsonEncode(shavedStatusResponse.data));
         _updateSyncStep(2, SyncStatus.completed);
       } else {
-        _updateSyncStep(2, SyncStatus.error, 'Không thể đồng bộ trạng thái cạo');
+        _updateSyncStep(
+            2, SyncStatus.error, 'Không thể đồng bộ trạng thái cạo');
         return;
       }
 
@@ -141,7 +146,8 @@ class AuthController extends GetxController {
     } catch (e) {
       print('Sync error: $e');
       // Find the first in-progress step and mark it as error
-      final inProgressIndex = syncSteps.indexWhere((step) => step.status == SyncStatus.inProgress);
+      final inProgressIndex =
+          syncSteps.indexWhere((step) => step.status == SyncStatus.inProgress);
       if (inProgressIndex != -1) {
         _updateSyncStep(inProgressIndex, SyncStatus.error, 'Đã có lỗi xảy ra');
       }
@@ -270,86 +276,5 @@ class AuthController extends GetxController {
         colorText: Colors.white,
       );
     }
-  }
-}
-
-class SyncStep {
-  final String title;
-  final SyncStatus status;
-  final String? errorMessage;
-
-  SyncStep({
-    required this.title,
-    required this.status,
-    this.errorMessage,
-  });
-
-  SyncStep copyWith({
-    String? title,
-    SyncStatus? status,
-    String? errorMessage,
-  }) {
-    return SyncStep(
-      title: title ?? this.title,
-      status: status ?? this.status,
-      errorMessage: errorMessage ?? this.errorMessage,
-    );
-  }
-}
-
-enum SyncStatus {
-  waiting,
-  inProgress,
-  completed,
-  error,
-}
-
-class SyncProgressDialog extends StatelessWidget {
-  final List<SyncStep> steps;
-
-  const SyncProgressDialog({
-    Key? key,
-    required this.steps,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Đồng bộ dữ liệu',
-              style: TextStyle(fontSize: 18),
-            ),
-            SizedBox(height: 16),
-            ...steps.map((step) {
-              return Row(
-                children: [
-                  Text(step.title),
-                  SizedBox(width: 8),
-                  Icon(
-                    step.status == SyncStatus.waiting
-                        ? Icons.timer
-                        : step.status == SyncStatus.inProgress
-                            ? Icons.sync
-                            : step.status == SyncStatus.completed
-                                ? Icons.check
-                                : Icons.error,
-                  ),
-                  if (step.errorMessage != null)
-                    Text(
-                      step.errorMessage!,
-                      style: TextStyle(color: Colors.red),
-                    ),
-                ],
-              );
-            }).toList(),
-          ],
-        ),
-      ),
-    );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:flutter_getx_boilerplate/models/sync_step.dart';
 
 class SyncProgressDialog extends StatelessWidget {
   final RxList<SyncStep> steps;
@@ -120,36 +121,5 @@ class SyncProgressDialog extends StatelessWidget {
           ),
         );
     }
-  }
-}
-
-enum SyncStatus {
-  waiting,
-  inProgress,
-  completed,
-  error,
-}
-
-class SyncStep {
-  final String title;
-  final SyncStatus status;
-  final String? errorMessage;
-
-  SyncStep({
-    required this.title,
-    required this.status,
-    this.errorMessage,
-  });
-
-  SyncStep copyWith({
-    String? title,
-    SyncStatus? status,
-    String? errorMessage,
-  }) {
-    return SyncStep(
-      title: title ?? this.title,
-      status: status ?? this.status,
-      errorMessage: errorMessage ?? this.errorMessage,
-    );
   }
 }

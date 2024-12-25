@@ -103,7 +103,7 @@ class SyncController extends GetxController {
         final details = update.statusUpdates
             .map((statusUpdate) => TreeConditionDetail(
                   statusId: statusUpdate.statusId,
-                  value: statusUpdate.statusName, // Use statusName directly
+                  value: statusUpdate.value, // Use the count value directly
                 ))
             .toList();
 
@@ -164,7 +164,7 @@ class SyncController extends GetxController {
       final details = update.statusUpdates
           .map((statusUpdate) => TreeConditionDetail(
                 statusId: statusUpdate.statusId,
-                value: statusUpdate.statusName, // Use statusName directly
+                value: statusUpdate.value, // Use the count value directly
               ))
           .toList();
 

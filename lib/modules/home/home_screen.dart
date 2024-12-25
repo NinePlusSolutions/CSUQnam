@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:badges/badges.dart' as badges;
 import '../sync/sync_controller.dart';
 import '../auth/auth_controller.dart';
+import 'package:get_storage/get_storage.dart';
 
 class HomeScreen extends GetView<HomeController> {
   const HomeScreen({super.key});
@@ -11,29 +12,7 @@ class HomeScreen extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Trang chủ',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
-        ),
-        backgroundColor: Colors.green,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(
-              Icons.logout,
-              color: Colors.white,
-            ),
-            onPressed: () {
-              Get.find<AuthController>().onLogout();
-            },
-          ),
-        ],
-      ),
+      appBar: _buildAppBar(),
       body: SafeArea(
         child: _buildBody(),
       ),
@@ -52,6 +31,68 @@ class HomeScreen extends GetView<HomeController> {
         unselectedItemColor: Colors.grey,
       ),
     );
+  }
+
+  AppBar _buildAppBar() {
+    return AppBar(
+      title: const Text(
+        'Trang chủ',
+        style: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+        ),
+      ),
+      backgroundColor: Colors.green,
+      elevation: 0,
+      actions: [
+        IconButton(
+          icon: const Icon(
+            Icons.logout,
+            color: Colors.white,
+          ),
+          onPressed: _handleLogout,
+        ),
+      ],
+    );
+  }
+
+  void _handleLogout() {
+    final storage = GetStorage();
+    final localUpdates = storage.read('local_updates');
+
+    if (localUpdates != null &&
+        localUpdates is List &&
+        localUpdates.isNotEmpty) {
+      Get.dialog(
+        AlertDialog(
+          title: const Text('Cảnh báo'),
+          content: const Text(
+            'Bạn có dữ liệu cần phải đồng bộ, nếu vẫn tiếp tục, dữ liệu sẽ bị xóa. Bạn có chắc chắn muốn tiếp tục không?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(),
+              child: const Text('Hủy'),
+            ),
+            TextButton(
+              onPressed: () {
+                Get.back();
+                storage.erase();
+                Get.offAllNamed('/auth');
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.red,
+              ),
+              child: const Text('Đăng xuất'),
+            ),
+          ],
+        ),
+      );
+    } else {
+      storage.erase();
+      Get.offAllNamed('/auth');
+    }
   }
 
   Widget _buildBody() {

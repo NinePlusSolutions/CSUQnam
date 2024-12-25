@@ -165,9 +165,26 @@ class InventoryController extends GetxController {
       farmLotId.value = lotId;
       lot.value = lotName;
 
-      // Show year dropdown if lot has ages
-      showYearDropdown.value =
-          selectedLot.value?.ageShavedResponse.isNotEmpty ?? false;
+      // Show year dropdown if lot has valid ages
+      final hasValidAges = selectedLot.value?.ageShavedResponse
+              .where((age) => age.value != null)
+              .isNotEmpty ??
+          false;
+      showYearDropdown.value = hasValidAges;
+
+      // If there's only one valid age, select it automatically
+      if (hasValidAges) {
+        final validAges = selectedLot.value!.ageShavedResponse
+            .where((age) => age.value != null)
+            .map((age) => age.value.toString())
+            .toSet()
+            .toList();
+        
+        if (validAges.length == 1) {
+          tappingAge.value = validAges.first;
+          yearShaved.value = int.parse(validAges.first);
+        }
+      }
     } catch (e) {
       print('Error selecting lot: $e');
       Get.snackbar(

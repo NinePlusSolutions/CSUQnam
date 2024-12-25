@@ -188,8 +188,20 @@ class InventoryScreen extends GetView<InventoryController> {
   }
 
   void _showEditDialog() {
+    // Đảm bảo hiển thị dropdown tuổi cạo nếu lô đã được chọn
+    if (controller.selectedLot.value != null) {
+      final hasValidAges = controller.selectedLot.value?.ageShavedResponse
+              .where((age) => age.value != null)
+              .isNotEmpty ??
+          false;
+      controller.showYearDropdown.value = hasValidAges;
+    }
+
     Get.dialog(
       Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
         child: Container(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -203,47 +215,28 @@ class InventoryScreen extends GetView<InventoryController> {
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: Colors.grey[300]!),
                 ),
-                child: Obx(() => DropdownButton<int>(
-                      value: controller.farmId.value == 0
-                          ? null
-                          : controller.farmId.value,
-                      isExpanded: true,
-                      underline: const SizedBox(),
-                      hint: const Text('Chọn nông trường'),
-                      items: controller.farmResponses.value.map((farm) {
-                        return DropdownMenuItem<int>(
-                          value: farm.farmId,
-                          child: Text(farm.farmName),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          final selectedFarm =
-                              controller.farmResponses.value.firstWhere(
-                            (farm) => farm.farmId == value,
-                          );
-                          controller.selectedFarm.value = selectedFarm;
-                          controller.farm.value = selectedFarm.farmName;
-                          controller.farmId.value = selectedFarm.farmId;
-
-                          // Reset dependent fields
-                          controller.selectedTeam.value = null;
-                          controller.productionTeam.value = '';
-                          controller.productTeamId.value = 0;
-                          controller.showTeamDropdown.value =
-                              selectedFarm.productTeamResponse.isNotEmpty;
-
-                          controller.selectedLot.value = null;
-                          controller.lot.value = '';
-                          controller.farmLotId.value = 0;
-                          controller.showLotDropdown.value = false;
-
-                          controller.yearShaved.value = 0;
-                          controller.tappingAge.value = '';
-                          controller.showYearDropdown.value = false;
-                        }
-                      },
-                    )),
+                child: DropdownButton<int>(
+                  value: controller.farmId.value == 0
+                      ? null
+                      : controller.farmId.value,
+                  isExpanded: true,
+                  underline: const SizedBox(),
+                  hint: const Text('Chọn nông trường'),
+                  items: controller.farmResponses.value.map((farm) {
+                    return DropdownMenuItem<int>(
+                      value: farm.farmId,
+                      child: Text(farm.farmName),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      final selectedFarm = controller.farmResponses.value
+                          .firstWhere((farm) => farm.farmId == value);
+                      controller.onFarmSelected(
+                          selectedFarm.farmId, selectedFarm.farmName);
+                    }
+                  },
+                ),
               ),
 
               // Team dropdown
@@ -278,22 +271,9 @@ class InventoryScreen extends GetView<InventoryController> {
                                 .firstWhere(
                               (team) => team.productTeamId == value,
                             );
-                            controller.selectedTeam.value = selectedTeam;
-                            controller.productionTeam.value =
-                                selectedTeam.productTeamName;
-                            controller.productTeamId.value =
-                                selectedTeam.productTeamId;
-
-                            // Reset dependent fields
-                            controller.selectedLot.value = null;
-                            controller.lot.value = '';
-                            controller.farmLotId.value = 0;
-                            controller.showLotDropdown.value =
-                                selectedTeam.farmLotResponse.isNotEmpty;
-
-                            controller.yearShaved.value = 0;
-                            controller.tappingAge.value = '';
-                            controller.showYearDropdown.value = false;
+                            controller.onTeamSelected(
+                                selectedTeam.productTeamId,
+                                selectedTeam.productTeamName);
                           }
                         },
                       ),
@@ -331,15 +311,8 @@ class InventoryScreen extends GetView<InventoryController> {
                                 .firstWhere(
                               (lot) => lot.farmLotId == value,
                             );
-                            controller.selectedLot.value = selectedLot;
-                            controller.lot.value = selectedLot.farmLotName;
-                            controller.farmLotId.value = selectedLot.farmLotId;
-
-                            // Reset and update age dropdown
-                            controller.yearShaved.value = 0;
-                            controller.tappingAge.value = '';
-                            controller.showYearDropdown.value =
-                                selectedLot.ageShavedResponse.isNotEmpty;
+                            controller.onLotSelected(
+                                selectedLot.farmLotId, selectedLot.farmLotName);
                           }
                         },
                       ),
@@ -421,12 +394,16 @@ class InventoryScreen extends GetView<InventoryController> {
                     onPressed: () => Get.back(),
                     child: const Text('Hủy'),
                   ),
+                  const SizedBox(width: 8),
                   ElevatedButton(
-                    onPressed: () {
-                      Get.back();
-                      controller.update();
-                    },
-                    child: const Text('Xác nhận'),
+                    onPressed: () => Get.back(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                    ),
+                    child: const Text(
+                      'Xác nhận',
+                      style: TextStyle(color: Colors.white),
+                    ),
                   ),
                 ],
               ),

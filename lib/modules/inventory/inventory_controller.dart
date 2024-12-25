@@ -973,17 +973,9 @@ class InventoryController extends GetxController {
 
   Future<void> fetchShavedStatusData() async {
     try {
-      final storage = Get.find<GetStorage>();
-      final localData = await storage.read('shaved_status_data');
-
-      if (localData != null) {
-        final response = ShavedStatusResponse.fromJson(jsonDecode(localData));
-        shavedStatusData.value = response.data;
-      } else {
-        final response = await _apiProvider.fetchShavedStatus();
-        await storage.write('shaved_status_data', jsonEncode(response));
-        shavedStatusData.value = response.data;
-      }
+      final response = await _apiProvider.fetchShavedStatus();
+      await storage.write('shaved_status_data', jsonEncode(response));
+      shavedStatusData.value = response.data;
     } catch (e) {
       print('Error fetching shaved status: $e');
       Get.snackbar(

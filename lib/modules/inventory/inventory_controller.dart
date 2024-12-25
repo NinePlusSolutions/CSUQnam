@@ -179,7 +179,7 @@ class InventoryController extends GetxController {
             .map((age) => age.value.toString())
             .toSet()
             .toList();
-        
+
         if (validAges.length == 1) {
           tappingAge.value = validAges.first;
           yearShaved.value = int.parse(validAges.first);
@@ -1123,128 +1123,117 @@ class InventoryController extends GetxController {
       return;
     }
 
-    // Nếu tất cả điều kiện đã thỏa mãn, hiển thị bottom sheet
-    Get.bottomSheet(
-      Container(
-        padding: const EdgeInsets.all(16),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(20),
+    // Fetch shaved status data first
+    fetchShavedStatusData().then((_) {
+      if (shavedStatusData.value == null) {
+        Get.snackbar(
+          'Lỗi',
+          'Không thể tải dữ liệu trạng thái cạo',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      // Show bottom sheet with fetched data
+      Get.bottomSheet(
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(20),
+            ),
           ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Chọn trạng thái cạo',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Chọn trạng thái cạo',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Get.back(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children:
+                        shavedStatusData.value!.toJson().entries.map((entry) {
+                      return Column(
+                        children: [
+                          _buildShavedStatusGroup(entry.key, entry.value),
+                          const SizedBox(height: 16),
+                        ],
+                      );
+                    }).toList(),
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Get.back(),
+              ),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, -2),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _buildShavedStatusGroup('BO1', [
-                      _buildStatusItem('BO1', 'BO1'),
-                      _buildStatusItem('BO1.1', 'BO1.1'),
-                      _buildStatusItem('BO1.2', 'BO1.2'),
-                      _buildStatusItem('BO1.3', 'BO1.3'),
-                      _buildStatusItem('BO1.4', 'BO1.4'),
-                      _buildStatusItem('BO1.5', 'BO1.5'),
-                      _buildStatusItem('BO1.6', 'BO1.6'),
-                    ]),
-                    const SizedBox(height: 16),
-                    _buildShavedStatusGroup('BO2', [
-                      _buildStatusItem('BO2', 'BO2'),
-                      _buildStatusItem('BO2.7', 'BO2.7'),
-                      _buildStatusItem('BO2.8', 'BO2.8'),
-                      _buildStatusItem('BO2.9', 'BO2.9'),
-                      _buildStatusItem('BO2.10', 'BO2.10'),
-                      _buildStatusItem('BO2.11', 'BO2.11'),
-                      _buildStatusItem('BO2.12', 'BO2.12'),
-                    ]),
-                    const SizedBox(height: 16),
-                    _buildShavedStatusGroup('HO', [
-                      _buildStatusItem('HO', 'HO'),
-                      _buildStatusItem('HO.1', 'HO.1'),
-                      _buildStatusItem('HO.2', 'HO.2'),
-                      _buildStatusItem('HO.3', 'HO.3'),
-                      _buildStatusItem('HO.4', 'HO.4'),
-                      _buildStatusItem('HO.5', 'HO.5'),
-                      _buildStatusItem('HO.6', 'HO.6'),
-                      _buildStatusItem('HO.7', 'HO.7'),
-                      _buildStatusItem('HO.8', 'HO.8'),
-                    ]),
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Get.back(),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: const Text('Hủy'),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Obx(() => ElevatedButton(
+                            onPressed: selectedShavedStatus.value != null
+                                ? () {
+                                    Get.back();
+                                    _showConfirmDialog();
+                                  }
+                                : null,
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            child: const Text('Xác nhận'),
+                          )),
+                    ),
                   ],
                 ),
               ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 4,
-                    offset: const Offset(0, -2),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Expanded(
-                    child: TextButton(
-                      onPressed: () => Get.back(),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      child: const Text('Hủy'),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Obx(() => ElevatedButton(
-                          onPressed: selectedShavedStatus.value != null
-                              ? () {
-                                  Get.back();
-                                  _showConfirmDialog();
-                                }
-                              : null,
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                          child: const Text('Xác nhận'),
-                        )),
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-    );
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+      );
+    });
   }
 
-  Widget _buildShavedStatusGroup(String title, List<Widget> items) {
+  Widget _buildShavedStatusGroup(String title, List<ShavedStatusItem> items) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1266,23 +1255,18 @@ class InventoryController extends GetxController {
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: items,
+          children: items.map((item) => _buildStatusItem(item)).toList(),
         ),
       ],
     );
   }
 
-  Widget _buildStatusItem(String id, String label) {
-    final item = ShavedStatusItem(id: 1, name: label);
+  Widget _buildStatusItem(ShavedStatusItem item) {
     return Obx(() {
-      final isSelected = selectedShavedStatus.value?.name == label;
+      final isSelected = selectedShavedStatus.value?.id == item.id;
       return InkWell(
         onTap: () {
-          if (isSelected) {
-            selectedShavedStatus.value = null;
-          } else {
-            selectedShavedStatus.value = item;
-          }
+          selectedShavedStatus.value = isSelected ? null : item;
         },
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -1294,7 +1278,7 @@ class InventoryController extends GetxController {
             ),
           ),
           child: Text(
-            label,
+            item.name,
             style: TextStyle(
               color: isSelected ? Colors.white : Colors.black87,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,

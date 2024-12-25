@@ -5,6 +5,7 @@ import 'package:flutter_getx_boilerplate/models/local/local_tree_update.dart';
 import 'package:flutter_getx_boilerplate/models/tree_condition/tree_condition_request.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'dart:io';
 
 class SyncController extends GetxController {
   final _apiProvider = Get.find<ApiProvider>();
@@ -18,6 +19,15 @@ class SyncController extends GetxController {
   void onInit() {
     super.onInit();
     loadPendingUpdates();
+  }
+
+  Future<bool> checkInternetConnection() async {
+    try {
+      final result = await InternetAddress.lookup('google.com');
+      return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+    } on SocketException catch (_) {
+      return false;
+    }
   }
 
   Future<void> loadPendingUpdates() async {
@@ -61,18 +71,14 @@ class SyncController extends GetxController {
                 statusUpdates: statusUpdates,
                 note: item['note'],
               ));
-              print('Loaded update with tapping age: ${item['tappingAge']}');
             }
           } catch (e) {
             print('Error parsing item: $e');
-            print('Problematic item: $item');
           }
         }
 
-        print('Successfully loaded ${updates.length} updates');
         pendingUpdates.value = updates;
       } else {
-        print('No valid data found in storage');
         pendingUpdates.clear();
       }
     } catch (e) {
@@ -88,6 +94,20 @@ class SyncController extends GetxController {
           'Thông báo',
           'Không có dữ liệu cần đồng bộ',
           backgroundColor: Colors.blue,
+          colorText: Colors.white,
+        );
+      });
+      return;
+    }
+
+    // Check internet connection first
+    final hasInternet = await checkInternetConnection();
+    if (!hasInternet) {
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        Get.snackbar(
+          'Lỗi kết nối',
+          'Không có kết nối mạng. Vui lòng kiểm tra lại kết nối của bạn.',
+          backgroundColor: Colors.red,
           colorText: Colors.white,
         );
       });
@@ -182,6 +202,20 @@ class SyncController extends GetxController {
       final request = TreeConditionRequest(
         treeConditionList: [treeCondition],
       );
+
+      // Check internet connection first
+      final hasInternet = await checkInternetConnection();
+      if (!hasInternet) {
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          Get.snackbar(
+            'Lỗi kết nối',
+            'Không có kết nối mạng. Vui lòng kiểm tra lại kết nối của bạn.',
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+          );
+        });
+        return;
+      }
 
       // Send to server
       final response = await _apiProvider.syncTreeCondition(request);

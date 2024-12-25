@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_getx_boilerplate/modules/home/home.dart';
 import 'package:get/get.dart';
@@ -57,7 +58,28 @@ class HomeScreen extends GetView<HomeController> {
     );
   }
 
-  void _handleLogout() {
+  Future<bool> _checkInternetConnection() async {
+    try {
+      final result = await InternetAddress.lookup('google.com');
+      return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+    } on SocketException catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> _handleLogout() async {
+    // Kiểm tra kết nối mạng
+    final hasInternet = await _checkInternetConnection();
+    if (!hasInternet) {
+      Get.snackbar(
+        'Lỗi kết nối',
+        'Vui lòng kiểm tra kết nối mạng trước khi đăng xuất',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
     final storage = GetStorage();
     final localUpdates = storage.read('local_updates');
 

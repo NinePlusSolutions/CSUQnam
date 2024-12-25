@@ -307,22 +307,201 @@ class InventoryController extends GetxController {
   }
 
   void _showConfirmDialog() {
+    // Build status summary text
+    String statusSummary = '';
+    int totalTrees = 0;
+    statusCounts.forEach((status, count) {
+      if (count.value > 0) {
+        totalTrees += count.value;
+        statusSummary += '• $status: ${count.value} cây\n';
+      }
+    });
+
     Get.dialog(
       AlertDialog(
-        title: const Text('Xác nhận'),
-        content: const Text('Bạn có chắc chắn muốn lưu cập nhật này?'),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Hủy'),
+        title: const Column(
+          children: [
+            Icon(
+              Icons.save_outlined,
+              size: 40,
+              color: Colors.blue,
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Xác nhận thông tin',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        content: Container(
+          constraints: const BoxConstraints(maxHeight: 400),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Thông tin cơ bản',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      _buildInfoRow('Lô:', lot.value),
+                      _buildInfoRow('Đội:', productionTeam.value),
+                      _buildInfoRow('Hàng:', row.value),
+                      _buildInfoRow('Trạng thái cạo:',
+                          selectedShavedStatus.value?.name ?? ''),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue[50],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Số lượng cây theo trạng thái',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        statusSummary,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          height: 1.5,
+                        ),
+                      ),
+                      const Divider(),
+                      Text(
+                        'Tổng số cây: $totalTrees',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (note.value.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.orange[50],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Ghi chú',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.orange,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          note.value,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
-          ElevatedButton(
+        ),
+        actions: [
+          TextButton.icon(
+            onPressed: () => Get.back(),
+            icon: const Icon(Icons.close),
+            label: const Text('Hủy'),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.grey[700],
+            ),
+          ),
+          ElevatedButton.icon(
             onPressed: () async {
               Get.back();
               await saveLocalUpdate();
-              submitInventory();
+              // Reset values for next row
+              selectedShavedStatus.value = null;
+              statusCounts.forEach((key, value) {
+                value.value = 0;
+              });
+              note.value = '';
+              // Increment row number
+              final currentRow = int.parse(row.value);
+              if (currentRow < totalRows) {
+                row.value = (currentRow + 1).toString();
+              }
             },
-            child: const Text('Xác nhận'),
+            icon: const Icon(Icons.check),
+            label: const Text('Xác nhận'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue,
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontWeight: FontWeight.w500,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),
@@ -340,65 +519,169 @@ class InventoryController extends GetxController {
       return;
     }
 
-    // Convert RxInt to int for statusCounts
-    final Map<String, int> convertedStatusCounts = {};
-    statusCounts.forEach((key, value) {
-      convertedStatusCounts[key] = value.value;
-    });
-
-    Get.put(UpdateTreeController());
-    Get.to(
-      () => UpdateTreeScreen(
-        farm: farm.value,
-        lot: lot.value,
-        team: productionTeam.value,
-        row: row.value,
-        statusCounts: convertedStatusCounts,
-      ),
-      arguments: {
-        'farmId': farmId.value,
-        'farmName': farm.value,
-        'productTeamId': productTeamId.value,
-        'productTeamName': productionTeam.value,
-        'farmLotId': farmLotId.value,
-        'farmLotName': lot.value,
-        'treeLineName': row.value,
-        'shavedStatusId': selectedShavedStatus.value!.id,
-        'shavedStatusName': selectedShavedStatus.value!.name,
-        'tappingAge': tappingAge.value,
-        'note': note.value,
-      },
-    )!
-        .then((value) {
-      if (value != null && value is Map) {
-        // If continuing to next row
-        if (value['row'] != null) {
-          row.value = value['row'];
-          // Reset values for next row
-          selectedShavedStatus.value = null;
-          statusCounts.forEach((key, value) {
-            value.value = 0;
-          });
-          note.value = '';
-        } else {
-          // If finished updating
-          showFinishDialog();
-        }
+    // Build status summary text
+    String statusSummary = '';
+    int totalTrees = 0;
+    statusCounts.forEach((status, count) {
+      if (count.value > 0) {
+        totalTrees += count.value;
+        final color = statusColors[status] ?? Colors.black;
+        statusSummary += '• $status: ${count.value} cây\n';
       }
     });
-  }
 
-  void showFinishDialog() {
     Get.dialog(
       AlertDialog(
-        title: const Text('Thành công'),
-        content: const Text('Bạn đã cập nhật thành công!'),
+        title: const Text('Xác nhận thông tin'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Thông tin cập nhật:',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text('Lô 1: ${lot.value}'),
+              Text('Đội: ${productionTeam.value}'),
+              Text('Hàng: ${row.value}'),
+              Text('Trạng thái cạo: ${selectedShavedStatus.value?.name}'),
+              const SizedBox(height: 12),
+              const Text(
+                'Số lượng cây theo trạng thái:',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(statusSummary),
+              const SizedBox(height: 8),
+              Text(
+                'Tổng số cây: $totalTrees',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              if (note.value.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                const Text(
+                  'Ghi chú:',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(note.value),
+              ],
+            ],
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () {
               Get.back();
             },
-            child: const Text('Đóng'),
+            child: const Text('Chỉnh sửa'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Get.back();
+              await saveLocalUpdate();
+              // Reset values for next row
+              selectedShavedStatus.value = null;
+              statusCounts.forEach((key, value) {
+                value.value = 0;
+              });
+              note.value = '';
+              // Increment row number
+              final currentRow = int.parse(row.value);
+              if (currentRow < totalRows) {
+                row.value = (currentRow + 1).toString();
+              }
+            },
+            child: const Text('Xác nhận'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void showFinishDialog() {
+    // Build status summary text
+    String statusSummary = '';
+    statusCounts.forEach((status, count) {
+      if (count.value > 0) {
+        statusSummary += '$status: ${count.value}\n';
+      }
+    });
+
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Xác nhận cập nhật'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Thông tin cập nhật:'),
+            const SizedBox(height: 8),
+            Text('Lô: ${lot.value}'),
+            Text('Đội: ${productionTeam.value}'),
+            Text('Hàng: ${row.value}'),
+            Text('Trạng thái cạo: ${selectedShavedStatus.value?.name}'),
+            const SizedBox(height: 8),
+            const Text('Số lượng cây theo trạng thái:'),
+            Text(statusSummary),
+            if (note.value.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text('Ghi chú: ${note.value}'),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Get.back();
+            },
+            child: const Text('Hủy'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Get.back();
+              try {
+                await saveLocalUpdate();
+                Get.snackbar(
+                  'Thành công',
+                  'Đã lưu thông tin cập nhật',
+                  backgroundColor: Colors.green,
+                  colorText: Colors.white,
+                );
+                // Reset values
+                selectedShavedStatus.value = null;
+                statusCounts.forEach((key, value) {
+                  value.value = 0;
+                });
+                note.value = '';
+                // Increment row number
+                final currentRow = int.parse(row.value);
+                if (currentRow < totalRows) {
+                  row.value = (currentRow + 1).toString();
+                }
+              } catch (e) {
+                Get.snackbar(
+                  'Lỗi',
+                  'Không thể lưu thông tin cập nhật. Vui lòng thử lại.',
+                  backgroundColor: Colors.red,
+                  colorText: Colors.white,
+                );
+              }
+            },
+            child: const Text('Xác nhận'),
           ),
         ],
       ),

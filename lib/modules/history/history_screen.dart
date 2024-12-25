@@ -129,6 +129,23 @@ class HistoryScreen extends GetView<HistoryController> {
                   ],
                 ),
                 const SizedBox(height: 8),
+                // Farm name
+                Row(
+                  children: [
+                    Icon(Icons.location_on, color: Colors.green[700], size: 18),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        history.farmName,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.green[700],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
                 // Location details
                 Container(
                   padding:
@@ -141,17 +158,6 @@ class HistoryScreen extends GetView<HistoryController> {
                   child: IntrinsicHeight(
                     child: Row(
                       children: [
-                        _buildLocationInfo(
-                          icon: Icons.location_on,
-                          label: 'Nông trường',
-                          value: history.farmName,
-                        ),
-                        VerticalDivider(
-                          color: Colors.green.withOpacity(0.2),
-                          thickness: 1,
-                          indent: 4,
-                          endIndent: 4,
-                        ),
                         _buildLocationInfo(
                           icon: Icons.group,
                           label: 'Tổ',

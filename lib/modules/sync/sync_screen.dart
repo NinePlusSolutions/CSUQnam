@@ -206,76 +206,196 @@ class _SyncScreenState extends State<SyncScreen> {
     );
   }
 
-  Widget _buildUpdateItem(LocalTreeUpdate update) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      elevation: 4,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(Radius.circular(20)),
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey[200]!),
+  void _showCardActions(LocalTreeUpdate update) {
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              width: 40,
+              height: 4,
               decoration: BoxDecoration(
-                color: Colors.green,
-                border: Border(
-                  bottom: BorderSide(
-                    color: Colors.grey[300]!,
-                    width: 1,
-                  ),
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.green[50],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.sync, color: Colors.green),
+              ),
+              title: const Text(
+                'Đồng bộ mục này',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-              child: Row(
-                children: [
-                  const Icon(Icons.location_on, color: Colors.white, size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      update.farmName,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
+              subtitle: Text(
+                'Đồng bộ dữ liệu của ${update.farmName}',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+              ),
+              onTap: () {
+                Get.back();
+                controller.syncSingleUpdate(update);
+              },
+            ),
+            const SizedBox(height: 8),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.red[50],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.delete_outline, color: Colors.red),
+              ),
+              title: const Text(
+                'Xóa mục này',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              subtitle: Text(
+                'Xóa dữ liệu của ${update.farmName}',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+              ),
+              onTap: () {
+                Get.back();
+                _showDeleteConfirmation(update);
+              },
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+    );
+  }
+
+  void _showDeleteConfirmation(LocalTreeUpdate update) {
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Xác nhận xóa'),
+        content:
+            Text('Bạn có chắc chắn muốn xóa dữ liệu của ${update.farmName}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () {
+              Get.back();
+              controller.deleteSingleUpdate(update);
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: const Text('Xóa'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUpdateItem(LocalTreeUpdate update) {
+    return GestureDetector(
+      onTap: () => _showCardActions(update),
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 8),
+        elevation: 4,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(20)),
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey[200]!),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: double.infinity,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.green,
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Colors.grey[300]!,
+                      width: 1,
                     ),
                   ),
-                ],
-              ),
-            ),
-            // Other info
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.green[50],
-                border: Border(
-                  bottom: BorderSide(
-                    color: Colors.grey[300]!,
-                    width: 1,
-                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.location_on,
+                        color: Colors.white, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        update.farmName,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              child: _buildHeader(update),
-            ),
-            // Status updates
-            Container(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildStatusUpdates(update.statusUpdates),
-                  const SizedBox(height: 16),
-                  _buildShavedStatus(update),
-                ],
+              // Other info
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.green[50],
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Colors.grey[300]!,
+                      width: 1,
+                    ),
+                  ),
+                ),
+                child: _buildHeader(update),
               ),
-            ),
-          ],
+              // Status updates
+              Container(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildStatusUpdates(update.statusUpdates),
+                    const SizedBox(height: 16),
+                    _buildShavedStatus(update),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

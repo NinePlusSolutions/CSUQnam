@@ -81,6 +81,18 @@ class SyncController extends GetxController {
     }
   }
 
+  // Helper method to map status ID to code
+  String _getStatusCode(int statusId) {
+    switch (statusId) {
+      case 1:
+        return 'U'; // Ví dụ: statusId 1 -> U
+      case 2:
+        return 'UN'; // Ví dụ: statusId 2 -> UN
+      default:
+        return 'N'; // Default code
+    }
+  }
+
   Future<void> syncUpdates() async {
     if (pendingUpdates.isEmpty) {
       SchedulerBinding.instance.addPostFrameCallback((_) {
@@ -103,7 +115,8 @@ class SyncController extends GetxController {
         final details = update.statusUpdates
             .map((statusUpdate) => TreeConditionDetail(
                   statusId: statusUpdate.statusId,
-                  value: statusUpdate.value,
+                  value: _getStatusCode(statusUpdate
+                      .statusId), // Use status code instead of value
                 ))
             .toList();
 
@@ -156,6 +169,81 @@ class SyncController extends GetxController {
     }
   }
 
+  Future<void> syncSingleUpdate(LocalTreeUpdate update) async {
+    try {
+      isSyncing.value = true;
+
+      // Convert single update to TreeCondition
+      final details = update.statusUpdates
+          .map((statusUpdate) => TreeConditionDetail(
+                statusId: statusUpdate.statusId,
+                value: _getStatusCode(
+                    statusUpdate.statusId), // Use status code instead of value
+              ))
+          .toList();
+
+      final treeCondition = TreeCondition(
+        farmId: update.farmId,
+        productTeamId: update.productTeamId,
+        farmLotId: update.farmLotId,
+        treeLineName: update.treeLineName,
+        shavedStatus: update.shavedStatusId,
+        dateCheck: update.dateCheck,
+        treeConditionDetails: details,
+      );
+
+      // Create request with single item
+      final request = TreeConditionRequest(
+        treeConditionList: [treeCondition],
+      );
+
+      // Send to server
+      final response = await _apiProvider.syncTreeCondition(request);
+
+      if (response.statusCode == 200) {
+        // Remove synced update from local storage
+        final List<Map<String, dynamic>> existingUpdates = [];
+        final storedData = _storage.read('local_updates');
+        if (storedData != null && storedData is List) {
+          existingUpdates.addAll(List<Map<String, dynamic>>.from(storedData));
+        }
+
+        // Remove the synced update
+        existingUpdates.removeWhere((item) =>
+            item['farmId'] == update.farmId &&
+            item['farmLotId'] == update.farmLotId &&
+            item['treeLineName'] == update.treeLineName &&
+            item['dateCheck'] == update.dateCheck.toIso8601String());
+
+        await _storage.write('local_updates', existingUpdates);
+        await loadPendingUpdates();
+
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          Get.snackbar(
+            'Thành công',
+            'Đã đồng bộ dữ liệu của ${update.farmName}',
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+          );
+        });
+      } else {
+        throw Exception('Sync failed with status: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error syncing single update: $e');
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        Get.snackbar(
+          'Lỗi',
+          'Không thể đồng bộ dữ liệu. Vui lòng thử lại',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      });
+    } finally {
+      isSyncing.value = false;
+    }
+  }
+
   Future<void> clearPendingUpdates() async {
     try {
       await _storage.write('local_updates', []);
@@ -178,6 +266,41 @@ class SyncController extends GetxController {
           colorText: Colors.white,
         );
       });
+    }
+  }
+
+  Future<void> deleteSingleUpdate(LocalTreeUpdate update) async {
+    try {
+      final List<Map<String, dynamic>> existingUpdates = [];
+      final storedData = _storage.read('local_updates');
+      if (storedData != null && storedData is List) {
+        existingUpdates.addAll(List<Map<String, dynamic>>.from(storedData));
+      }
+
+      // Remove the update
+      existingUpdates.removeWhere((item) =>
+          item['farmId'] == update.farmId &&
+          item['farmLotId'] == update.farmLotId &&
+          item['treeLineName'] == update.treeLineName &&
+          item['dateCheck'] == update.dateCheck.toIso8601String());
+
+      await _storage.write('local_updates', existingUpdates);
+      await loadPendingUpdates();
+
+      Get.snackbar(
+        'Thành công',
+        'Đã xóa dữ liệu của ${update.farmName}',
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      print('Error deleting single update: $e');
+      Get.snackbar(
+        'Lỗi',
+        'Không thể xóa dữ liệu: $e',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
 }

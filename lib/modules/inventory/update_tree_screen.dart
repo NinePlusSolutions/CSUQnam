@@ -62,7 +62,7 @@ class UpdateTreeScreen extends GetView<UpdateTreeController> {
             padding: const EdgeInsets.only(right: 8),
             child: IconButton(
               icon: const Icon(Icons.sync, color: Colors.white),
-              onPressed: _showSyncConfirmation,
+              onPressed: () => Get.toNamed('/sync'),
             ),
           ),
         ],

@@ -6,14 +6,19 @@ part 'tree_condition_request.g.dart';
 class TreeConditionRequest {
   @JsonKey(name: 'treeConditionList')
   final List<TreeCondition> treeConditionList;
+  final String? description;
 
   TreeConditionRequest({
     required this.treeConditionList,
+    this.description,
   });
 
   factory TreeConditionRequest.fromJson(Map<String, dynamic> json) =>
       _$TreeConditionRequestFromJson(json);
-  Map<String, dynamic> toJson() => _$TreeConditionRequestToJson(this);
+  Map<String, dynamic> toJson() => {
+        'treeConditionList': treeConditionList.map((x) => x.toJson()).toList(),
+        'description': description,
+      };
 }
 
 @JsonSerializable()
@@ -45,7 +50,16 @@ class TreeCondition {
 
   factory TreeCondition.fromJson(Map<String, dynamic> json) =>
       _$TreeConditionFromJson(json);
-  Map<String, dynamic> toJson() => _$TreeConditionToJson(this);
+  Map<String, dynamic> toJson() => {
+        'farmId': farmId,
+        'productTeamId': productTeamId,
+        'farmLotId': farmLotId,
+        'treeLineName': treeLineName,
+        'shavedStatus': shavedStatus,
+        'dateCheck': dateCheck.toIso8601String(),
+        'treeConditionDetails':
+            treeConditionDetails.map((x) => x.toJson()).toList(),
+      };
 }
 
 @JsonSerializable()

@@ -137,7 +137,10 @@ class SyncController extends GetxController {
           treeConditionDetails: details,
         );
       }).toList();
-      final request = TreeConditionRequest(treeConditionList: treeConditions);
+      final request = TreeConditionRequest(
+        treeConditionList: treeConditions,
+        description: pendingUpdates.first.note,
+      );
       final response = await _apiProvider.syncTreeCondition(request);
 
       if (response.statusCode == 200 && response.data['status'] == true) {
@@ -197,6 +200,7 @@ class SyncController extends GetxController {
       // Create request with single item
       final request = TreeConditionRequest(
         treeConditionList: [treeCondition],
+        description: update.note,
       );
 
       // Check internet connection first

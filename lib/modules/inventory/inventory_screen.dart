@@ -45,7 +45,7 @@ class InventoryScreen extends GetView<InventoryController> {
                   children: [
                     _buildStatusGrid(),
                     const SizedBox(height: 24),
-                    //    _buildNoteSection(),
+                    _buildNoteSection(),
                     // _buildFinishButton(),
                   ],
                 ),

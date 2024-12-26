@@ -731,24 +731,14 @@ class InventoryScreen extends GetView<InventoryController> {
             ],
           ),
           child: TextField(
-            onChanged: controller.updateNote,
-            maxLines: 4,
+            controller: controller.noteController,
+            onChanged: (value) => controller.note.value = value,
+            maxLines: 3,
             decoration: InputDecoration(
               hintText: 'Nhập ghi chú (nếu có)',
-              hintStyle: TextStyle(color: Colors.grey[400]),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey[300]!),
+                borderRadius: BorderRadius.circular(8),
               ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey[300]!),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Colors.green),
-              ),
-              contentPadding: const EdgeInsets.all(16),
             ),
           ),
         ),

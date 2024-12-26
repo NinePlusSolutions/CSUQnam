@@ -30,6 +30,7 @@ class InventoryController extends GetxController {
   final RxMap<String, Color> statusColors = <String, Color>{}.obs;
   final RxMap<String, RxInt> statusCounts = <String, RxInt>{}.obs;
   final RxString note = ''.obs;
+  final noteController = TextEditingController();
   final RxString tappingAge = ''.obs;
   final RxInt yearShaved = 0.obs;
   final RxString row = '1'.obs;
@@ -290,6 +291,20 @@ class InventoryController extends GetxController {
       }
 
       _showSuccessMessage('Thành công', 'Đã lưu dữ liệu kiểm kê');
+
+      // Reset values for next row
+      selectedShavedStatus.value = null;
+      statusCounts.forEach((key, value) {
+        value.value = 0;
+      });
+      note.value = '';
+      noteController.text = ''; // Reset text controller
+
+      // Increment row number
+      final currentRow = int.parse(row.value);
+      if (currentRow < totalRows) {
+        row.value = (currentRow + 1).toString();
+      }
     } catch (e) {
       print('Error saving local update: $e');
       _showErrorMessage('Lỗi', 'Không thể lưu dữ liệu kiểm kê: $e');

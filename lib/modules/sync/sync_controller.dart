@@ -77,6 +77,8 @@ class SyncController extends GetxController {
           }
         }
 
+        // Sort updates by dateCheck in descending order (newest first)
+        updates.sort((a, b) => b.dateCheck.compareTo(a.dateCheck));
         pendingUpdates.value = updates;
       } else {
         pendingUpdates.clear();

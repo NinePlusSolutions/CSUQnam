@@ -297,235 +297,158 @@ class InventoryController extends GetxController {
   }
 
   void _showConfirmDialog() {
-    // Kiểm tra các trường bắt buộc
-    if (farmId.value == 0 || farm.value.isEmpty) {
-      _showErrorMessage('Thiếu thông tin', 'Vui lòng chọn nông trường');
-      return;
-    }
-
-    if (productTeamId.value == 0 || productionTeam.value.isEmpty) {
-      _showErrorMessage('Thiếu thông tin', 'Vui lòng chọn tổ sản xuất');
-      return;
-    }
-
-    if (farmLotId.value == 0 || lot.value.isEmpty) {
-      _showErrorMessage('Thiếu thông tin', 'Vui lòng chọn lô');
-      return;
-    }
-
-    if (tappingAge.value.isEmpty) {
-      _showErrorMessage('Thiếu thông tin', 'Vui lòng chọn tuổi cạo');
-      return;
-    }
-
-    if (row.value.isEmpty) {
-      _showErrorMessage('Thiếu thông tin', 'Vui lòng chọn hàng');
-      return;
-    }
-
-    if (selectedShavedStatus.value == null) {
-      _showErrorMessage('Thiếu thông tin', 'Vui lòng chọn trạng thái cạo');
-      return;
-    }
-
-    // Kiểm tra xem có ít nhất một trạng thái được cập nhật
-    bool hasStatusUpdate = false;
-    statusCounts.forEach((_, count) {
-      if (count.value > 0) {
-        hasStatusUpdate = true;
-      }
-    });
-
-    if (!hasStatusUpdate) {
-      _showErrorMessage('Thiếu thông tin', 'Vui lòng cập nhật ít nhất một trạng thái cây');
-      return;
-    }
-
-    // Build status summary text
-    String statusSummary = '';
-    int totalTrees = 0;
-    statusCounts.forEach((status, count) {
-      if (count.value > 0) {
-        totalTrees += count.value;
-        statusSummary += '• $status: ${count.value} cây\n';
-      }
-    });
-
+    final screenWidth = MediaQuery.of(Get.context!).size.width;
     Get.dialog(
-      AlertDialog(
-        title: const Column(
-          children: [
-            Icon(
-              Icons.save_outlined,
-              size: 40,
-              color: Colors.blue,
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Xác nhận thông tin',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
+      Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
         ),
-        content: Container(
-          constraints: const BoxConstraints(maxHeight: 400),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Thông tin cơ bản',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      _buildInfoRow('Lô:', lot.value),
-                      _buildInfoRow('Đội:', productionTeam.value),
-                      _buildInfoRow('Hàng:', row.value),
-                      _buildInfoRow('Trạng thái cạo:',
-                          selectedShavedStatus.value?.name ?? ''),
-                    ],
-                  ),
+        child: Container(
+          width: screenWidth * 0.9, // Make dialog wider
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Title
+              const Text(
+                'Xác nhận thông tin',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
                 ),
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.blue[50],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Số lượng cây theo trạng thái',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        statusSummary,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          height: 1.5,
-                        ),
-                      ),
-                      const Divider(),
-                      Text(
-                        'Tổng số cây: $totalTrees',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue,
-                        ),
-                      ),
-                    ],
-                  ),
+              ),
+              const SizedBox(height: 20),
+              // Location info
+              _buildInfoRow('Nông trường:', farm.value),
+              _buildInfoRow('Tổ:', productionTeam.value),
+              _buildInfoRow('Lô:', lot.value),
+              _buildInfoRow('Hàng:', row.value),
+              const SizedBox(height: 16),
+              // Tree status section
+              const Text(
+                'Số lượng theo trạng thái:',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
                 ),
-                if (note.value.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.orange[50],
-                      borderRadius: BorderRadius.circular(8),
+              ),
+              const SizedBox(height: 12),
+              // Tree status counts with colors
+              ...statusList.map((condition) {
+                final count = statusCounts[condition.name] ?? 0;
+                if (count == 0) return const SizedBox.shrink();
+
+                final color = statusColors[condition.name] ?? Colors.grey;
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: color.withOpacity(0.3),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Ghi chú',
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        condition.name,
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: color,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: color.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          count.toString(),
                           style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.orange,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: color,
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          note.value,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ],
+                      ),
+                    ],
+                  ),
+                );
+              }),
+              const SizedBox(height: 16),
+              // Shaved status
+              _buildInfoRow('Trạng thái mặt cạo:',
+                  selectedShavedStatus.value?.name ?? ''),
+              if (note.value.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                _buildInfoRow('Ghi chú:', note.value),
+              ],
+              const SizedBox(height: 24),
+              // Buttons
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Get.back(),
+                    child: const Text(
+                      'Hủy',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                    ),
+                    onPressed: () {
+                      Get.back();
+                      saveLocalUpdate();
+                    },
+                    child: const Text(
+                      'Xác nhận',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ],
-              ],
-            ),
+              ),
+            ],
           ),
         ),
-        actions: [
-          TextButton.icon(
-            onPressed: () => Get.back(),
-            icon: const Icon(Icons.close),
-            label: const Text('Hủy'),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.grey[700],
-            ),
-          ),
-          ElevatedButton.icon(
-            onPressed: () async {
-              Get.back();
-              await saveLocalUpdate();
-              // Reset values for next row
-              selectedShavedStatus.value = null;
-              statusCounts.forEach((key, value) {
-                value.value = 0;
-              });
-              note.value = '';
-              // Increment row number
-              final currentRow = int.parse(row.value);
-              if (currentRow < totalRows) {
-                row.value = (currentRow + 1).toString();
-              }
-            },
-            icon: const Icon(Icons.check),
-            label: const Text('Xác nhận'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              foregroundColor: Colors.white,
-            ),
-          ),
-        ],
       ),
     );
   }
 
   Widget _buildInfoRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 100,
+            width: 140,
             child: Text(
               label,
               style: const TextStyle(
-                fontWeight: FontWeight.w500,
-                color: Colors.black87,
+                fontSize: 15,
+                color: Colors.black54,
               ),
             ),
           ),
@@ -533,7 +456,8 @@ class InventoryController extends GetxController {
             child: Text(
               value,
               style: const TextStyle(
-                fontWeight: FontWeight.w600,
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
@@ -697,7 +621,8 @@ class InventoryController extends GetxController {
                   row.value = (currentRow + 1).toString();
                 }
               } catch (e) {
-                _showErrorMessage('Lỗi', 'Không thể lưu thông tin cập nhật. Vui lòng thử lại.');
+                _showErrorMessage('Lỗi',
+                    'Không thể lưu thông tin cập nhật. Vui lòng thử lại.');
               }
             },
             child: const Text('Xác nhận'),
@@ -945,20 +870,23 @@ class InventoryController extends GetxController {
           } catch (e) {
             print('Error fetching data from API: $e');
             if (!hasStoredData) {
-              _showErrorMessage('Lỗi', 'Không thể tải dữ liệu từ máy chủ. Vui lòng thử lại sau.');
+              _showErrorMessage('Lỗi',
+                  'Không thể tải dữ liệu từ máy chủ. Vui lòng thử lại sau.');
             }
           }
         }
       } on SocketException catch (_) {
         // No internet connection
         if (!hasStoredData) {
-          _showErrorMessage('Lỗi kết nối', 'Không có kết nối mạng. Vui lòng kiểm tra lại kết nối của bạn.');
+          _showErrorMessage('Lỗi kết nối',
+              'Không có kết nối mạng. Vui lòng kiểm tra lại kết nối của bạn.');
         }
       }
     } catch (e) {
       print('Error in initData: $e');
       if (!hasStoredData) {
-        _showErrorMessage('Lỗi', 'Không thể tải dữ liệu. Vui lòng thử lại sau.');
+        _showErrorMessage(
+            'Lỗi', 'Không thể tải dữ liệu. Vui lòng thử lại sau.');
       }
     } finally {
       isLoading.value = false;
@@ -1193,7 +1121,8 @@ class InventoryController extends GetxController {
     });
 
     if (!hasStatusUpdate) {
-      _showErrorMessage('Thiếu thông tin', 'Vui lòng cập nhật ít nhất một trạng thái cây');
+      _showErrorMessage(
+          'Thiếu thông tin', 'Vui lòng cập nhật ít nhất một trạng thái cây');
       return;
     }
 

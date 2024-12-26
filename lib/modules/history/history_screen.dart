@@ -111,19 +111,39 @@ class HistoryScreen extends GetView<HistoryController> {
               children: [
                 // Date and time
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Icon(Icons.calendar_today,
-                        color: Colors.green[700], size: 18),
-                    const SizedBox(width: 6),
                     Expanded(
-                      child: Text(
-                        DateFormat('dd/MM/yyyy HH:mm')
-                            .format(history.dateCheck),
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green[700],
-                        ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.calendar_today,
+                              color: Colors.green[700], size: 18),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Đã đồng bộ vào:',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.green[700],
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  DateFormat('dd/MM/yyyy HH:mm')
+                                      .format(history.dateCheck),
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.green[700],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],

@@ -244,6 +244,7 @@ class HomeController extends BaseController<AuthRepository> {
 
   final currentBatchName = RxString('');
   final isLoadingBatch = RxBool(false);
+  final isBatchCompleted = RxBool(true);
 
   @override
   void onInit() {
@@ -256,7 +257,9 @@ class HomeController extends BaseController<AuthRepository> {
       isLoadingBatch.value = true;
       final response = await Get.find<ApiProvider>().getInventoryBatches();
       if (response.isNotEmpty) {
-        currentBatchName.value = response[0]['name'];
+        final batch = response[0];
+        currentBatchName.value = batch['name'];
+        isBatchCompleted.value = batch['isCompleted'] ?? true;
       }
     } catch (e) {
       Get.snackbar(
@@ -267,6 +270,29 @@ class HomeController extends BaseController<AuthRepository> {
       );
     } finally {
       isLoadingBatch.value = false;
+    }
+  }
+
+  void handleInventoryPress() {
+    if (isLoadingBatch.value) return;
+
+    if (isBatchCompleted.value) {
+      Get.dialog(
+        AlertDialog(
+          title: const Text('Thông báo'),
+          content: Text(
+            'Đợt kiểm kê ${currentBatchName.value} đã kết thúc, bạn không thể thực hiện kiểm kê nữa.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(),
+              child: const Text('Đóng'),
+            ),
+          ],
+        ),
+      );
+    } else {
+      Get.toNamed('/inventory');
     }
   }
 

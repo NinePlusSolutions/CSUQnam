@@ -151,7 +151,7 @@ class HomeScreen extends GetView<HomeController> {
                   : controller.currentBatchName.value.isEmpty
                       ? 'Chưa có đợt kiểm kê'
                       : controller.currentBatchName.value,
-              onTap: () => Get.toNamed('/inventory'),
+              onTap: controller.handleInventoryPress,
             );
           }),
           const SizedBox(height: 16),

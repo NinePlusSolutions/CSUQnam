@@ -121,23 +121,28 @@ class InventoryController extends GetxController {
     }
   }
 
-  Future<void> onTeamSelected(int teamId, String teamName) async {
+  Future<void> onTeamSelected(int teamId, String? teamName) async {
     try {
       // Reset lot and year dropdowns
       resetLotAndYearDropdowns();
 
       // Find selected team from local data
-      selectedTeam.value = selectedFarm.value?.productTeamResponse.firstWhere(
+      final selectedTeam = selectedFarm.value?.productTeamResponse.firstWhere(
         (team) => team.productTeamId == teamId,
       );
 
       // Update values
       productTeamId.value = teamId;
-      productionTeam.value = teamName;
-
-      // Show lot dropdown if team has lots
-      showLotDropdown.value =
-          selectedTeam.value?.farmLotResponse.isNotEmpty ?? false;
+      productionTeam.value = teamName ?? '';
+      if (selectedTeam != null) {
+        this.selectedTeam.value = selectedTeam;
+        if (selectedTeam.farmLotResponse.isNotEmpty) {
+          showLotDropdown.value = true;
+        } else {
+          resetLotAndYearDropdowns();
+        }
+      }
+      updateHeaderValues();
     } catch (e) {
       print('Error selecting team: $e');
       _showErrorMessage('Error', 'Failed to select team: $e');
@@ -948,7 +953,7 @@ class InventoryController extends GetxController {
           if (defaultFarm.productTeamResponse.isNotEmpty) {
             final defaultTeam = defaultFarm.productTeamResponse[0];
             selectedTeam.value = defaultTeam;
-            productionTeam.value = defaultTeam.productTeamName;
+            productionTeam.value = defaultTeam.productTeamName ?? "";
             productTeamId.value = defaultTeam.productTeamId;
             showTeamDropdown.value = true;
 
@@ -982,7 +987,7 @@ class InventoryController extends GetxController {
     }
 
     if (selectedTeam.value != null) {
-      productionTeam.value = selectedTeam.value!.productTeamName;
+      productionTeam.value = selectedTeam.value!.productTeamName ?? "";
       productTeamId.value = selectedTeam.value!.productTeamId;
     }
 
@@ -1313,8 +1318,8 @@ class InventoryController extends GetxController {
   Future<void> fetchProfile() async {
     try {
       final apiResponse = await _apiProvider.getProfile();
-      await storage.write('profile_data', jsonEncode(apiResponse.data));
-      if (apiResponse.data != null) {
+      if (apiResponse.status) {
+        await storage.write('profile_data', jsonEncode(apiResponse.data));
         final profileData = apiResponse.data!;
         if (profileData.farmByUserResponse.isNotEmpty) {
           final farmByUser = profileData.farmByUserResponse[0];
@@ -1328,29 +1333,33 @@ class InventoryController extends GetxController {
 
             if (defaultFarm.productTeamResponse.isNotEmpty) {
               final defaultTeam = defaultFarm.productTeamResponse[0];
-              selectedTeam.value = defaultTeam;
-              productionTeam.value = defaultTeam.productTeamName;
-              productTeamId.value = defaultTeam.productTeamId;
-              showTeamDropdown.value = true;
+              if (defaultTeam.productTeamName != null) {
+                selectedTeam.value = defaultTeam;
+                productionTeam.value = defaultTeam.productTeamName!;
+                productTeamId.value = defaultTeam.productTeamId;
+                showTeamDropdown.value = true;
 
-              if (defaultTeam.farmLotResponse.isNotEmpty) {
-                final defaultLot = defaultTeam.farmLotResponse[0];
-                selectedLot.value = defaultLot;
-                lot.value = defaultLot.farmLotName;
-                farmLotId.value = defaultLot.farmLotId;
-                showLotDropdown.value = true;
+                if (defaultTeam.farmLotResponse.isNotEmpty) {
+                  final defaultLot = defaultTeam.farmLotResponse[0];
+                  selectedLot.value = defaultLot;
+                  lot.value = defaultLot.farmLotName;
+                  farmLotId.value = defaultLot.farmLotId;
+                  showLotDropdown.value = true;
 
-                if (defaultLot.ageShavedResponse.isNotEmpty) {
-                  final defaultAge = defaultLot.ageShavedResponse[0].value;
-                  if (defaultAge != null) {
-                    yearShaved.value = defaultAge;
-                    tappingAge.value = defaultAge.toString();
+                  if (defaultLot.ageShavedResponse.isNotEmpty) {
+                    final defaultAge = defaultLot.ageShavedResponse[0].value;
+                    if (defaultAge != null) {
+                      yearShaved.value = defaultAge;
+                      tappingAge.value = defaultAge.toString();
+                    }
                   }
                 }
               }
             }
           }
         }
+      } else {
+        throw Exception('Failed to get profile data');
       }
     } catch (e) {
       print('Error fetching profile: $e');

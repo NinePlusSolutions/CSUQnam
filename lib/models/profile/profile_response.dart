@@ -4,7 +4,7 @@ part 'profile_response.g.dart';
 
 @JsonSerializable()
 class ProfileResponse {
-  final String? id;
+  final String id;
   final String email;
   final String phoneNumber;
   final String fullName;
@@ -13,6 +13,7 @@ class ProfileResponse {
   final String? address;
   final int? status;
   final String? dateOfBirth;
+  final int? loginPlatform;
   final List<FarmByUserResponse> farmByUserResponse;
 
   ProfileResponse({
@@ -25,6 +26,7 @@ class ProfileResponse {
     this.address,
     this.status,
     this.dateOfBirth,
+    this.loginPlatform,
     required this.farmByUserResponse,
   });
 
@@ -35,6 +37,7 @@ class ProfileResponse {
 
 @JsonSerializable()
 class FarmByUserResponse {
+  @JsonKey(name: 'farmResponses')
   final List<FarmResponse> farmResponse;
   final String userId;
 
@@ -53,6 +56,7 @@ class FarmResponse {
   final int id;
   final int farmId;
   final String farmName;
+  @JsonKey(name: 'productTeamResponses')
   final List<ProductTeamResponse> productTeamResponse;
 
   FarmResponse({
@@ -71,13 +75,14 @@ class FarmResponse {
 class ProductTeamResponse {
   final int id;
   final int productTeamId;
-  final String productTeamName;
+  final String? productTeamName;
+  @JsonKey(name: 'farmLotResponses')
   final List<FarmLotResponse> farmLotResponse;
 
   ProductTeamResponse({
     required this.id,
     required this.productTeamId,
-    required this.productTeamName,
+    this.productTeamName,
     required this.farmLotResponse,
   });
 
@@ -91,6 +96,7 @@ class FarmLotResponse {
   final int id;
   final int farmLotId;
   final String farmLotName;
+  @JsonKey(name: 'ageShavedResponses')
   final List<AgeShavedResponse> ageShavedResponse;
 
   FarmLotResponse({

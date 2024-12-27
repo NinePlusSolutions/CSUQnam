@@ -9,6 +9,7 @@ class ApiConstants {
   static const String treeCondition = '/v1/tree-condition';
   static const String shavedStatus = '/v1/common/shaved-status';
   static const String history = '/v1/tree-condition/history';
+  static const String inventoryBatches = '/v1/common/inventory-batches';
 
   // Farm endpoints
   static const String farm = '/v1/common/farm';
@@ -27,4 +28,5 @@ class ApiConstants {
   static String getYearShavedUrl() => '$baseUrlProd$yearShaved';
   static String getSyncTreeConditionUrl() => '$baseUrlProd$treeCondition';
   static String getHistoryTreeConditionUrl() => '$baseUrlProd$history';
+  static String getInventoryBatchesUrl() => '$baseUrlProd$inventoryBatches';
 }

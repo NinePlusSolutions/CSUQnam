@@ -260,7 +260,7 @@ class InventoryScreen extends GetView<InventoryController> {
                                 .map((team) {
                               return DropdownMenuItem<int>(
                                 value: team.productTeamId,
-                                child: Text(team.productTeamName),
+                                child: Text(team.productTeamName ?? 'Unknown Team'),
                               );
                             }).toList() ??
                             [],
@@ -272,8 +272,9 @@ class InventoryScreen extends GetView<InventoryController> {
                               (team) => team.productTeamId == value,
                             );
                             controller.onTeamSelected(
-                                selectedTeam.productTeamId,
-                                selectedTeam.productTeamName);
+                              selectedTeam.productTeamId,
+                              selectedTeam.productTeamName,
+                            );
                           }
                         },
                       ),

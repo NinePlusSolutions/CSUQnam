@@ -277,4 +277,20 @@ class ApiProvider {
       throw Exception('Failed to fetch years: $e');
     }
   }
+
+  Future<List<dynamic>> getInventoryBatches() async {
+    try {
+      final response = await _dio.get(
+        ApiConstants.getInventoryBatchesUrl(),
+      );
+      if (response.statusCode == 200) {
+        return response.data;
+      }
+      throw Exception('Failed to fetch inventory batches');
+    } on DioException catch (e) {
+      throw Exception('Network error: ${e.message}');
+    } catch (e) {
+      throw Exception('Error fetching inventory batches: $e');
+    }
+  }
 }

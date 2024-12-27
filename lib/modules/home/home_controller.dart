@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_getx_boilerplate/api/api_provider.dart';
 import 'package:flutter_getx_boilerplate/base/base_controller.dart';
 import 'package:flutter_getx_boilerplate/models/response/user/user.dart';
 import 'package:flutter_getx_boilerplate/repositories/auth_repository.dart';
@@ -240,6 +241,34 @@ class HomeController extends BaseController<AuthRepository> {
   final user = Rx<User?>(null as User?);
 
   final searchController = TextEditingController();
+
+  final currentBatchName = RxString('');
+  final isLoadingBatch = RxBool(false);
+
+  @override
+  void onInit() {
+    super.onInit();
+    fetchInventoryBatch();
+  }
+
+  Future<void> fetchInventoryBatch() async {
+    try {
+      isLoadingBatch.value = true;
+      final response = await Get.find<ApiProvider>().getInventoryBatches();
+      if (response.isNotEmpty) {
+        currentBatchName.value = response[0]['name'];
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Lỗi',
+        'Không thể tải thông tin đợt kiểm kê: ${e.toString()}',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      isLoadingBatch.value = false;
+    }
+  }
 
   // @override
   // Future getData() async {

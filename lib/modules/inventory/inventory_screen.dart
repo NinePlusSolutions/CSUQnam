@@ -35,7 +35,10 @@ class InventoryScreen extends GetView<InventoryController> {
                 activeTrackColor: Colors.green[300],
               )),
           IconButton(
-            icon: const Icon(Icons.history),
+            icon: const Icon(
+              Icons.history,
+              color: Colors.white,
+            ),
             onPressed: () => _showHistoryDialog(),
           ),
         ],

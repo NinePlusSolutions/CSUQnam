@@ -1147,166 +1147,202 @@ class InventoryController extends GetxController {
     }
 
     // Show bottom sheet
+    final expandedStatus = <String, bool>{};
+    for (var key in shavedStatusData.value!.toJson().keys) {
+      expandedStatus[key] = false;
+    }
+
     Get.bottomSheet(
-      Container(
-        height: Get.height * 0.8,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-        ),
-        child: Column(
-          children: [
-            // Header
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Theme.of(Get.context!).primaryColor.withOpacity(0.05),
-                border: Border(
-                  bottom: BorderSide(color: Colors.grey[200]!),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Chọn trạng thái cạo',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(Get.context!).primaryColor,
+      StatefulBuilder(
+        builder: (context, setState) {
+          return Container(
+            height: Get.height * 0.8,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+            ),
+            child: Column(
+              children: [
+                // Header
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color:
+                        Theme.of(Get.context!).primaryColor.withOpacity(0.05),
+                    border: Border(
+                      bottom: BorderSide(color: Colors.grey[200]!),
                     ),
                   ),
-                  IconButton(
-                    onPressed: () => Get.back(),
-                    icon: Icon(
-                      Icons.close,
-                      color: Theme.of(Get.context!).primaryColor,
-                    ),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                ],
-              ),
-            ),
-            // Content
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children:
-                      shavedStatusData.value!.toJson().entries.map((entry) {
-                    return Container(
-                      margin: const EdgeInsets.only(top: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey[200]!),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Theme.of(Get.context!)
-                                  .primaryColor
-                                  .withOpacity(0.05),
-                              borderRadius: const BorderRadius.vertical(
-                                top: Radius.circular(8),
-                              ),
-                            ),
-                            child: Text(
-                              entry.key,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Theme.of(Get.context!).primaryColor,
-                              ),
-                            ),
-                          ),
-                          _buildShavedStatusGroup(entry.key, entry.value),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ),
-            // Bottom buttons
-            Container(
-              padding: EdgeInsets.only(
-                left: 16,
-                right: 16,
-                bottom: MediaQuery.of(Get.context!).padding.bottom + 16,
-                top: 16,
-              ),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border(
-                  top: BorderSide(color: Colors.grey[200]!),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Get.back(),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        side: BorderSide(
-                            color: Theme.of(Get.context!)
-                                .primaryColor
-                                .withOpacity(0.5)),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: Text(
-                        'Hủy',
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Chọn trạng thái cạo',
                         style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
                           color: Theme.of(Get.context!).primaryColor,
                         ),
                       ),
+                      IconButton(
+                        onPressed: () => Get.back(),
+                        icon: Icon(
+                          Icons.close,
+                          color: Theme.of(Get.context!).primaryColor,
+                        ),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
+                  ),
+                ),
+                // Content
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children:
+                          shavedStatusData.value!.toJson().entries.map((entry) {
+                        final isExpanded = expandedStatus[entry.key] ?? false;
+                        return Container(
+                          margin: const EdgeInsets.only(top: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey[200]!),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Header with expand/collapse
+                              InkWell(
+                                onTap: () {
+                                  setState(() {
+                                    expandedStatus[entry.key] = !isExpanded;
+                                  });
+                                },
+                                child: Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(Get.context!)
+                                        .primaryColor
+                                        .withOpacity(0.05),
+                                    borderRadius: const BorderRadius.vertical(
+                                      top: Radius.circular(8),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          entry.key,
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                            color: Theme.of(Get.context!)
+                                                .primaryColor,
+                                          ),
+                                        ),
+                                      ),
+                                      Icon(
+                                        isExpanded
+                                            ? Icons.keyboard_arrow_up
+                                            : Icons.keyboard_arrow_down,
+                                        color:
+                                            Theme.of(Get.context!).primaryColor,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              // Status grid
+                              if (isExpanded)
+                                _buildShavedStatusGroup(entry.key, entry.value),
+                            ],
+                          ),
+                        );
+                      }).toList(),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Obx(
-                      () => ElevatedButton(
-                        onPressed: selectedShavedStatus.value != null
-                            ? () {
-                                Get.back();
-                                _showConfirmDialog();
-                              }
-                            : null,
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          backgroundColor: Theme.of(Get.context!).primaryColor,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                ),
+                // Bottom buttons
+                Container(
+                  padding: EdgeInsets.only(
+                    left: 16,
+                    right: 16,
+                    bottom: MediaQuery.of(Get.context!).padding.bottom + 16,
+                    top: 16,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border(
+                      top: BorderSide(color: Colors.grey[200]!),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Get.back(),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            side: BorderSide(
+                                color: Theme.of(Get.context!)
+                                    .primaryColor
+                                    .withOpacity(0.5)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
-                          elevation: 0,
-                          disabledBackgroundColor: Colors.grey[300],
-                          disabledForegroundColor: Colors.grey[600],
-                        ),
-                        child: const Text(
-                          'Xác nhận',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
+                          child: Text(
+                            'Hủy',
+                            style: TextStyle(
+                              color: Theme.of(Get.context!).primaryColor,
+                            ),
                           ),
                         ),
                       ),
-                    ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Obx(
+                          () => ElevatedButton(
+                            onPressed: selectedShavedStatus.value != null
+                                ? () {
+                                    Get.back();
+                                    _showConfirmDialog();
+                                  }
+                                : null,
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              backgroundColor:
+                                  Theme.of(Get.context!).primaryColor,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              elevation: 0,
+                              disabledBackgroundColor: Colors.grey[300],
+                              disabledForegroundColor: Colors.grey[600],
+                            ),
+                            child: const Text(
+                              'Xác nhận',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
       isScrollControlled: true,
       backgroundColor: Colors.transparent,

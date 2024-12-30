@@ -72,6 +72,7 @@
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		9FA23402581836BCFD4E1C55 /* prodProfile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = prodProfile.xcconfig; path = Flutter/prodProfile.xcconfig; sourceTree = "<group>"; };
 		A8C93CB7DBD0EA2F28525D13 /* prodDebug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = prodDebug.xcconfig; path = Flutter/prodDebug.xcconfig; sourceTree = "<group>"; };
+		B2323C0A2D2292C7006E1C34 /* Runner.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Runner.entitlements; sourceTree = "<group>"; };
 		B3DEFFD8082FD35CB4ED3085 /* Pods-Runner.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.release.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"; sourceTree = "<group>"; };
 		B4F7C56722B7A166FDE766A0 /* devProfile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = devProfile.xcconfig; path = Flutter/devProfile.xcconfig; sourceTree = "<group>"; };
 		BCD3A2844A7DA31A5468D42E /* devRelease.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = devRelease.xcconfig; path = Flutter/devRelease.xcconfig; sourceTree = "<group>"; };
@@ -121,7 +122,6 @@
 				DF1DFB363724C2ED0EDA499D /* Pods-RunnerTests.release.xcconfig */,
 				0E5AA31C553D1713B259C424 /* Pods-RunnerTests.profile.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -168,6 +168,7 @@
 		97C146F01CF9000F007C117D /* Runner */ = {
 			isa = PBXGroup;
 			children = (
+				B2323C0A2D2292C7006E1C34 /* Runner.entitlements */,
 				97C146FA1CF9000F007C117D /* Main.storyboard */,
 				97C146FD1CF9000F007C117D /* Assets.xcassets */,
 				97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */,
@@ -644,15 +645,18 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
-				DEVELOPMENT_TEAM = 6CWW3B8722;
+				DEVELOPMENT_TEAM = 2T8EDQ9Y53;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = Runner/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Hệ thống quản lý cây sao su";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.flutterGetxBoilerplate;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nineplus.quanlycaosu;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
@@ -977,15 +981,18 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
-				DEVELOPMENT_TEAM = 6CWW3B8722;
+				DEVELOPMENT_TEAM = 2T8EDQ9Y53;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = Runner/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Hệ thống quản lý cây sao su";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.flutterGetxBoilerplate;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nineplus.quanlycaosu;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -1000,21 +1007,138 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
-				DEVELOPMENT_TEAM = 6CWW3B8722;
+				DEVELOPMENT_TEAM = 2T8EDQ9Y53;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = Runner/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Hệ thống quản lý cây sao su";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.flutterGetxBoilerplate;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nineplus.quanlycaosu;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
+		};
+		B2323BFE2D22920F006E1C34 /* Debug-dev */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
+				DEVELOPMENT_TEAM = 2T8EDQ9Y53;
+				INFOPLIST_KEY_CFBundleDisplayName = "Hệ thống quản lý cây sao su";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				PRODUCT_BUNDLE_IDENTIFIER = com.nineplus.quanlycaosu;
+				PRODUCT_NAME = Runner;
+			};
+			name = "Debug-dev";
+		};
+		B2323BFF2D22920F006E1C34 /* Profile-dev */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
+				DEVELOPMENT_TEAM = 2T8EDQ9Y53;
+				INFOPLIST_KEY_CFBundleDisplayName = "Hệ thống quản lý cây sao su";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				PRODUCT_BUNDLE_IDENTIFIER = com.nineplus.quanlycaosu;
+				PRODUCT_NAME = Runner;
+			};
+			name = "Profile-dev";
+		};
+		B2323C002D22920F006E1C34 /* Release-dev */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
+				DEVELOPMENT_TEAM = 2T8EDQ9Y53;
+				INFOPLIST_KEY_CFBundleDisplayName = "Hệ thống quản lý cây sao su";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				PRODUCT_BUNDLE_IDENTIFIER = com.nineplus.quanlycaosu;
+				PRODUCT_NAME = Runner;
+			};
+			name = "Release-dev";
+		};
+		B2323C012D22920F006E1C34 /* Debug-prod */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
+				DEVELOPMENT_TEAM = 2T8EDQ9Y53;
+				INFOPLIST_KEY_CFBundleDisplayName = "Hệ thống quản lý cây sao su";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				PRODUCT_BUNDLE_IDENTIFIER = com.nineplus.quanlycaosu;
+				PRODUCT_NAME = Runner;
+			};
+			name = "Debug-prod";
+		};
+		B2323C022D22920F006E1C34 /* Profile-prod */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
+				DEVELOPMENT_TEAM = 2T8EDQ9Y53;
+				INFOPLIST_KEY_CFBundleDisplayName = "Hệ thống quản lý cây sao su";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				PRODUCT_BUNDLE_IDENTIFIER = com.nineplus.quanlycaosu;
+				PRODUCT_NAME = Runner;
+			};
+			name = "Profile-prod";
+		};
+		B2323C032D22920F006E1C34 /* Release-prod */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
+				DEVELOPMENT_TEAM = 2T8EDQ9Y53;
+				INFOPLIST_KEY_CFBundleDisplayName = "Hệ thống quản lý cây sao su";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				PRODUCT_BUNDLE_IDENTIFIER = com.nineplus.quanlycaosu;
+				PRODUCT_NAME = Runner;
+			};
+			name = "Release-prod";
+		};
+		B2323C042D22920F006E1C34 /* Debug-dev */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = RunnerTests;
+			};
+			name = "Debug-dev";
+		};
+		B2323C052D22920F006E1C34 /* Profile-dev */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = RunnerTests;
+			};
+			name = "Profile-dev";
+		};
+		B2323C062D22920F006E1C34 /* Release-dev */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = RunnerTests;
+			};
+			name = "Release-dev";
+		};
+		B2323C072D22920F006E1C34 /* Debug-prod */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = RunnerTests;
+			};
+			name = "Debug-prod";
+		};
+		B2323C082D22920F006E1C34 /* Profile-prod */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = RunnerTests;
+			};
+			name = "Profile-prod";
+		};
+		B2323C092D22920F006E1C34 /* Release-prod */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = RunnerTests;
+			};
+			name = "Release-prod";
 		};
 		E5DC48015F31BB21AD8C3209 /* Release-prod */ = {
 			isa = XCBuildConfiguration;
@@ -1167,6 +1291,12 @@
 				331C8088294A63A400263BE5 /* Debug */,
 				331C8089294A63A400263BE5 /* Release */,
 				331C808A294A63A400263BE5 /* Profile */,
+				B2323C042D22920F006E1C34 /* Debug-dev */,
+				B2323C052D22920F006E1C34 /* Profile-dev */,
+				B2323C062D22920F006E1C34 /* Release-dev */,
+				B2323C072D22920F006E1C34 /* Debug-prod */,
+				B2323C082D22920F006E1C34 /* Profile-prod */,
+				B2323C092D22920F006E1C34 /* Release-prod */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -1193,6 +1323,12 @@
 				97C147061CF9000F007C117D /* Debug */,
 				97C147071CF9000F007C117D /* Release */,
 				249021D4217E4FDB00AE95B9 /* Profile */,
+				B2323BFE2D22920F006E1C34 /* Debug-dev */,
+				B2323BFF2D22920F006E1C34 /* Profile-dev */,
+				B2323C002D22920F006E1C34 /* Release-dev */,
+				B2323C012D22920F006E1C34 /* Debug-prod */,
+				B2323C022D22920F006E1C34 /* Profile-prod */,
+				B2323C032D22920F006E1C34 /* Release-prod */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

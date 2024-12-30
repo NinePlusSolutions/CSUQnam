@@ -1,5 +1,5 @@
 name: flutter_getx_boilerplate
-description: "A boilerplate for Flutter GetX project"
+description: "Hệ thống quản lý cây cao su"
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
 version: 1.0.0+1
@@ -46,8 +46,8 @@ flutter:
   assets:
     - assets/images/
     - assets/svgs/
-    - .env.dev
-    - .env.prod
+    # - .env.dev
+    # - .env.prod
 
   # see https://flutter.dev/to/font-from-package
   fonts:
@@ -61,9 +61,9 @@ flavorizr:
   flavors:
     dev:
       app:
-        name: "[Dev]Cao Su QNam" # replace with your app name
+        name: "[Dev]Hệ thống quản lý cây cao su" # replace with your app name
       android:
-        applicationId: "com.example.getx.dev" # replace with your package name
+        applicationId: "com.nineplus.quanlycaosu.dev" # replace with your package name
         icon: "assets/system/logo_circle.png" # replace with your icon path
         
         # optional, if you want to use firebase
@@ -71,7 +71,7 @@ flavorizr:
         #   config: ".firebase/apple/google-services-dev.json"
   
       ios:
-        bundleId: "com.example.getx.dev" # replace with your bundle id
+        bundleId: "com.nineplus.quanlycaosu.dev" # replace with your bundle id
         icon: "assets/system/logo_circle.png"  # replace with your icon path
         # optional, if you want to use firebase
         # firebase:
@@ -79,12 +79,12 @@ flavorizr:
   
     prod:
       app:
-        name: "Cao Su QNam" # replace with your app name
+        name: "Hệ thống quản lý cây cao su" # replace with your app name
       android:
-          applicationId: "com.example.getx" # replace with your package name
+          applicationId: "com.nineplus.quanlycaosu" # replace with your package name
           icon: "assets/system/logo_circle.png" # replace with your icon path
       ios:
-          bundleId: "com.example.getx" # replace with your package name
+          bundleId: "com.nineplus.quanlycaosu" # replace with your package name
           icon: "assets/system/logo_circle.png" # replace with your icon path
 
 # config you app native splash screen

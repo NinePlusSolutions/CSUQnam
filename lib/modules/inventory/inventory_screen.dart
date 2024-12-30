@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_getx_boilerplate/models/local/local_tree_update.dart';
+import 'package:flutter_getx_boilerplate/modules/sync/sync_controller.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'inventory_controller.dart';
 
 class InventoryScreen extends GetView<InventoryController> {
@@ -31,6 +34,10 @@ class InventoryScreen extends GetView<InventoryController> {
                 activeColor: Colors.white,
                 activeTrackColor: Colors.green[300],
               )),
+          IconButton(
+            icon: const Icon(Icons.history),
+            onPressed: () => _showHistoryDialog(),
+          ),
         ],
       ),
       body: SafeArea(
@@ -824,6 +831,296 @@ class InventoryScreen extends GetView<InventoryController> {
               ],
             ),
           )),
+    );
+  }
+
+  void _showHistoryDialog() {
+    final storedData = controller.storage.read('local_updates');
+    print('DEBUG History - Raw stored data: $storedData');
+    print('DEBUG History - Current filters:');
+    print(
+        '  Farm ID: ${controller.farmId.value} (${controller.farmId.value.runtimeType})');
+    print(
+        '  Team ID: ${controller.productTeamId.value} (${controller.productTeamId.value.runtimeType})');
+    print(
+        '  Lot ID: ${controller.farmLotId.value} (${controller.farmLotId.value.runtimeType})');
+    print(
+        '  Age: ${controller.tappingAge.value} (${controller.tappingAge.value.runtimeType})');
+    print(
+        '  Row: ${controller.row.value} (${controller.row.value.runtimeType})');
+
+    final List<LocalTreeUpdate> updates = [];
+
+    if (storedData is List) {
+      for (var item in storedData) {
+        if (item is Map<String, dynamic>) {
+          print('DEBUG History - Processing item: $item');
+          final update = LocalTreeUpdate(
+            farmId: item['farmId'] ?? 0,
+            farmName: item['farmName'] ?? '',
+            productTeamId: item['productTeamId'] ?? 0,
+            productTeamName: item['productTeamName'] ?? '',
+            farmLotId: item['farmLotId'] ?? 0,
+            farmLotName: item['farmLotName'] ?? '',
+            treeLineName: item['treeLineName'] ?? '',
+            shavedStatusId: item['shavedStatusId'] ?? 0,
+            shavedStatusName: item['shavedStatusName'] ?? '',
+            tappingAge: item['tappingAge'] ?? 0,
+            dateCheck:
+                DateTime.tryParse(item['dateCheck'] ?? '') ?? DateTime.now(),
+            statusUpdates: (item['statusUpdates'] as List?)
+                    ?.map((status) => LocalStatusUpdate(
+                          statusId: status['statusId'] ?? 0,
+                          statusName: status['statusName'] ?? '',
+                          value: status['value']?.toString() ?? '0',
+                        ))
+                    .toList() ??
+                [],
+            note: item['note'],
+          );
+
+          print('DEBUG History - Created update:');
+          print(
+              '  Farm ID match: ${update.farmId} (${update.farmId.runtimeType}) == ${controller.farmId.value} (${controller.farmId.value.runtimeType})');
+          print(
+              '  Team ID match: ${update.productTeamId} (${update.productTeamId.runtimeType}) == ${controller.productTeamId.value} (${controller.productTeamId.value.runtimeType})');
+          print(
+              '  Lot ID match: ${update.farmLotId} (${update.farmLotId.runtimeType}) == ${controller.farmLotId.value} (${controller.farmLotId.value.runtimeType})');
+          print(
+              '  Age match: ${update.tappingAge} (${update.tappingAge.runtimeType}) == ${int.tryParse(controller.tappingAge.value)} (${int.tryParse(controller.tappingAge.value).runtimeType})');
+          print(
+              '  Row match: ${update.treeLineName} (${update.treeLineName.runtimeType}) == ${controller.row.value} (${controller.row.value.runtimeType})');
+
+          final farmIdMatch = update.farmId == controller.farmId.value;
+          final teamIdMatch =
+              update.productTeamId == controller.productTeamId.value;
+          final lotIdMatch = update.farmLotId == controller.farmLotId.value;
+          final ageMatch =
+              update.tappingAge.toString() == controller.tappingAge.value;
+          final rowMatch = update.treeLineName == controller.row.value;
+
+          print('DEBUG History - Match results:');
+          print('  Farm ID match: $farmIdMatch');
+          print('  Team ID match: $teamIdMatch');
+          print('  Lot ID match: $lotIdMatch');
+          print('  Age match: $ageMatch');
+          print('  Row match: $rowMatch');
+
+          if (farmIdMatch &&
+              teamIdMatch &&
+              lotIdMatch &&
+              ageMatch &&
+              rowMatch) {
+            print('DEBUG History - Adding update to list');
+            updates.add(update);
+          }
+        }
+      }
+    }
+
+    print('DEBUG History - Total updates found: ${updates.length}');
+    updates.sort((a, b) => b.dateCheck.compareTo(a.dateCheck));
+
+    // Tính tổng số cây từ tất cả status updates
+    int totalTrees = 0;
+    final Map<int, String> allStatuses = {};
+
+    if (updates.isNotEmpty) {
+      final latestUpdate = updates.first;
+      for (var update in updates) {
+        for (var status in update.statusUpdates) {
+          totalTrees += int.tryParse(status.value) ?? 0;
+          allStatuses[status.statusId] = status.statusName;
+        }
+      }
+    }
+
+    Get.dialog(
+      Dialog(
+        child: Container(
+          width: double.infinity,
+          height: Get.height * 0.6,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Thông tin cập nhật',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Get.back(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              if (updates.isEmpty)
+                Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.history,
+                          size: 64,
+                          color: Colors.grey[300],
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Chưa có thông tin cập nhật cho vị trí này',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Thông tin cơ bản
+                      _buildInfoRow('Nông trường', updates.first.farmName),
+                      _buildInfoRow('Đội', updates.first.productTeamName),
+                      _buildInfoRow('Lô', updates.first.farmLotName),
+                      _buildInfoRow('Hàng', updates.first.treeLineName),
+                      _buildInfoRow(
+                          'Tuổi cạo', updates.first.tappingAge.toString()),
+                      const SizedBox(height: 16),
+
+                      // Thời gian cập nhật
+                      _buildInfoRow(
+                          'Thời gian cập nhật',
+                          DateFormat('HH:mm dd/MM/yyyy')
+                              .format(updates.first.dateCheck)),
+                      const SizedBox(height: 16),
+
+                      // Tổng số cây
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.blue[50],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.forest, color: Colors.blue[700]),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Tổng số cây: $totalTrees',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.blue[700],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Danh sách trạng thái
+                      const Text(
+                        'Trạng thái cây:',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: allStatuses.length,
+                          itemBuilder: (context, index) {
+                            final statusId = allStatuses.keys.elementAt(index);
+                            final statusName = allStatuses[statusId]!;
+                            int statusCount = 0;
+
+                            // Tính tổng cho trạng thái này
+                            for (var update in updates) {
+                              for (var status in update.statusUpdates) {
+                                if (status.statusId == statusId) {
+                                  statusCount +=
+                                      int.tryParse(status.value) ?? 0;
+                                }
+                              }
+                            }
+
+                            final color = _getStatusColor(statusName);
+
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: color.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    statusName,
+                                    style: TextStyle(
+                                      color: color,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  Text(
+                                    '$statusCount cây',
+                                    style: TextStyle(
+                                      color: color,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Text(
+            '$label: ',
+            style: const TextStyle(
+              color: Colors.grey,
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

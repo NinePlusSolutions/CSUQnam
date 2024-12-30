@@ -17,7 +17,7 @@ class HistoryScreen extends GetView<HistoryController> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Lịch sử kiểm kê',
+          'Lịch sử đồng bộ dữ liệu kiểm kê',
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.green,
@@ -48,7 +48,7 @@ class HistoryScreen extends GetView<HistoryController> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Không có lịch sử kiểm kê',
+                  'Không có lịch sử dữ liệu kiểm kê',
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.grey[600],

@@ -218,6 +218,40 @@ class InventoryController extends GetxController {
     note.value = value;
   }
 
+  void _handleEndInventory() {
+    // Close the dialog first
+    Get.back();
+    // Schedule navigation and state updates after the current frame
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        isLoading.value = true;
+        await Get.toNamed('/sync');
+      } finally {
+        isLoading.value = false;
+      }
+    });
+  }
+
+  void _handleNextRow() {
+    // Close the dialog first
+    Get.back();
+    // Schedule state updates after the current frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Reset values for next row
+      selectedShavedStatus.value = null;
+      statusCounts.forEach((key, value) {
+        value.value = 0;
+      });
+      note.value = '';
+      noteController.text = ''; // Reset text controller
+      // Increment row number
+      final currentRow = int.parse(row.value);
+      if (currentRow < totalRows) {
+        row.value = (currentRow + 1).toString();
+      }
+    });
+  }
+
   Future<void> saveLocalUpdate() async {
     try {
       final now = DateTime.now();
@@ -346,12 +380,7 @@ class InventoryController extends GetxController {
                   children: [
                     // Kết thúc đợt kiểm kê button
                     OutlinedButton(
-                      onPressed: () {
-                        Get.back();
-                        Future.delayed(Duration.zero, () {
-                          Get.toNamed('/sync');
-                        });
-                      },
+                      onPressed: _handleEndInventory,
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 24,
@@ -390,21 +419,7 @@ class InventoryController extends GetxController {
                     const SizedBox(height: 12),
                     // Qua hàng tiếp theo button
                     ElevatedButton(
-                      onPressed: () {
-                        Get.back();
-                        // Reset values for next row
-                        selectedShavedStatus.value = null;
-                        statusCounts.forEach((key, value) {
-                          value.value = 0;
-                        });
-                        note.value = '';
-                        noteController.text = ''; // Reset text controller
-                        // Increment row number
-                        final currentRow = int.parse(row.value);
-                        if (currentRow < totalRows) {
-                          row.value = (currentRow + 1).toString();
-                        }
-                      },
+                      onPressed: _handleNextRow,
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 24,
@@ -1450,10 +1465,10 @@ class InventoryController extends GetxController {
                               backgroundColor:
                                   Theme.of(Get.context!).primaryColor,
                               foregroundColor: Colors.white,
+                              elevation: 0,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              elevation: 0,
                               disabledBackgroundColor: Colors.grey[300],
                               disabledForegroundColor: Colors.grey[600],
                             ),

@@ -295,21 +295,152 @@ class InventoryController extends GetxController {
         await syncController.loadPendingUpdates();
       }
 
-      _showSuccessMessage('Thành công', 'Đã lưu dữ liệu kiểm kê');
-
-      // Reset values for next row
-      selectedShavedStatus.value = null;
-      statusCounts.forEach((key, value) {
-        value.value = 0;
-      });
-      note.value = '';
-      noteController.text = ''; // Reset text controller
-
-      // Increment row number
-      final currentRow = int.parse(row.value);
-      if (currentRow < totalRows) {
-        row.value = (currentRow + 1).toString();
-      }
+      // Show dialog lựa chọn hành động tiếp theo
+      Get.dialog(
+        Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Success icon
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: Colors.green[50],
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.check_circle,
+                    color: Colors.green[600],
+                    size: 48,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                // Title
+                Text(
+                  'Cập nhật thành công',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(Get.context!).primaryColor,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Message
+                const Text(
+                  'Bạn muốn thực hiện thao tác nào tiếp theo?',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                // Buttons
+                Column(
+                  children: [
+                    // Kết thúc đợt kiểm kê button
+                    OutlinedButton(
+                      onPressed: () {
+                        Get.back();
+                        Future.delayed(Duration.zero, () {
+                          Get.toNamed('/sync');
+                        });
+                      },
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                        side: BorderSide(
+                          color: Theme.of(Get.context!)
+                              .primaryColor
+                              .withOpacity(0.5),
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        minimumSize: const Size(double.infinity, 48),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.sync,
+                            size: 20,
+                            color: Theme.of(Get.context!).primaryColor,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Kết thúc đợt kiểm kê',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: Theme.of(Get.context!).primaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    // Qua hàng tiếp theo button
+                    ElevatedButton(
+                      onPressed: () {
+                        Get.back();
+                        // Reset values for next row
+                        selectedShavedStatus.value = null;
+                        statusCounts.forEach((key, value) {
+                          value.value = 0;
+                        });
+                        note.value = '';
+                        noteController.text = ''; // Reset text controller
+                        // Increment row number
+                        final currentRow = int.parse(row.value);
+                        if (currentRow < totalRows) {
+                          row.value = (currentRow + 1).toString();
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                        backgroundColor: Theme.of(Get.context!).primaryColor,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        minimumSize: const Size(double.infinity, 48),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.arrow_forward, size: 20),
+                          SizedBox(width: 12),
+                          Text(
+                            'Qua hàng tiếp theo',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        barrierDismissible: false,
+      );
     } catch (e) {
       print('Error saving local update: $e');
       _showErrorMessage('Lỗi', 'Không thể lưu dữ liệu kiểm kê: $e');

@@ -25,24 +25,26 @@ class StatusInfo {
 }
 
 class InventoryController extends GetxController {
+  final _apiProvider = Get.find<ApiProvider>();
   final storage = GetStorage();
+
+  final farm = ''.obs;
+  final farmId = 0.obs;
+  final productionTeam = ''.obs;
+  final productTeamId = 0.obs;
+  final lot = ''.obs;
+  final farmLotId = 0.obs;
+  final yearShaved = 0.obs;
+  final tappingAge = ''.obs;
+  final rowNumber = 0.obs;
+
   final RxList<StatusInfo> statusList = <StatusInfo>[].obs;
   final RxMap<String, Color> statusColors = <String, Color>{}.obs;
   final RxMap<String, RxInt> statusCounts = <String, RxInt>{}.obs;
   final RxString note = ''.obs;
   final noteController = TextEditingController();
-  final RxString tappingAge = ''.obs;
-  final RxInt yearShaved = 0.obs;
   final RxString row = '1'.obs;
   final totalRows = 50;
-
-  // Farm info
-  final RxString farm = ''.obs;
-  final RxInt farmId = 0.obs;
-  final RxString productionTeam = ''.obs;
-  final RxInt productTeamId = 0.obs;
-  final RxString lot = ''.obs;
-  final RxInt farmLotId = 0.obs;
 
   // Local data
   final Rx<List<FarmResponse>> farmResponses = Rx<List<FarmResponse>>([]);
@@ -70,8 +72,6 @@ class InventoryController extends GetxController {
     Colors.red[700]!, // 10
     Colors.red[900]!, // 11
   ];
-
-  final ApiProvider _apiProvider = ApiProvider();
 
   final Rxn<ShavedStatusData> shavedStatusData = Rxn<ShavedStatusData>();
   final Rxn<ShavedStatusItem> selectedShavedStatus = Rxn<ShavedStatusItem>();

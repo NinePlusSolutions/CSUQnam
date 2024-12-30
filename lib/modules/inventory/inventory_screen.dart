@@ -189,6 +189,16 @@ class InventoryScreen extends GetView<InventoryController> {
   }
 
   void _showEditDialog() {
+    // Store original values
+    final originalFarmId = controller.farmId.value;
+    final originalFarm = controller.farm.value;
+    final originalTeamId = controller.productTeamId.value;
+    final originalTeam = controller.productionTeam.value;
+    final originalLotId = controller.farmLotId.value;
+    final originalLot = controller.lot.value;
+    final originalAge = controller.tappingAge.value;
+    final originalRow = controller.row.value;
+
     if (controller.selectedLot.value != null) {
       final hasValidAges = controller.selectedLot.value?.ageShavedResponse
               .where((age) => age.value != null)
@@ -260,7 +270,8 @@ class InventoryScreen extends GetView<InventoryController> {
                                 .map((team) {
                               return DropdownMenuItem<int>(
                                 value: team.productTeamId,
-                                child: Text(team.productTeamName ?? 'Unknown Team'),
+                                child: Text(
+                                    team.productTeamName ?? 'Unknown Team'),
                               );
                             }).toList() ??
                             [],
@@ -366,25 +377,29 @@ class InventoryScreen extends GetView<InventoryController> {
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: Colors.grey[300]!),
                 ),
-                child: Obx(() => DropdownButton<String>(
-                      value: controller.row.value.isEmpty
-                          ? null
-                          : controller.row.value,
-                      isExpanded: true,
-                      underline: const SizedBox(),
-                      hint: const Text('Chọn hàng'),
-                      items: controller.getRowNumbers().map((row) {
-                        return DropdownMenuItem<String>(
-                          value: row,
-                          child: Text('Hàng $row'),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          controller.row.value = value;
-                        }
-                      },
-                    )),
+                child: TextFormField(
+                  initialValue: controller.row.value,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    hintText: 'Nhập số hàng',
+                    labelText: 'Chọn hàng',
+                  ),
+                  onChanged: (value) {
+                    if (value.isEmpty) return;
+
+                    final number = int.tryParse(value);
+                    if (number != null && number > 0) {
+                      controller.row.value = number.toString();
+                    } else {
+                      Get.snackbar(
+                        'Thông báo',
+                        'Vui lòng nhập số hàng hợp lệ',
+                        backgroundColor: Colors.red[100],
+                      );
+                    }
+                  },
+                ),
               ),
 
               // Buttons
@@ -392,7 +407,18 @@ class InventoryScreen extends GetView<InventoryController> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
-                    onPressed: () => Get.back(),
+                    onPressed: () {
+                      // Restore all original values
+                      controller.farmId.value = originalFarmId;
+                      controller.farm.value = originalFarm;
+                      controller.productTeamId.value = originalTeamId;
+                      controller.productionTeam.value = originalTeam;
+                      controller.farmLotId.value = originalLotId;
+                      controller.lot.value = originalLot;
+                      controller.tappingAge.value = originalAge;
+                      controller.row.value = originalRow;
+                      Get.back();
+                    },
                     child: const Text('Hủy'),
                   ),
                   const SizedBox(width: 8),

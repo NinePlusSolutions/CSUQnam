@@ -7,35 +7,18 @@ class OfflineIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.black87,
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(12),
-          bottomRight: Radius.circular(12),
+      width: double.infinity,
+      color: Colors.black.withOpacity(0.7),
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: const Text(
+        'Offline Mode',
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: Colors.white70,
+          fontSize: 11,
+          letterSpacing: 0.5,
+          fontWeight: FontWeight.w400,
         ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color: Colors.red,
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ),
-          const SizedBox(width: 8),
-          const Text(
-            'No Internet Connection',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
       ),
     );
   }

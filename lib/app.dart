@@ -47,8 +47,9 @@ class App extends StatelessWidget {
                   return AnimatedPositioned(
                     duration: const Duration(milliseconds: 300),
                     curve: Curves.easeInOut,
-                    top: isOffline ? 0 : -50,
-                    left: (MediaQuery.of(context).size.width - 200) / 2,
+                    top: isOffline ? 0 : -30,
+                    left: 0,
+                    right: 0,
                     child: const OfflineIndicator(),
                   );
                 }),

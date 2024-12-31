@@ -7,6 +7,7 @@ import 'package:flutter_getx_boilerplate/modules/inventory/inventory_controller.
 import 'package:flutter_getx_boilerplate/repositories/auth_repository.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'dart:convert';
 
 class TreeStatus {
   final String id;
@@ -247,53 +248,71 @@ class HomeController extends GetxController {
   final currentBatchName = ''.obs;
   final isLoadingBatch = false.obs;
   final Rxn<InventoryBatch> currentBatch = Rxn<InventoryBatch>();
+  final inventoryBatches = <dynamic>[].obs;
+  final hasActiveBatch = false.obs;
+
+  Future<void> fetchInventoryBatch() async {
+    try {
+      isLoadingBatch.value = true;
+
+      // Try to get data from local storage first
+      final storedData = storage.read('inventory_batches');
+      if (storedData != null) {
+        final decodedData = jsonDecode(storedData);
+        processInventoryBatchData(decodedData);
+      }
+
+      // Try to get fresh data from API
+      try {
+        final response = await _apiProvider.getInventoryBatches();
+        if (response.isNotEmpty) {
+          // Save to local storage
+          await storage.write('inventory_batches', jsonEncode(response));
+          processInventoryBatchData(response);
+        }
+      } catch (e) {
+        print('Error fetching fresh inventory data: $e');
+        // Continue with stored data if API fails
+      }
+    } catch (e) {
+      print('Error in fetchInventoryBatch: $e');
+    } finally {
+      isLoadingBatch.value = false;
+    }
+  }
+
+  void processInventoryBatchData(dynamic data) {
+    try {
+      if (data != null && data is List) {
+        // Update observable list
+        inventoryBatches.value = data;
+
+        // Find active batch
+        final activeBatch = data.firstWhereOrNull(
+          (batch) => batch['isCompleted'] == false,
+        );
+
+        if (activeBatch != null) {
+          currentBatch.value = activeBatch;
+          currentBatchName.value = activeBatch['name']?.toString() ?? '';
+          hasActiveBatch.value = true;
+        } else {
+          currentBatch.value = null;
+          currentBatchName.value = '';
+          hasActiveBatch.value = false;
+        }
+      }
+    } catch (e) {
+      print('Error processing inventory batch data: $e');
+      hasActiveBatch.value = false;
+      currentBatchName.value = '';
+    }
+  }
 
   @override
   void onInit() {
     super.onInit();
     fetchInventoryBatch();
-  }
-
-  Future<void> fetchInventoryBatch() async {
-    try {
-      isLoadingBatch.value = true;
-      final response = await _apiProvider.getInventoryBatches();
-
-      final batches =
-          response.map((json) => InventoryBatch.fromJson(json)).toList();
-
-      // Find the first non-completed batch
-      final activeBatch =
-          batches.firstWhereOrNull((batch) => !batch.isCompleted);
-
-      if (activeBatch != null) {
-        currentBatch.value = activeBatch;
-        currentBatchName.value = activeBatch.name;
-
-        // Save current batch ID to storage
-        await storage.write('current_batch_id', activeBatch.id);
-        await storage.write('current_batch_name', activeBatch.name);
-      } else {
-        currentBatch.value = null;
-        currentBatchName.value = '';
-
-        // Clear storage when no active batch
-        await storage.write('current_batch_id', null);
-        await storage.write('current_batch_name', '');
-
-        // Clear all local data since no active batch
-        await storage.write(
-            '${InventoryController.syncStorageKey}_${storage.read('current_batch_id')}',
-            []);
-        await storage.write(
-            '${InventoryController.historyStorageKey}_${storage.read('current_batch_id')}',
-            []);
-      }
-    } catch (e) {
-      print('Error fetching inventory batch: $e');
-    } finally {
-      isLoadingBatch.value = false;
-    }
   }
 
   Future<void> handleInventoryPress() async {

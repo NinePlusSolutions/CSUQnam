@@ -194,7 +194,7 @@ class _SyncScreenState extends State<SyncScreen> {
           TextButton(
             onPressed: () {
               Get.back();
-              controller.clearSyncedData();
+              controller.clearAllData();
             },
             child: Text(
               'Đồng ý',

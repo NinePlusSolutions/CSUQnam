@@ -33,8 +33,8 @@ class InventoryController extends GetxController {
   static const String historyStorageKey = 'history_updates';
 
   String get _currentBatchId => storage.read('current_batch_id')?.toString() ?? '';
-  String get _currentSyncKey => '${syncStorageKey}_${_currentBatchId}';
-  String get _currentHistoryKey => '${historyStorageKey}_${_currentBatchId}';
+  String get _currentSyncKey => '${syncStorageKey}_$_currentBatchId';
+  String get currentHistoryKey => '${historyStorageKey}_$_currentBatchId';
 
   final farm = ''.obs;
   final farmId = 0.obs;
@@ -109,7 +109,7 @@ class InventoryController extends GetxController {
   void onFarmSelected(int farmId, String farmName) {
     this.farmId.value = farmId;
     farm.value = farmName;
-    
+
     // Clear previous selections
     productTeamId.value = 0;
     productionTeam.value = '';
@@ -117,12 +117,12 @@ class InventoryController extends GetxController {
     lot.value = '';
     tappingAge.value = '';
     yearShaved.value = 0;
-    
+
     // Find the selected farm and update selectedFarm
     final selectedFarm = farmResponses.value.firstWhereOrNull(
       (farm) => farm.farmId == farmId,
     );
-    
+
     if (selectedFarm != null) {
       this.selectedFarm.value = selectedFarm;
       // Only show team dropdown if the farm has teams
@@ -131,7 +131,7 @@ class InventoryController extends GetxController {
       this.selectedFarm.value = null;
       showTeamDropdown.value = false;
     }
-    
+
     // Reset dependent selections
     selectedTeam.value = null;
     selectedLot.value = null;
@@ -142,19 +142,20 @@ class InventoryController extends GetxController {
   void onTeamSelected(int teamId, String teamName) {
     productTeamId.value = teamId;
     productionTeam.value = teamName;
-    
+
     // Clear lot selections
     farmLotId.value = 0;
     lot.value = '';
     tappingAge.value = '';
     yearShaved.value = 0;
-    
+
     // Find the selected team from the current farm
     if (selectedFarm.value != null) {
-      final selectedTeam = selectedFarm.value!.productTeamResponse.firstWhereOrNull(
+      final selectedTeam =
+          selectedFarm.value!.productTeamResponse.firstWhereOrNull(
         (team) => team.productTeamId == teamId,
       );
-      
+
       if (selectedTeam != null) {
         this.selectedTeam.value = selectedTeam;
         // Only show lot dropdown if the team has lots
@@ -164,7 +165,7 @@ class InventoryController extends GetxController {
         showLotDropdown.value = false;
       }
     }
-    
+
     // Reset dependent selections
     selectedLot.value = null;
     showYearDropdown.value = false;
@@ -173,17 +174,17 @@ class InventoryController extends GetxController {
   void onLotSelected(int lotId, String lotName) {
     farmLotId.value = lotId;
     lot.value = lotName;
-    
+
     // Clear age selections
     tappingAge.value = '';
     yearShaved.value = 0;
-    
+
     // Find the selected lot from the current team
     if (selectedTeam.value != null) {
       final selectedLot = selectedTeam.value!.farmLotResponse.firstWhereOrNull(
         (lot) => lot.farmLotId == lotId,
       );
-      
+
       if (selectedLot != null) {
         this.selectedLot.value = selectedLot;
         // Only show year dropdown if the lot has age shaved responses
@@ -263,27 +264,27 @@ class InventoryController extends GetxController {
 
   Future<void> saveLocalUpdate() async {
     try {
-      if (!isEditingEnabled.value) {
-        return;
-      }
-
-      if (_currentBatchId.isEmpty) {
+      // Kiểm tra xem có status nào được cập nhật không
+      final hasUpdates = statusCounts.values.any((count) => count.value > 0);
+      if (!hasUpdates && selectedShavedStatus.value == null) {
         Get.snackbar(
-          'Thông báo',
-          'Không có đợt kiểm kê nào đang diễn ra',
-          backgroundColor: Colors.orange[100],
+          'Lỗi',
+          'Vui lòng cập nhật ít nhất một trạng thái hoặc trạng thái cạo',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
         );
         return;
       }
 
+      // Tạo danh sách status updates
       final statusUpdates = <Map<String, dynamic>>[];
       statusCounts.forEach((statusName, count) {
         if (count.value > 0) {
           final status = statusList.firstWhere((s) => s.name == statusName);
           statusUpdates.add({
-            'statusId': status.id,
-            'statusName': status.name,
-            'value': count.value.toString(),
+            'statusId': status.id.toString(), // Convert to String
+            'statusName': statusName,
+            'value': count.value.toString(), // Keep as String
           });
         }
       });
@@ -302,31 +303,31 @@ class InventoryController extends GetxController {
         dateCheck: DateTime.now(),
         statusUpdates: statusUpdates
             .map((status) => LocalStatusUpdate(
-                  statusId: status['statusId'],
+                  statusId: int.parse(status['statusId']), // Parse back to int
                   statusName: status['statusName'],
-                  value: status['value'],
+                  value: status['value'], // Keep as String
                 ))
             .toList(),
         note: note.value,
       );
 
       final updateJson = {
-        'farmId': update.farmId,
+        'farmId': update.farmId.toString(), // Convert to String
         'farmName': update.farmName,
-        'productTeamId': update.productTeamId,
+        'productTeamId': update.productTeamId.toString(), // Convert to String
         'productTeamName': update.productTeamName,
-        'farmLotId': update.farmLotId,
+        'farmLotId': update.farmLotId.toString(), // Convert to String
         'farmLotName': update.farmLotName,
         'treeLineName': update.treeLineName,
-        'shavedStatusId': update.shavedStatusId,
+        'shavedStatusId': update.shavedStatusId.toString(), // Convert to String
         'shavedStatusName': update.shavedStatusName,
         'tappingAge': update.tappingAge,
         'dateCheck': update.dateCheck.toIso8601String(),
         'statusUpdates': update.statusUpdates
             .map((status) => {
-                  'statusId': status.statusId,
+                  'statusId': status.statusId.toString(), // Convert to String
                   'statusName': status.statusName,
-                  'value': status.value,
+                  'value': status.value, // Keep as String
                 })
             .toList(),
         'note': update.note,
@@ -345,12 +346,23 @@ class InventoryController extends GetxController {
 
       // Save to history storage
       List<Map<String, dynamic>> historyUpdates = [];
-      final historyData = storage.read(_currentHistoryKey);
+      final historyData = storage.read(currentHistoryKey);
       if (historyData != null && historyData is List) {
         historyUpdates = List<Map<String, dynamic>>.from(historyData);
       }
       historyUpdates.add(updateJson);
-      await storage.write(_currentHistoryKey, historyUpdates);
+      await storage.write(currentHistoryKey, historyUpdates);
+
+      // Cập nhật current_batch trong local storage
+      final currentBatch = storage.read('inventory_batches');
+      if (currentBatch != null && currentBatch is List) {
+        final batchList = List<Map<String, dynamic>>.from(currentBatch);
+        final activeBatch = batchList
+            .firstWhereOrNull((batch) => batch['isCompleted'] == false);
+        if (activeBatch != null) {
+          await storage.write('current_batch', activeBatch);
+        }
+      }
 
       print('Saved updates: $existingUpdates');
 

@@ -880,43 +880,46 @@ class InventoryScreen extends GetView<InventoryController> {
   }
 
   void _showHistoryDialog() {
-    final storedData =
-        controller.storage.read(InventoryController.historyStorageKey);
+    final storedData = controller.storage.read(controller.currentHistoryKey);
     final List<LocalTreeUpdate> updates = [];
 
     if (storedData is List) {
       for (var item in storedData) {
         if (item is Map<String, dynamic>) {
-          final update = LocalTreeUpdate(
-            farmId: item['farmId'] ?? 0,
-            farmName: item['farmName'] ?? '',
-            productTeamId: item['productTeamId'] ?? 0,
-            productTeamName: item['productTeamName'] ?? '',
-            farmLotId: item['farmLotId'] ?? 0,
-            farmLotName: item['farmLotName'] ?? '',
-            treeLineName: item['treeLineName'] ?? '',
-            shavedStatusId: item['shavedStatusId'] ?? 0,
-            shavedStatusName: item['shavedStatusName'] ?? '',
-            tappingAge: item['tappingAge'] ?? 0,
-            dateCheck:
-                DateTime.tryParse(item['dateCheck'] ?? '') ?? DateTime.now(),
-            statusUpdates: (item['statusUpdates'] as List?)
-                    ?.map((status) => LocalStatusUpdate(
-                          statusId: status['statusId'] ?? 0,
-                          statusName: status['statusName'] ?? '',
-                          value: status['value']?.toString() ?? '0',
-                        ))
-                    .toList() ??
-                [],
-            note: item['note'],
-          );
+          try {
+            final update = LocalTreeUpdate(
+              farmId: int.parse(item['farmId'] ?? '0'),
+              farmName: item['farmName'] ?? '',
+              productTeamId: int.parse(item['productTeamId'] ?? '0'),
+              productTeamName: item['productTeamName'] ?? '',
+              farmLotId: int.parse(item['farmLotId'] ?? '0'),
+              farmLotName: item['farmLotName'] ?? '',
+              treeLineName: item['treeLineName'] ?? '',
+              shavedStatusId: int.parse(item['shavedStatusId'] ?? '0'),
+              shavedStatusName: item['shavedStatusName'] ?? '',
+              tappingAge: item['tappingAge'] ?? '',
+              dateCheck:
+                  DateTime.tryParse(item['dateCheck'] ?? '') ?? DateTime.now(),
+              statusUpdates: (item['statusUpdates'] as List?)
+                      ?.map((status) => LocalStatusUpdate(
+                            statusId: int.parse(status['statusId'] ?? '0'),
+                            statusName: status['statusName'] ?? '',
+                            value: status['value']?.toString() ?? '0',
+                          ))
+                      .toList() ??
+                  [],
+              note: item['note'],
+            );
 
-          if (update.farmId == controller.farmId.value &&
-              update.productTeamId == controller.productTeamId.value &&
-              update.farmLotId == controller.farmLotId.value &&
-              update.tappingAge.toString() == controller.tappingAge.value &&
-              update.treeLineName == controller.row.value) {
-            updates.add(update);
+            if (update.farmId == controller.farmId.value &&
+                update.productTeamId == controller.productTeamId.value &&
+                update.farmLotId == controller.farmLotId.value &&
+                update.tappingAge == controller.tappingAge.value &&
+                update.treeLineName == controller.row.value) {
+              updates.add(update);
+            }
+          } catch (e) {
+            print('Error parsing history item: $e');
           }
         }
       }

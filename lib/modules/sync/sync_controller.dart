@@ -55,25 +55,25 @@ class SyncController extends GetxController {
                 for (var status in item['statusUpdates']) {
                   if (status is Map<String, dynamic>) {
                     statusUpdates.add(LocalStatusUpdate(
-                      statusId: status['statusId'],
-                      statusName: status['statusName'],
-                      value: status['value'],
+                      statusId: int.parse(status['statusId'] ?? '0'),
+                      statusName: status['statusName'] ?? '',
+                      value: status['value']?.toString() ?? '0',
                     ));
                   }
                 }
               }
 
               final update = LocalTreeUpdate(
-                farmId: item['farmId'],
-                farmName: item['farmName'],
-                productTeamId: item['productTeamId'],
-                productTeamName: item['productTeamName'],
-                farmLotId: item['farmLotId'],
-                farmLotName: item['farmLotName'],
-                treeLineName: item['treeLineName'],
-                shavedStatusId: item['shavedStatusId'],
-                shavedStatusName: item['shavedStatusName'],
-                tappingAge: item['tappingAge'],
+                farmId: int.parse(item['farmId'] ?? '0'),
+                farmName: item['farmName'] ?? '',
+                productTeamId: int.parse(item['productTeamId'] ?? '0'),
+                productTeamName: item['productTeamName'] ?? '',
+                farmLotId: int.parse(item['farmLotId'] ?? '0'),
+                farmLotName: item['farmLotName'] ?? '',
+                treeLineName: item['treeLineName'] ?? '',
+                shavedStatusId: int.parse(item['shavedStatusId'] ?? '0'),
+                shavedStatusName: item['shavedStatusName'] ?? '',
+                tappingAge: item['tappingAge'] ?? '',
                 dateCheck: dateCheck,
                 statusUpdates: statusUpdates,
                 note: item['note'],
@@ -97,10 +97,10 @@ class SyncController extends GetxController {
                 for (var newStatus in update.statusUpdates) {
                   if (existingStatusMap.containsKey(newStatus.statusId)) {
                     // Add values for existing status
-                    final existingValue =
-                        int.parse(existingStatusMap[newStatus.statusId]!.value);
+                    final existingValue = int.parse(existingStatusMap[newStatus.statusId]!.value);
                     final newValue = int.parse(newStatus.value);
-                    // Create new LocalStatusUpdate instance with updated value
+                    
+                    // Create new instance with updated value
                     existingStatusMap[newStatus.statusId] = LocalStatusUpdate(
                       statusId: newStatus.statusId,
                       statusName: newStatus.statusName,
@@ -112,39 +112,24 @@ class SyncController extends GetxController {
                   }
                 }
 
-                // Update the grouped entry with merged status updates and latest date
-                groupedUpdates[key] = LocalTreeUpdate(
-                  farmId: update.farmId,
-                  farmName: update.farmName,
-                  productTeamId: update.productTeamId,
-                  productTeamName: update.productTeamName,
-                  farmLotId: update.farmLotId,
-                  farmLotName: update.farmLotName,
-                  treeLineName: update.treeLineName,
-                  shavedStatusId: update.shavedStatusId,
-                  shavedStatusName: update.shavedStatusName,
-                  tappingAge: update.tappingAge,
-                  dateCheck: update.dateCheck.isAfter(existingUpdate.dateCheck)
-                      ? update.dateCheck
-                      : existingUpdate.dateCheck,
-                  statusUpdates: existingStatusMap.values.toList(),
-                  note: update.note,
-                );
+                // Update the existing update with merged status updates
+                existingUpdate.statusUpdates.clear();
+                existingUpdate.statusUpdates.addAll(existingStatusMap.values);
               } else {
-                // If this is the first update with this key, add it to the map
+                // Add new update to the map
                 groupedUpdates[key] = update;
               }
             }
           } catch (e) {
-            print('Error parsing item: $e');
+            print('Error parsing sync item: $e');
           }
         }
 
-        // Convert map values to list and sort by dateCheck
-        final updates = groupedUpdates.values.toList()
-          ..sort((a, b) => b.dateCheck.compareTo(a.dateCheck));
+        // Convert grouped updates to list and sort by date
+        final List<LocalTreeUpdate> sortedUpdates = groupedUpdates.values.toList();
+        sortedUpdates.sort((a, b) => b.dateCheck.compareTo(a.dateCheck));
 
-        pendingUpdates.value = updates;
+        pendingUpdates.value = sortedUpdates;
       } else {
         pendingUpdates.clear();
       }

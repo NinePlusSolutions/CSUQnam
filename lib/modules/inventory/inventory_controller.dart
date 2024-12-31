@@ -32,6 +32,10 @@ class InventoryController extends GetxController {
   static const String syncStorageKey = 'local_updates';
   static const String historyStorageKey = 'history_updates';
 
+  String get _currentBatchId => storage.read('current_batch_id')?.toString() ?? '';
+  String get _currentSyncKey => '${syncStorageKey}_${_currentBatchId}';
+  String get _currentHistoryKey => '${historyStorageKey}_${_currentBatchId}';
+
   final farm = ''.obs;
   final farmId = 0.obs;
   final productionTeam = ''.obs;
@@ -262,6 +266,15 @@ class InventoryController extends GetxController {
         return;
       }
 
+      if (_currentBatchId.isEmpty) {
+        Get.snackbar(
+          'Thông báo',
+          'Không có đợt kiểm kê nào đang diễn ra',
+          backgroundColor: Colors.orange[100],
+        );
+        return;
+      }
+
       final statusUpdates = <Map<String, dynamic>>[];
       statusCounts.forEach((statusName, count) {
         if (count.value > 0) {
@@ -322,21 +335,21 @@ class InventoryController extends GetxController {
 
       // Save to sync storage
       List<Map<String, dynamic>> existingUpdates = [];
-      final storedData = storage.read(syncStorageKey);
+      final storedData = storage.read(_currentSyncKey);
       if (storedData != null && storedData is List) {
         existingUpdates = List<Map<String, dynamic>>.from(storedData);
       }
       existingUpdates.add(updateJson);
-      await storage.write(syncStorageKey, existingUpdates);
+      await storage.write(_currentSyncKey, existingUpdates);
 
       // Save to history storage
       List<Map<String, dynamic>> historyUpdates = [];
-      final historyData = storage.read(historyStorageKey);
+      final historyData = storage.read(_currentHistoryKey);
       if (historyData != null && historyData is List) {
         historyUpdates = List<Map<String, dynamic>>.from(historyData);
       }
       historyUpdates.add(updateJson);
-      await storage.write(historyStorageKey, historyUpdates);
+      await storage.write(_currentHistoryKey, historyUpdates);
 
       print('Saved updates: $existingUpdates');
 

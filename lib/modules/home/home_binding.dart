@@ -18,6 +18,6 @@ class HomeBinding implements Bindings {
     // Initialize controllers
     Get.put(AuthController(), permanent: true);  // Make AuthController permanent
     Get.put(SyncController());  // Initialize SyncController
-    Get.put(HomeController(Get.find()));  // Initialize HomeController
+    Get.put(HomeController());  // Initialize HomeController
   }
 }

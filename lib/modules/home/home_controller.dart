@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_getx_boilerplate/api/api_provider.dart';
 import 'package:flutter_getx_boilerplate/base/base_controller.dart';
 import 'package:flutter_getx_boilerplate/models/response/user/user.dart';
+import 'package:flutter_getx_boilerplate/models/inventory/inventory_batch.dart';
+import 'package:flutter_getx_boilerplate/modules/inventory/inventory_controller.dart';
 import 'package:flutter_getx_boilerplate/repositories/auth_repository.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -15,8 +17,9 @@ class TreeStatus {
       {required this.id, required this.name, required this.descriptions});
 }
 
-class HomeController extends BaseController<AuthRepository> {
-  HomeController(super.repository);
+class HomeController extends GetxController {
+  final _apiProvider = Get.find<ApiProvider>();
+  final storage = GetStorage();
 
   // Selected values for tree update
   final selectedTreeStatus = Rx<String?>(null);
@@ -25,7 +28,6 @@ class HomeController extends BaseController<AuthRepository> {
   // Track updated trees in current session
   final updatedTrees = <String>{}.obs;
   final updatedTreesCount = 0.obs;
-  final storage = GetStorage();
 
   // Tree statuses based on the diagram
   final treeStatuses = [
@@ -242,9 +244,9 @@ class HomeController extends BaseController<AuthRepository> {
 
   final searchController = TextEditingController();
 
-  final currentBatchName = RxString('');
-  final isLoadingBatch = RxBool(false);
-  final isBatchCompleted = RxBool(true);
+  final currentBatchName = ''.obs;
+  final isLoadingBatch = false.obs;
+  final Rxn<InventoryBatch> currentBatch = Rxn<InventoryBatch>();
 
   @override
   void onInit() {
@@ -255,56 +257,54 @@ class HomeController extends BaseController<AuthRepository> {
   Future<void> fetchInventoryBatch() async {
     try {
       isLoadingBatch.value = true;
-      final response = await Get.find<ApiProvider>().getInventoryBatches();
-      if (response.isNotEmpty) {
-        final batch = response[0];
-        currentBatchName.value = batch['name'];
-        isBatchCompleted.value = batch['isCompleted'] ?? true;
+      final response = await _apiProvider.getInventoryBatches();
+
+      final batches =
+          response.map((json) => InventoryBatch.fromJson(json)).toList();
+
+      // Find the first non-completed batch
+      final activeBatch =
+          batches.firstWhereOrNull((batch) => !batch.isCompleted);
+
+      if (activeBatch != null) {
+        currentBatch.value = activeBatch;
+        currentBatchName.value = activeBatch.name;
+
+        // Save current batch ID to storage
+        await storage.write('current_batch_id', activeBatch.id);
+        await storage.write('current_batch_name', activeBatch.name);
+      } else {
+        currentBatch.value = null;
+        currentBatchName.value = '';
+
+        // Clear storage when no active batch
+        await storage.write('current_batch_id', null);
+        await storage.write('current_batch_name', '');
+
+        // Clear all local data since no active batch
+        await storage.write(
+            '${InventoryController.syncStorageKey}_${storage.read('current_batch_id')}',
+            []);
+        await storage.write(
+            '${InventoryController.historyStorageKey}_${storage.read('current_batch_id')}',
+            []);
       }
     } catch (e) {
-      Get.snackbar(
-        'Lỗi',
-        'Không thể tải thông tin đợt kiểm kê: ${e.toString()}',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      print('Error fetching inventory batch: $e');
     } finally {
       isLoadingBatch.value = false;
     }
   }
 
-  void handleInventoryPress() {
-    if (isLoadingBatch.value) return;
-
-    if (isBatchCompleted.value) {
-      Get.dialog(
-        AlertDialog(
-          title: const Text('Thông báo'),
-          content: Text(
-            'Đợt kiểm kê ${currentBatchName.value} đã kết thúc, bạn không thể thực hiện kiểm kê nữa.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Get.back(),
-              child: const Text('Đóng'),
-            ),
-          ],
-        ),
+  Future<void> handleInventoryPress() async {
+    if (currentBatch.value == null) {
+      Get.snackbar(
+        'Thông báo',
+        'Hiện tại chưa có đợt kiểm kê nào',
+        backgroundColor: Colors.orange[100],
       );
-    } else {
-      Get.toNamed('/inventory');
+      return;
     }
+    Get.toNamed('/inventory');
   }
-
-  // @override
-  // Future getData() async {
-  //   try {
-  //     final res = await repository.me();
-  //     user.value = res;
-  //   } on ErrorResponse catch (e) {
-  //     showError("", e.message);
-  //   } catch (e) {
-  //     showError("", e.toString());
-  //   }
-  // }
 }

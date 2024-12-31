@@ -303,7 +303,8 @@ class InventoryController extends GetxController {
                       int.tryParse(update['value']?.toString() ?? '0') ?? 0;
                   if (statusName != null &&
                       statusCounts.containsKey(statusName)) {
-                    statusCounts[statusName]!.value += value; // Add values from all records
+                    statusCounts[statusName]!.value +=
+                        value; // Add values from all records
                   }
                 }
               }
@@ -371,14 +372,14 @@ class InventoryController extends GetxController {
       };
 
       // Get existing data
-      final List<dynamic> existingData =
-          storage.read(currentHistoryKey) ?? [];
+      final List<dynamic> existingData = storage.read(currentHistoryKey) ?? [];
 
       // Remove old records for this location
       existingData.removeWhere((item) {
         if (item is Map<String, dynamic>) {
           return item['farmId'].toString() == farmId.value.toString() &&
-              item['productTeamId'].toString() == productTeamId.value.toString() &&
+              item['productTeamId'].toString() ==
+                  productTeamId.value.toString() &&
               item['farmLotId'].toString() == farmLotId.value.toString() &&
               item['treeLineName'] == row.value &&
               item['tappingAge'] == tappingAge.value;
@@ -423,8 +424,7 @@ class InventoryController extends GetxController {
       };
 
       // Get existing data
-      final List<dynamic> existingData =
-          storage.read(currentHistoryKey) ?? [];
+      final List<dynamic> existingData = storage.read(currentHistoryKey) ?? [];
 
       // Add new record
       existingData.add(newRecord);
@@ -571,7 +571,6 @@ class InventoryController extends GetxController {
       noteController.clear();
       selectedShavedStatus.value = null;
 
-      // Hiển thị dialog với UI cải tiến
       Get.dialog(
         Dialog(
           shape: RoundedRectangleBorder(
@@ -615,46 +614,47 @@ class InventoryController extends GetxController {
                       color: Colors.black87,
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  // Buttons
-                  Row(
+                  const SizedBox(height: 32),
+                  // Button group
+                  Column(
                     children: [
-                      Expanded(
+                      // Primary action button
+                      SizedBox(
+                        width: double.infinity,
                         child: ElevatedButton(
                           onPressed: () {
                             Get.back(); // Đóng dialog
-                            Get.offNamed(Routes
-                                .sync); // Chuyển đến màn hình đồng bộ và xóa stack
+                            Get.offNamed(Routes.sync);
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green,
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
+                            elevation: 0,
                           ),
                           child: const Text(
                             'Đến màn hình đồng bộ',
-                            style: TextStyle(fontSize: 16),
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
+                      const SizedBox(height: 12),
+                      // Secondary action button
+                      SizedBox(
+                        width: double.infinity,
                         child: OutlinedButton(
                           onPressed: () {
-                            Get.back(); // Đóng dialog
-                            // Tăng số hàng lên 1
+                            Get.back();
                             final currentRow = int.parse(row.value);
                             if (currentRow < totalRows) {
                               row.value = (currentRow + 1).toString();
                             }
-                            // Reset form để nhập hàng mới
                             statusCounts
                                 .forEach((key, value) => value.value = 0);
                             note.value = '';
@@ -662,16 +662,43 @@ class InventoryController extends GetxController {
                             selectedShavedStatus.value = null;
                           },
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.green,
-                            side: const BorderSide(color: Colors.green),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            foregroundColor: Colors.green[700],
+                            side: BorderSide(color: Colors.green[700]!),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
                           child: const Text(
                             'Chuyển qua hàng tiếp theo',
-                            style: TextStyle(fontSize: 16),
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      // Cancel button
+                      SizedBox(
+                        width: double.infinity,
+                        child: TextButton(
+                          onPressed: () {
+                            Get.back();
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.grey[700],
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: const Text(
+                            'Hủy',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
                       ),
@@ -682,6 +709,7 @@ class InventoryController extends GetxController {
             ),
           ),
         ),
+        barrierDismissible: false,
       );
     } catch (e) {
       print('Error saving local update: $e');
@@ -696,152 +724,208 @@ class InventoryController extends GetxController {
 
   void _showConfirmDialog() {
     final screenWidth = MediaQuery.of(Get.context!).size.width;
-    Get.dialog(
-      Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+    Get.dialog(Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Container(
+        width: screenWidth * 0.9,
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(Get.context!).size.height * 0.8,
         ),
-        child: Container(
-          width: screenWidth * 0.9,
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(Get.context!).size.height * 0.8,
-          ),
-          padding: const EdgeInsets.all(24),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Header with icon
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.green[50],
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.fact_check_rounded,
-                    color: Colors.green[700],
-                    size: 40,
+        padding: const EdgeInsets.all(24),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header with icon
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.green[50],
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.fact_check_rounded,
+                  color: Colors.green[700],
+                  size: 40,
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Title
+              const Text(
+                'Xác nhận thông tin',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 24),
+              // Location info in a decorated container
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.grey.withOpacity(0.2),
                   ),
                 ),
-                const SizedBox(height: 16),
-                // Title
-                const Text(
-                  'Xác nhận thông tin',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                // Location info in a decorated container
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[50],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.grey.withOpacity(0.2),
+                child: Column(
+                  children: [
+                    _buildLocationInfoRow(
+                      Icons.location_on,
+                      'Nông trường:',
+                      farm.value,
+                      Colors.green[700]!,
                     ),
-                  ),
-                  child: Column(
-                    children: [
-                      _buildLocationInfoRow(
-                        Icons.location_on,
-                        'Nông trường:',
-                        farm.value,
-                        Colors.green[700]!,
-                      ),
-                      const SizedBox(height: 12),
-                      _buildLocationInfoRow(
-                        Icons.group,
-                        'Tổ:',
-                        productionTeam.value,
-                        Colors.green[700]!,
-                      ),
-                      const SizedBox(height: 12),
-                      _buildLocationInfoRow(
-                        Icons.grid_view,
-                        'Lô:',
-                        lot.value,
-                        Colors.green[700]!,
-                      ),
-                      const SizedBox(height: 12),
-                      _buildLocationInfoRow(
-                        Icons.calendar_today,
-                        'Tuổi cạo:',
-                        '$tappingAge tuổi',
-                        Colors.green[700]!,
-                      ),
-                      const SizedBox(height: 12),
-                      _buildLocationInfoRow(
-                        Icons.format_list_numbered,
-                        'Hàng:',
-                        row.value,
-                        Colors.green[700]!,
-                      ),
-                    ],
+                    const SizedBox(height: 12),
+                    _buildLocationInfoRow(
+                      Icons.group,
+                      'Tổ:',
+                      productionTeam.value,
+                      Colors.green[700]!,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildLocationInfoRow(
+                      Icons.grid_view,
+                      'Lô:',
+                      lot.value,
+                      Colors.green[700]!,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildLocationInfoRow(
+                      Icons.calendar_today,
+                      'Tuổi cạo:',
+                      '$tappingAge tuổi',
+                      Colors.green[700]!,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildLocationInfoRow(
+                      Icons.format_list_numbered,
+                      'Hàng:',
+                      row.value,
+                      Colors.green[700]!,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              // Tree status section
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.green[50],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.green.withOpacity(0.2),
                   ),
                 ),
-                const SizedBox(height: 20),
-                // Tree status section
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.green[50],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.green.withOpacity(0.2),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.forest,
-                            color: Colors.green[700],
-                            size: 20,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.forest,
+                          color: Colors.green[700],
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Số lượng theo trạng thái',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.green,
                           ),
-                          const SizedBox(width: 8),
-                          const Text(
-                            'Số lượng theo trạng thái',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.green,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        // Total tree count
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.green[700]!.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: Colors.green[700]!.withOpacity(0.3),
                             ),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          // Total tree count
-                          Container(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Tổng số cây',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: Colors.green[700],
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.green[700]!.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  statusCounts.values
+                                      .fold<int>(
+                                        0,
+                                        (sum, count) => sum + count.value,
+                                      )
+                                      .toString(),
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.green[700],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Individual status counts
+                        ...statusList.map((condition) {
+                          final count = statusCounts[condition.name] ?? 0;
+                          if (count == 0) return const SizedBox.shrink();
+
+                          final color =
+                              statusColors[condition.name] ?? Colors.grey;
+                          return Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 10,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.green[700]!.withOpacity(0.1),
+                              color: color.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                color: Colors.green[700]!.withOpacity(0.3),
+                                color: color.withOpacity(0.3),
                               ),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  'Tổng số cây',
+                                  condition.name,
                                   style: TextStyle(
                                     fontSize: 15,
-                                    color: Colors.green[700],
+                                    color: color,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -852,219 +936,159 @@ class InventoryController extends GetxController {
                                     vertical: 4,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.green[700]!.withOpacity(0.15),
+                                    color: color.withOpacity(0.15),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Text(
-                                    statusCounts.values
-                                        .fold<int>(
-                                          0,
-                                          (sum, count) => sum + count.value,
-                                        )
-                                        .toString(),
+                                    count.toString(),
                                     style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
-                                      color: Colors.green[700],
+                                      color: color,
                                     ),
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                          // Individual status counts
-                          ...statusList.map((condition) {
-                            final count = statusCounts[condition.name] ?? 0;
-                            if (count == 0) return const SizedBox.shrink();
-
-                            final color =
-                                statusColors[condition.name] ?? Colors.grey;
-                            return Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                color: color.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: color.withOpacity(0.3),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    condition.name,
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      color: color,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: color.withOpacity(0.15),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Text(
-                                      count.toString(),
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color: color,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }).where(
-                              (widget) => widget != const SizedBox.shrink()),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-                // Shaved status in a decorated container
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.orange[50],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.orange.withOpacity(0.2),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.face,
-                        color: Colors.orange[700],
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Trạng thái mặt cạo: ${selectedShavedStatus.value?.name ?? ''}',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.orange[700],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (note.value.isNotEmpty) ...[
-                  const SizedBox(height: 20),
-                  // Note in a separate container
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.blue[50],
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: Colors.blue.withOpacity(0.2),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.note,
-                              color: Colors.blue[700],
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Ghi chú',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.blue[700],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          note.value,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
+                          );
+                        }).where((widget) => widget != const SizedBox.shrink()),
                       ],
                     ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              // Shaved status in a decorated container
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.orange[50],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.orange.withOpacity(0.2),
                   ),
-                ],
-                const SizedBox(height: 24),
-                // Action buttons
-                Row(
+                ),
+                child: Row(
                   children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Get.back(),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.grey[700],
-                          side: BorderSide(color: Colors.grey[400]!),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: const Text(
-                          'Hủy',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                      ),
+                    Icon(
+                      Icons.face,
+                      color: Colors.orange[700],
+                      size: 20,
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 8),
                     Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Get.back();
-                          saveLocalUpdate();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: const Text(
-                          'Xác nhận',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
+                      child: Text(
+                        'Trạng thái mặt cạo: ${selectedShavedStatus.value?.name ?? ''}',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.orange[700],
                         ),
                       ),
                     ),
                   ],
                 ),
+              ),
+              if (note.value.isNotEmpty) ...[
+                const SizedBox(height: 20),
+                // Note in a separate container
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.blue[50],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Colors.blue.withOpacity(0.2),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.note,
+                            color: Colors.blue[700],
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Ghi chú',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.blue[700],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        note.value,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
-            ),
+              const SizedBox(height: 24),
+              // Action buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Get.back(),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.grey[700],
+                        side: BorderSide(color: Colors.grey[400]!),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text(
+                        'Hủy',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Get.back();
+                        saveLocalUpdate();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text(
+                        'Xác nhận',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),
-      barrierDismissible: false,
-    );
+    ));
   }
 
   Widget _buildLocationInfoRow(
@@ -1502,8 +1526,8 @@ class InventoryController extends GetxController {
           } catch (e) {
             print('Error fetching data from API: $e');
             if (!hasStoredData) {
-              _showErrorMessage('Lỗi',
-                  'Không thể tải dữ liệu từ máy chủ. Vui lòng thử lại.');
+              _showErrorMessage(
+                  'Lỗi', 'Không thể tải dữ liệu từ máy chủ. Vui lòng thử lại.');
             }
           }
         }

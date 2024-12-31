@@ -5,6 +5,7 @@ import 'package:flutter_getx_boilerplate/models/response/user/user.dart';
 import 'package:flutter_getx_boilerplate/models/inventory/inventory_batch.dart';
 import 'package:flutter_getx_boilerplate/modules/inventory/inventory_controller.dart';
 import 'package:flutter_getx_boilerplate/repositories/auth_repository.dart';
+import 'package:flutter_getx_boilerplate/routes/app_pages.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'dart:convert';
@@ -359,5 +360,21 @@ class HomeController extends GetxController {
       return;
     }
     Get.toNamed('/inventory');
+  }
+
+  Future<void> logout() async {
+    try {
+      await storage.remove('current_batch_id');
+      await storage.remove('user_token');
+      Get.offAllNamed(Routes.login);
+    } catch (e) {
+      print('Error during logout: $e');
+      Get.snackbar(
+        'Lỗi',
+        'Không thể đăng xuất. Vui lòng thử lại.',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
   }
 }

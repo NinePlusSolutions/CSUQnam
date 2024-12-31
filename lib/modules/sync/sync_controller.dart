@@ -14,9 +14,10 @@ class SyncController extends GetxController {
   static const String syncStorageKey = 'local_updates';
   static const String historyStorageKey = 'history_updates';
 
-  String get _currentBatchId => _storage.read('current_batch_id')?.toString() ?? '';
-  String get _currentSyncKey => '${syncStorageKey}_${_currentBatchId}';
-  String get _currentHistoryKey => '${historyStorageKey}_${_currentBatchId}';
+  String get _currentBatchId =>
+      _storage.read('current_batch_id')?.toString() ?? '';
+  String get _currentSyncKey => '${syncStorageKey}_$_currentBatchId';
+  String get _currentHistoryKey => '${historyStorageKey}_$_currentBatchId';
 
   final RxList<LocalTreeUpdate> pendingUpdates = <LocalTreeUpdate>[].obs;
   final isSyncing = false.obs;
@@ -97,9 +98,10 @@ class SyncController extends GetxController {
                 for (var newStatus in update.statusUpdates) {
                   if (existingStatusMap.containsKey(newStatus.statusId)) {
                     // Add values for existing status
-                    final existingValue = int.parse(existingStatusMap[newStatus.statusId]!.value);
+                    final existingValue =
+                        int.parse(existingStatusMap[newStatus.statusId]!.value);
                     final newValue = int.parse(newStatus.value);
-                    
+
                     // Create new instance with updated value
                     existingStatusMap[newStatus.statusId] = LocalStatusUpdate(
                       statusId: newStatus.statusId,
@@ -126,7 +128,8 @@ class SyncController extends GetxController {
         }
 
         // Convert grouped updates to list and sort by date
-        final List<LocalTreeUpdate> sortedUpdates = groupedUpdates.values.toList();
+        final List<LocalTreeUpdate> sortedUpdates =
+            groupedUpdates.values.toList();
         sortedUpdates.sort((a, b) => b.dateCheck.compareTo(a.dateCheck));
 
         pendingUpdates.value = sortedUpdates;
@@ -316,13 +319,8 @@ class SyncController extends GetxController {
     }
   }
 
-  Future<void> clearSyncedData() async {
+  Future<void> clearAllData() async {
     try {
-      if (_currentBatchId.isEmpty) {
-        print('No active batch found');
-        return;
-      }
-
       // Get existing history data
       final historyData = _storage.read(_currentHistoryKey) ?? [];
       final syncData = _storage.read(_currentSyncKey) ?? [];
@@ -336,10 +334,24 @@ class SyncController extends GetxController {
 
       // Clear sync data
       await _storage.write(_currentSyncKey, []);
+      await loadPendingUpdates(); // Reload to update UI
       pendingUpdates.clear();
 
+      Get.back(); // Close confirmation dialog
+      Get.snackbar(
+        'Thành công',
+        'Đã xóa tất cả dữ liệu',
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
     } catch (e) {
-      print('Error clearing synced data: $e');
+      print('Error clearing data: $e');
+      Get.snackbar(
+        'Lỗi',
+        'Không thể xóa dữ liệu',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
 

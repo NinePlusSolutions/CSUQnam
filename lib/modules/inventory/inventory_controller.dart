@@ -106,94 +106,95 @@ class InventoryController extends GetxController {
     showYearDropdown.value = false;
   }
 
-  Future<void> onFarmSelected(int farmId, String farmName) async {
-    try {
-      // Reset all dropdowns first
-      resetDropdowns();
-
-      // Find selected farm from local data
-      selectedFarm.value = farmResponses.value.firstWhere(
-        (farm) => farm.farmId == farmId,
-      );
-
-      // Update values
-      this.farmId.value = farmId;
-      farm.value = farmName;
-
-      // Show team dropdown if farm has teams
-      showTeamDropdown.value =
-          selectedFarm.value?.productTeamResponse.isNotEmpty ?? false;
-    } catch (e) {
-      print('Error selecting farm: $e');
-      _showErrorMessage('Lỗi', 'Không thể chọn nông trường: $e');
+  void onFarmSelected(int farmId, String farmName) {
+    this.farmId.value = farmId;
+    farm.value = farmName;
+    
+    // Clear previous selections
+    productTeamId.value = 0;
+    productionTeam.value = '';
+    farmLotId.value = 0;
+    lot.value = '';
+    tappingAge.value = '';
+    yearShaved.value = 0;
+    
+    // Find the selected farm and update selectedFarm
+    final selectedFarm = farmResponses.value.firstWhereOrNull(
+      (farm) => farm.farmId == farmId,
+    );
+    
+    if (selectedFarm != null) {
+      this.selectedFarm.value = selectedFarm;
+      // Only show team dropdown if the farm has teams
+      showTeamDropdown.value = selectedFarm.productTeamResponse.isNotEmpty;
+    } else {
+      this.selectedFarm.value = null;
+      showTeamDropdown.value = false;
     }
+    
+    // Reset dependent selections
+    selectedTeam.value = null;
+    selectedLot.value = null;
+    showLotDropdown.value = false;
+    showYearDropdown.value = false;
   }
 
-  Future<void> onTeamSelected(int teamId, String? teamName) async {
-    try {
-      // Reset lot and year dropdowns
-      resetLotAndYearDropdowns();
-
-      // Find selected team from local data
-      final selectedTeam = selectedFarm.value?.productTeamResponse.firstWhere(
+  void onTeamSelected(int teamId, String teamName) {
+    productTeamId.value = teamId;
+    productionTeam.value = teamName;
+    
+    // Clear lot selections
+    farmLotId.value = 0;
+    lot.value = '';
+    tappingAge.value = '';
+    yearShaved.value = 0;
+    
+    // Find the selected team from the current farm
+    if (selectedFarm.value != null) {
+      final selectedTeam = selectedFarm.value!.productTeamResponse.firstWhereOrNull(
         (team) => team.productTeamId == teamId,
       );
-
-      // Update values
-      productTeamId.value = teamId;
-      productionTeam.value = teamName ?? '';
+      
       if (selectedTeam != null) {
         this.selectedTeam.value = selectedTeam;
-        if (selectedTeam.farmLotResponse.isNotEmpty) {
-          showLotDropdown.value = true;
-        } else {
-          resetLotAndYearDropdowns();
-        }
+        // Only show lot dropdown if the team has lots
+        showLotDropdown.value = selectedTeam.farmLotResponse.isNotEmpty;
+      } else {
+        this.selectedTeam.value = null;
+        showLotDropdown.value = false;
       }
-      updateHeaderValues();
-    } catch (e) {
-      print('Error selecting team: $e');
-      _showErrorMessage('Error', 'Failed to select team: $e');
     }
+    
+    // Reset dependent selections
+    selectedLot.value = null;
+    showYearDropdown.value = false;
   }
 
-  Future<void> onLotSelected(int lotId, String lotName) async {
-    try {
-      // Reset year dropdown
-      resetYearDropdown();
-
-      // Find selected lot from local data
-      selectedLot.value = selectedTeam.value?.farmLotResponse.firstWhere(
+  void onLotSelected(int lotId, String lotName) {
+    farmLotId.value = lotId;
+    lot.value = lotName;
+    
+    // Clear age selections
+    tappingAge.value = '';
+    yearShaved.value = 0;
+    
+    // Find the selected lot from the current team
+    if (selectedTeam.value != null) {
+      final selectedLot = selectedTeam.value!.farmLotResponse.firstWhereOrNull(
         (lot) => lot.farmLotId == lotId,
       );
-
-      // Update values
-      farmLotId.value = lotId;
-      lot.value = lotName;
-
-      // Show year dropdown if lot has valid ages
-      final hasValidAges = selectedLot.value?.ageShavedResponse
-              .where((age) => age.value != null)
-              .isNotEmpty ??
-          false;
-      showYearDropdown.value = hasValidAges;
-
-      // If there's only one valid age, select it automatically
-      if (hasValidAges) {
-        final validAges = selectedLot.value!.ageShavedResponse
+      
+      if (selectedLot != null) {
+        this.selectedLot.value = selectedLot;
+        // Only show year dropdown if the lot has age shaved responses
+        final hasValidAges = selectedLot.ageShavedResponse
             .where((age) => age.value != null)
-            .map((age) => age.value.toString())
-            .toSet()
-            .toList();
-
-        if (validAges.length == 1) {
-          tappingAge.value = validAges.first;
-          yearShaved.value = int.parse(validAges.first);
-        }
+            .isNotEmpty;
+        showYearDropdown.value = hasValidAges;
+      } else {
+        this.selectedLot.value = null;
+        showYearDropdown.value = false;
       }
-    } catch (e) {
-      print('Error selecting lot: $e');
-      _showErrorMessage('Error', 'Failed to select lot: $e');
     }
   }
 

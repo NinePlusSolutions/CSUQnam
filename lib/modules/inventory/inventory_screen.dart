@@ -236,7 +236,9 @@ class InventoryScreen extends GetView<InventoryController> {
                   border: Border.all(color: Colors.grey[300]!),
                 ),
                 child: DropdownButton<int>(
-                  value: controller.farmId.value == 0
+                  value: controller.farmId.value == 0 ||
+                          !controller.farmResponses.value
+                              .any((f) => f.farmId == controller.farmId.value)
                       ? null
                       : controller.farmId.value,
                   isExpanded: true,
@@ -245,15 +247,23 @@ class InventoryScreen extends GetView<InventoryController> {
                   items: controller.farmResponses.value.map((farm) {
                     return DropdownMenuItem<int>(
                       value: farm.farmId,
-                      child: Text(farm.farmName),
+                      child: Text(farm.farmName ?? 'Không có tên'),
                     );
                   }).toList(),
                   onChanged: (value) {
                     if (value != null) {
-                      final selectedFarm = controller.farmResponses.value
-                          .firstWhere((farm) => farm.farmId == value);
-                      controller.onFarmSelected(
-                          selectedFarm.farmId, selectedFarm.farmName);
+                      try {
+                        final selectedFarm = controller.farmResponses.value
+                            .firstWhereOrNull((farm) => farm.farmId == value);
+                        if (selectedFarm != null) {
+                          controller.onFarmSelected(
+                            selectedFarm.farmId,
+                            selectedFarm.farmName ?? '',
+                          );
+                        }
+                      } catch (e) {
+                        print('Error selecting farm: $e');
+                      }
                     }
                   },
                 ),
@@ -269,33 +279,44 @@ class InventoryScreen extends GetView<InventoryController> {
                         border: Border.all(color: Colors.grey[300]!),
                       ),
                       child: DropdownButton<int>(
-                        value: controller.productTeamId.value == 0
+                        value: controller.productTeamId.value == 0 ||
+                                !(controller
+                                        .selectedFarm.value?.productTeamResponse
+                                        .any((t) =>
+                                            t.productTeamId ==
+                                            controller.productTeamId.value) ??
+                                    false)
                             ? null
                             : controller.productTeamId.value,
                         isExpanded: true,
                         underline: const SizedBox(),
                         hint: const Text('Chọn tổ'),
-                        items: controller
-                                .selectedFarm.value?.productTeamResponse
-                                .map((team) {
-                              return DropdownMenuItem<int>(
-                                value: team.productTeamId,
-                                child: Text(
-                                    team.productTeamName ?? 'Unknown Team'),
-                              );
-                            }).toList() ??
-                            [],
+                        items: (controller
+                                    .selectedFarm.value?.productTeamResponse ??
+                                [])
+                            .where((team) => team.productTeamId != null)
+                            .map((team) {
+                          return DropdownMenuItem<int>(
+                            value: team.productTeamId,
+                            child: Text(team.productTeamName ?? 'Không có tên'),
+                          );
+                        }).toList(),
                         onChanged: (value) {
                           if (value != null) {
-                            final selectedTeam = controller
-                                .selectedFarm.value!.productTeamResponse
-                                .firstWhere(
-                              (team) => team.productTeamId == value,
-                            );
-                            controller.onTeamSelected(
-                              selectedTeam.productTeamId,
-                              selectedTeam.productTeamName,
-                            );
+                            try {
+                              final selectedTeam = controller
+                                  .selectedFarm.value?.productTeamResponse
+                                  .firstWhereOrNull(
+                                      (team) => team.productTeamId == value);
+                              if (selectedTeam != null) {
+                                controller.onTeamSelected(
+                                  selectedTeam.productTeamId,
+                                  selectedTeam.productTeamName ?? '',
+                                );
+                              }
+                            } catch (e) {
+                              print('Error selecting team: $e');
+                            }
                           }
                         },
                       ),
@@ -312,29 +333,43 @@ class InventoryScreen extends GetView<InventoryController> {
                         border: Border.all(color: Colors.grey[300]!),
                       ),
                       child: DropdownButton<int>(
-                        value: controller.farmLotId.value == 0
+                        value: controller.farmLotId.value == 0 ||
+                                !(controller.selectedTeam.value?.farmLotResponse
+                                        .any((l) =>
+                                            l.farmLotId ==
+                                            controller.farmLotId.value) ??
+                                    false)
                             ? null
                             : controller.farmLotId.value,
                         isExpanded: true,
                         underline: const SizedBox(),
                         hint: const Text('Chọn lô'),
-                        items: controller.selectedTeam.value?.farmLotResponse
+                        items:
+                            (controller.selectedTeam.value?.farmLotResponse ??
+                                    [])
+                                .where((lot) => lot.farmLotId != null)
                                 .map((lot) {
-                              return DropdownMenuItem<int>(
-                                value: lot.farmLotId,
-                                child: Text(lot.farmLotName),
-                              );
-                            }).toList() ??
-                            [],
+                          return DropdownMenuItem<int>(
+                            value: lot.farmLotId,
+                            child: Text(lot.farmLotName ?? 'Không có tên'),
+                          );
+                        }).toList(),
                         onChanged: (value) {
                           if (value != null) {
-                            final selectedLot = controller
-                                .selectedTeam.value!.farmLotResponse
-                                .firstWhere(
-                              (lot) => lot.farmLotId == value,
-                            );
-                            controller.onLotSelected(
-                                selectedLot.farmLotId, selectedLot.farmLotName);
+                            try {
+                              final selectedLot = controller
+                                  .selectedTeam.value?.farmLotResponse
+                                  .firstWhereOrNull(
+                                      (lot) => lot.farmLotId == value);
+                              if (selectedLot != null) {
+                                controller.onLotSelected(
+                                  selectedLot.farmLotId,
+                                  selectedLot.farmLotName ?? '',
+                                );
+                              }
+                            } catch (e) {
+                              print('Error selecting lot: $e');
+                            }
                           }
                         },
                       ),
@@ -351,28 +386,43 @@ class InventoryScreen extends GetView<InventoryController> {
                         border: Border.all(color: Colors.grey[300]!),
                       ),
                       child: DropdownButton<String>(
-                        value: controller.tappingAge.value.isEmpty
+                        value: controller.tappingAge.value.isEmpty ||
+                                !((controller
+                                        .selectedLot.value?.ageShavedResponse
+                                        .where((age) => age.value != null)
+                                        .map((age) => age.value.toString())
+                                        .toSet()
+                                        .contains(
+                                            controller.tappingAge.value) ??
+                                    false))
                             ? null
                             : controller.tappingAge.value,
                         isExpanded: true,
                         underline: const SizedBox(),
                         hint: const Text('Chọn tuổi cạo'),
-                        items: controller.selectedLot.value?.ageShavedResponse
+                        items:
+                            (controller.selectedLot.value?.ageShavedResponse ??
+                                    [])
                                 .where((age) => age.value != null)
                                 .map((age) => age.value.toString())
                                 .toSet() // Remove duplicates
-                                .toList()
                                 .map((ageStr) {
-                              return DropdownMenuItem<String>(
-                                value: ageStr,
-                                child: Text('$ageStr tuổi'),
-                              );
-                            }).toList() ??
-                            [],
+                          return DropdownMenuItem<String>(
+                            value: ageStr,
+                            child: Text('$ageStr tuổi'),
+                          );
+                        }).toList(),
                         onChanged: (value) {
-                          if (value != null) {
-                            controller.tappingAge.value = value;
-                            controller.yearShaved.value = int.parse(value);
+                          if (value != null && value.isNotEmpty) {
+                            try {
+                              final age = int.tryParse(value);
+                              if (age != null) {
+                                controller.tappingAge.value = value;
+                                controller.yearShaved.value = age;
+                              }
+                            } catch (e) {
+                              print('Error setting tapping age: $e');
+                            }
                           }
                         },
                       ),

@@ -44,10 +44,10 @@ class AppPages {
         Get.lazyPut(() => InventoryController());
       }),
     ),
-    GetPage(
-      name: '/updated-trees',
-      page: () => UpdatedTreesScreen(),
-    ),
+    // GetPage(
+    //   name: '/updated-trees',
+    //   page: () => UpdatedTreesScreen(),
+    // ),
     GetPage(
       name: Routes.updateTree,
       page: () => const UpdateTreeScreen(

@@ -26,7 +26,7 @@ dependencies:
   intl: ^0.20.1
   path_provider: ^2.1.5
   flutter_dotenv: ^5.2.1
-  flutter_slidable: ^3.1.1
+  # flutter_slidable: ^3.1.1
   get_storage: ^2.1.1
   badges: ^3.1.2
   logger: ^2.5.0

@@ -32,7 +32,8 @@ class InventoryController extends GetxController {
   static const String syncStorageKey = 'local_updates';
   static const String historyStorageKey = 'history_updates';
 
-  String get _currentBatchId => storage.read('current_batch_id')?.toString() ?? '';
+  String get _currentBatchId =>
+      storage.read('current_batch_id')?.toString() ?? '';
   String get _currentSyncKey => '${syncStorageKey}_$_currentBatchId';
   String get currentHistoryKey => '${historyStorageKey}_$_currentBatchId';
 
@@ -229,8 +230,6 @@ class InventoryController extends GetxController {
   }
 
   void _handleEndInventory() {
-    // Close the dialog first
-    Get.back();
     // Schedule navigation and state updates after the current frame
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       try {
@@ -243,8 +242,6 @@ class InventoryController extends GetxController {
   }
 
   void _handleNextRow() {
-    // Close the dialog first
-    Get.back();
     // Schedule state updates after the current frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Reset values for next row
@@ -372,17 +369,115 @@ class InventoryController extends GetxController {
       noteController.clear();
       selectedShavedStatus.value = null;
 
-      Get.back();
-      Get.snackbar(
-        'Thành công',
-        'Đã lưu thông tin kiểm kê',
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
+      // Hiển thị dialog với UI cải tiến
+      Get.dialog(
+        Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icon success
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.green[50],
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.check_circle_outline,
+                    color: Colors.green[700],
+                    size: 48,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Title
+                const Text(
+                  'Thành công',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Message
+                const Text(
+                  'Đã lưu thông tin kiểm kê thành công',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                // Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Get.back(); // Đóng dialog
+                          Get.offNamed(Routes
+                              .sync); // Chuyển đến màn hình đồng bộ và xóa stack
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: const Text(
+                          'Đến màn hình đồng bộ',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Get.back(); // Đóng dialog
+                          // Tăng số hàng lên 1
+                          final currentRow = int.parse(row.value);
+                          if (currentRow < totalRows) {
+                            row.value = (currentRow + 1).toString();
+                          }
+                          // Reset form để nhập hàng mới
+                          statusCounts.forEach((key, value) => value.value = 0);
+                          note.value = '';
+                          noteController.clear();
+                          selectedShavedStatus.value = null;
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.green,
+                          side: const BorderSide(color: Colors.green),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: const Text(
+                          'Chuyển qua hàng tiếp theo',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       );
-
-      // Cập nhật lại danh sách trong SyncController
-      final syncController = Get.find<SyncController>();
-      syncController.loadPendingUpdates();
     } catch (e) {
       print('Error saving local update: $e');
       Get.snackbar(
@@ -506,13 +601,6 @@ class InventoryController extends GetxController {
                   ),
                   const SizedBox(width: 16),
                   ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
-                      ),
-                    ),
                     onPressed: () {
                       Get.back();
                       saveLocalUpdate();

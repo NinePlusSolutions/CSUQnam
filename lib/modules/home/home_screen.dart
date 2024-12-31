@@ -120,57 +120,59 @@ class HomeScreen extends GetView<HomeController> {
 
     return Padding(
       padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const SizedBox(height: 32),
-          Text(
-            'Xin chào!',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[800],
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(height: 32),
+            Text(
+              'Xin chào!',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[800],
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Chọn tác vụ bạn muốn thực hiện',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[600],
+            const SizedBox(height: 8),
+            Text(
+              'Chọn tác vụ bạn muốn thực hiện',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey[600],
+              ),
             ),
-          ),
-          const SizedBox(height: 48),
-          Obx(() {
-            return _buildActionButton(
-              icon: Icons.inventory_2_outlined,
-              label: 'Kiểm kê',
-              color: Colors.green,
-              description: controller.isLoadingBatch.value
-                  ? 'Đang tải...'
-                  : controller.currentBatchName.value.isEmpty
-                      ? 'Chưa có đợt kiểm kê'
-                      : controller.currentBatchName.value,
-              onTap: controller.handleInventoryPress,
-            );
-          }),
-          const SizedBox(height: 16),
-          Obx(() => _buildActionButton(
-                icon: Icons.sync,
-                label: 'Đồng bộ',
-                color: Colors.blue,
-                hasBadge: syncController.pendingUpdates.isNotEmpty,
-                onTap: () => Get.toNamed('/sync'),
-              )),
-          const SizedBox(height: 16),
-          _buildActionButton(
-            icon: Icons.history_rounded,
-            label: 'Lịch sử đồng bộ',
-            color: Colors.purple,
-            description: 'Xem lịch sử đồng bộ dữ liệu',
-            onTap: () => Get.toNamed('/history'),
-          ),
-        ],
+            const SizedBox(height: 48),
+            Obx(() {
+              return _buildActionButton(
+                icon: Icons.inventory_2_outlined,
+                label: 'Kiểm kê',
+                color: Colors.green,
+                description: controller.isLoadingBatch.value
+                    ? 'Đang tải...'
+                    : controller.currentBatchName.value.isEmpty
+                        ? 'Chưa có đợt kiểm kê'
+                        : controller.currentBatchName.value,
+                onTap: controller.handleInventoryPress,
+              );
+            }),
+            const SizedBox(height: 16),
+            Obx(() => _buildActionButton(
+                  icon: Icons.sync,
+                  label: 'Đồng bộ',
+                  color: Colors.blue,
+                  hasBadge: syncController.pendingUpdates.isNotEmpty,
+                  onTap: () => Get.toNamed('/sync'),
+                )),
+            const SizedBox(height: 16),
+            _buildActionButton(
+              icon: Icons.history_rounded,
+              label: 'Lịch sử đồng bộ',
+              color: Colors.purple,
+              description: 'Xem lịch sử đồng bộ dữ liệu',
+              onTap: () => Get.toNamed('/history'),
+            ),
+          ],
+        ),
       ),
     );
   }

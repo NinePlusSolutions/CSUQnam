@@ -39,6 +39,10 @@ class AuthController extends GetxController {
         title: 'Đồng bộ trạng thái cạo',
         status: SyncStatus.waiting,
       ),
+      const SyncStep(
+        title: 'Đồng bộ đợt kiểm kê',
+        status: SyncStatus.waiting,
+      ),
     ];
   }
 
@@ -143,6 +147,25 @@ class AuthController extends GetxController {
       } else {
         await _updateSyncStep(
             2, SyncStatus.error, 'Không thể đồng bộ trạng thái cạo');
+        return;
+      }
+
+      // Sync inventory batches data
+      await _updateSyncStep(3, SyncStatus.inProgress);
+      try {
+        final inventoryResponse = await _apiProvider.getInventoryBatches();
+        if (inventoryResponse.isNotEmpty) {
+          await storage.write('inventory_batches', jsonEncode(inventoryResponse));
+          await _updateSyncStep(3, SyncStatus.completed);
+        } else {
+          await _updateSyncStep(
+              3, SyncStatus.error, 'Không thể đồng bộ đợt kiểm kê');
+          return;
+        }
+      } catch (e) {
+        print('Error syncing inventory batches: $e');
+        await _updateSyncStep(
+            3, SyncStatus.error, 'Không thể đồng bộ đợt kiểm kê');
         return;
       }
 

@@ -197,47 +197,63 @@ class HomeScreen extends GetView<HomeController> {
 
   Widget _buildBody() {
     final syncController = Get.find<SyncController>();
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: _buildActionButton(
-                  icon: Icons.inventory_2_outlined,
-                  label: 'Kiểm kê',
-                  color: Colors.green,
-                  onTap: controller.handleInventoryPress,
-                ),
+
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(height: 32),
+            Text(
+              'Xin chào!',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[800],
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildActionButton(
-                  icon: Icons.sync,
-                  label: 'Đồng bộ',
-                  color: Colors.blue,
-                  countBuilder: () => syncController.pendingUpdates.length,
-                  onTap: () => Get.toNamed('/sync'),
-                ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Chọn tác vụ bạn muốn thực hiện',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey[600],
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildActionButton(
-                  icon: Icons.history_rounded,
-                  label: 'Lịch sử đồng bộ',
-                  color: Colors.purple,
-                  onTap: () => Get.toNamed('/history'),
-                ),
-              ),
-            ],
-          ),
-        ],
+            ),
+            const SizedBox(height: 48),
+            Obx(() {
+              return _buildActionButton(
+                icon: Icons.inventory_2_outlined,
+                label: 'Kiểm kê',
+                color: Colors.green,
+                description: controller.isLoadingBatch.value
+                    ? 'Đang tải...'
+                    : controller.currentBatchName.value.isEmpty
+                        ? 'Chưa có đợt kiểm kê'
+                        : controller.currentBatchName.value,
+                onTap: controller.handleInventoryPress,
+              );
+            }),
+            const SizedBox(height: 16),
+            _buildActionButton(
+              icon: Icons.sync,
+              label: 'Đồng bộ',
+              color: Colors.blue,
+              description: 'Đồng bộ dữ liệu mới nhất',
+              countBuilder: () => syncController.pendingUpdates.length,
+              onTap: () => Get.toNamed('/sync'),
+            ),
+            const SizedBox(height: 16),
+            _buildActionButton(
+              icon: Icons.history_rounded,
+              label: 'Lịch sử đồng bộ',
+              color: Colors.purple,
+              description: 'Xem lịch sử đồng bộ dữ liệu',
+              onTap: () => Get.toNamed('/history'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -247,64 +263,113 @@ class HomeScreen extends GetView<HomeController> {
     required String label,
     required Color color,
     required VoidCallback onTap,
+    String? description,
     int Function()? countBuilder,
   }) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Stack(
-              clipBehavior: Clip.none,
+    return Container(
+      height: 120,
+      decoration: BoxDecoration(
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: color.withOpacity(0.1)),
+            ),
+            child: Row(
               children: [
-                Icon(icon, color: color, size: 32),
-                if (countBuilder != null)
-                  Obx(() {
-                    final count = countBuilder();
-                    if (count > 0) {
-                      return Positioned(
-                        right: -12,
-                        top: -8,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.red,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            count.toString(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.6),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        icon,
+                        color: Colors.white,
+                        size: 32,
+                      ),
+                    ),
+                    if (countBuilder != null)
+                      Obx(() {
+                        final count = countBuilder();
+                        if (count > 0) {
+                          return Positioned(
+                            right: -8,
+                            top: -8,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                count.toString(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
-                          ),
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      }),
+                  ],
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[800],
                         ),
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  }),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        description ?? '',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  color: color,
+                  size: 20,
+                ),
               ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: TextStyle(
-                color: color,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

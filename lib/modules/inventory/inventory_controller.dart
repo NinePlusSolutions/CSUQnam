@@ -268,11 +268,6 @@ class InventoryController extends GetxController {
         }
       }
 
-      if (statusUpdates.isEmpty) {
-        _showErrorMessage('Lỗi', 'Vui lòng cập nhật ít nhất một trạng thái');
-        return;
-      }
-
       final localUpdate = LocalTreeUpdate(
         farmId: farmId.value,
         farmName: farm.value,
@@ -1275,20 +1270,6 @@ class InventoryController extends GetxController {
 
     if (row.value.isEmpty) {
       _showErrorMessage('Thiếu thông tin', 'Vui lòng chọn hàng');
-      return;
-    }
-
-    // Kiểm tra xem có ít nhất một trạng thái được cập nhật
-    bool hasStatusUpdate = false;
-    statusCounts.forEach((_, count) {
-      if (count.value > 0) {
-        hasStatusUpdate = true;
-      }
-    });
-
-    if (!hasStatusUpdate) {
-      _showErrorMessage(
-          'Thiếu thông tin', 'Vui lòng cập nhật ít nhất một trạng thái cây');
       return;
     }
 

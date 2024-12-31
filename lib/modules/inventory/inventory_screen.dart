@@ -1055,6 +1055,34 @@ class InventoryScreen extends GetView<InventoryController> {
                               ),
                               const SizedBox(height: 16),
 
+                              // Tình trạng mặt cạo
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange[50],
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                      color: Colors.orange.withOpacity(0.3)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.local_offer,
+                                        color: Colors.orange[700]),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      'Tình trạng mặt cạo: ${updates.first.shavedStatusName}',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.orange[700],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+
                               // Danh sách trạng thái
                               const Text(
                                 'Chi tiết trạng thái:',

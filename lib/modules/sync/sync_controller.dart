@@ -14,6 +14,10 @@ class SyncController extends GetxController {
   static const String syncStorageKey = 'local_updates';
   static const String historyStorageKey = 'history_updates';
 
+  String get _currentBatchId => _storage.read('current_batch_id')?.toString() ?? '';
+  String get _currentSyncKey => '${syncStorageKey}_${_currentBatchId}';
+  String get _currentHistoryKey => '${historyStorageKey}_${_currentBatchId}';
+
   final RxList<LocalTreeUpdate> pendingUpdates = <LocalTreeUpdate>[].obs;
   final isSyncing = false.obs;
   final syncProgress = 0.0.obs;
@@ -35,7 +39,7 @@ class SyncController extends GetxController {
 
   Future<void> loadPendingUpdates() async {
     try {
-      final storedData = _storage.read(syncStorageKey);
+      final storedData = _storage.read(_currentSyncKey);
       print('Loaded data from storage: $storedData');
 
       if (storedData != null && storedData is List) {
@@ -208,7 +212,7 @@ class SyncController extends GetxController {
 
       if (response.statusCode == 200 && response.data['status'] == true) {
         // Clear local storage after successful sync
-        await _storage.write(syncStorageKey, []);
+        await _storage.write(_currentSyncKey, []);
         pendingUpdates.clear();
 
         SchedulerBinding.instance.addPostFrameCallback((_) {
@@ -286,7 +290,7 @@ class SyncController extends GetxController {
       if (response.statusCode == 200) {
         // Remove synced update from local storage
         final List<Map<String, dynamic>> existingUpdates = [];
-        final storedData = _storage.read(syncStorageKey);
+        final storedData = _storage.read(_currentSyncKey);
         if (storedData != null && storedData is List) {
           existingUpdates.addAll(List<Map<String, dynamic>>.from(storedData));
         }
@@ -298,7 +302,7 @@ class SyncController extends GetxController {
             item['treeLineName'] == update.treeLineName &&
             item['dateCheck'] == update.dateCheck.toIso8601String());
 
-        await _storage.write(syncStorageKey, existingUpdates);
+        await _storage.write(_currentSyncKey, existingUpdates);
         await loadPendingUpdates();
 
         SchedulerBinding.instance.addPostFrameCallback((_) {
@@ -329,19 +333,24 @@ class SyncController extends GetxController {
 
   Future<void> clearSyncedData() async {
     try {
+      if (_currentBatchId.isEmpty) {
+        print('No active batch found');
+        return;
+      }
+
       // Get existing history data
-      final historyData = _storage.read(historyStorageKey) ?? [];
-      final syncData = _storage.read(syncStorageKey) ?? [];
+      final historyData = _storage.read(_currentHistoryKey) ?? [];
+      final syncData = _storage.read(_currentSyncKey) ?? [];
 
       // Add sync data to history before clearing
       if (syncData is List) {
         List<dynamic> newHistory = List.from(historyData);
         newHistory.addAll(syncData);
-        await _storage.write(historyStorageKey, newHistory);
+        await _storage.write(_currentHistoryKey, newHistory);
       }
 
       // Clear sync data
-      await _storage.write(syncStorageKey, []);
+      await _storage.write(_currentSyncKey, []);
       pendingUpdates.clear();
 
     } catch (e) {
@@ -352,7 +361,7 @@ class SyncController extends GetxController {
   Future<void> deleteSingleUpdate(LocalTreeUpdate update) async {
     try {
       final List<Map<String, dynamic>> existingUpdates = [];
-      final storedData = _storage.read(syncStorageKey);
+      final storedData = _storage.read(_currentSyncKey);
       if (storedData != null && storedData is List) {
         existingUpdates.addAll(List<Map<String, dynamic>>.from(storedData));
       }
@@ -364,7 +373,7 @@ class SyncController extends GetxController {
           item['treeLineName'] == update.treeLineName &&
           item['dateCheck'] == update.dateCheck.toIso8601String());
 
-      await _storage.write(syncStorageKey, existingUpdates);
+      await _storage.write(_currentSyncKey, existingUpdates);
       await loadPendingUpdates();
 
       Get.snackbar(

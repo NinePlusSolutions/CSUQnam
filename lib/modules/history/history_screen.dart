@@ -201,6 +201,19 @@ class HistoryScreen extends GetView<HistoryController> {
                           endIndent: 4,
                         ),
                         _buildLocationInfo(
+                          icon: Icons.calendar_today,
+                          label: 'Tuổi cạo',
+                          value: history.yearShaved.isNotEmpty
+                              ? '${history.yearShaved} tuổi'
+                              : 'Chưa xác định',
+                        ),
+                        VerticalDivider(
+                          color: Colors.green.withOpacity(0.2),
+                          thickness: 1,
+                          indent: 4,
+                          endIndent: 4,
+                        ),
+                        _buildLocationInfo(
                           icon: Icons.format_list_numbered,
                           label: 'Hàng',
                           value: history.treeLineName,

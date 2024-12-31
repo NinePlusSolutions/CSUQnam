@@ -501,6 +501,17 @@ class _SyncScreenState extends State<SyncScreen> {
                             endIndent: 4,
                           ),
                           _buildLocationInfo(
+                            icon: Icons.calendar_today,
+                            label: 'Tuổi cạo',
+                            value: '${update.tappingAge} tuổi',
+                          ),
+                          VerticalDivider(
+                            color: Colors.green.withOpacity(0.2),
+                            thickness: 1,
+                            indent: 4,
+                            endIndent: 4,
+                          ),
+                          _buildLocationInfo(
                             icon: Icons.format_list_numbered,
                             label: 'Hàng',
                             value: update.treeLineName,

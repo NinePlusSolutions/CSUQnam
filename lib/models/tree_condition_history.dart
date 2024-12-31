@@ -49,6 +49,7 @@ class TreeConditionHistory {
   final String? description;
   final DateTime dateCheck;
   final List<TreeConditionDetail> treeConditionDetails;
+  final String yearShaved;
 
   TreeConditionHistory({
     required this.id,
@@ -65,6 +66,7 @@ class TreeConditionHistory {
     this.description,
     required this.dateCheck,
     required this.treeConditionDetails,
+    required this.yearShaved,
   });
 
   factory TreeConditionHistory.fromJson(Map<String, dynamic> json) {
@@ -85,6 +87,7 @@ class TreeConditionHistory {
       treeConditionDetails: (json['treeConditionDetails'] as List)
           .map((e) => TreeConditionDetail.fromJson(e))
           .toList(),
+      yearShaved: json['yearShaved']?.toString() ?? '',
     );
   }
 }

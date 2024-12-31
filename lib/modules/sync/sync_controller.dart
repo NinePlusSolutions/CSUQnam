@@ -334,8 +334,8 @@ class SyncController extends GetxController {
 
       // Clear sync data
       await _storage.write(_currentSyncKey, []);
+      pendingUpdates.clear(); // Clear the list immediately
       await loadPendingUpdates(); // Reload to update UI
-      pendingUpdates.clear();
 
       Get.back(); // Close confirmation dialog
       Get.snackbar(
@@ -388,5 +388,9 @@ class SyncController extends GetxController {
         colorText: Colors.white,
       );
     }
+  }
+
+  Future<void> refreshPendingUpdates() async {
+    await loadPendingUpdates();
   }
 }

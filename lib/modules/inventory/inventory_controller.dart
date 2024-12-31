@@ -593,6 +593,10 @@ class InventoryController extends GetxController {
       selectedShavedStatus.value = null;
       isEditMode.value = false;
 
+      // Refresh pending updates count
+      final syncController = Get.find<SyncController>();
+      await syncController.refreshPendingUpdates();
+
       Get.dialog(
         Dialog(
           shape: RoundedRectangleBorder(

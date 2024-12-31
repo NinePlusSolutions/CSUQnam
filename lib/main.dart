@@ -3,14 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_getx_boilerplate/di.dart';
 import 'package:flutter_getx_boilerplate/shared/constants/colors.dart';
+import 'package:flutter_getx_boilerplate/shared/services/connectivity_service.dart';
+import 'package:flutter_getx_boilerplate/widgets/offline_indicator.dart';
+import 'package:get/get.dart';
 import 'app.dart';
 
 FutureOr<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // final fileName = flavor.F.appFlavor == Flavor.dev ? ".env.dev" : ".env.prod";
-  // await dotenv.load(fileName: fileName);
   await DependencyInjection.init();
-
+  Get.put(OfflineIndicatorController());
+  await Get.putAsync(() => ConnectivityService().init());
   runApp(const App());
 
   configLoading();

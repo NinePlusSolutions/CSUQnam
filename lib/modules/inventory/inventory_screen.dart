@@ -838,7 +838,7 @@ class InventoryScreen extends GetView<InventoryController> {
   }
 
   void _showHistoryDialog() {
-    final storedData = controller.storage.read('local_updates');
+    final storedData = controller.storage.read(InventoryController.historyStorageKey);
     final List<LocalTreeUpdate> updates = [];
 
     if (storedData is List) {

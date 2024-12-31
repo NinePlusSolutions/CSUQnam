@@ -28,6 +28,10 @@ class InventoryController extends GetxController {
   final _apiProvider = Get.find<ApiProvider>();
   final storage = GetStorage();
 
+  // Storage keys
+  static const String syncStorageKey = 'local_updates';
+  static const String historyStorageKey = 'history_updates';
+
   final farm = ''.obs;
   final farmId = 0.obs;
   final productionTeam = ''.obs;
@@ -254,21 +258,23 @@ class InventoryController extends GetxController {
 
   Future<void> saveLocalUpdate() async {
     try {
-      final now = DateTime.now();
-      print('Current tapping age: ${tappingAge.value}'); // Debug log
-      final List<LocalStatusUpdate> statusUpdates = [];
-      for (var status in statusList) {
-        final count = statusCounts[status.name] ?? 0.obs;
-        if (count.value > 0) {
-          statusUpdates.add(LocalStatusUpdate(
-            statusId: status.id,
-            statusName: status.name,
-            value: count.value.toString(),
-          ));
-        }
+      if (!isEditingEnabled.value) {
+        return;
       }
 
-      final localUpdate = LocalTreeUpdate(
+      final statusUpdates = <Map<String, dynamic>>[];
+      statusCounts.forEach((statusName, count) {
+        if (count.value > 0) {
+          final status = statusList.firstWhere((s) => s.name == statusName);
+          statusUpdates.add({
+            'statusId': status.id,
+            'statusName': status.name,
+            'value': count.value.toString(),
+          });
+        }
+      });
+
+      final update = LocalTreeUpdate(
         farmId: farmId.value,
         farmName: farm.value,
         productTeamId: productTeamId.value,
@@ -276,184 +282,89 @@ class InventoryController extends GetxController {
         farmLotId: farmLotId.value,
         farmLotName: lot.value,
         treeLineName: row.value,
-        shavedStatusId: selectedShavedStatus.value!.id,
-        shavedStatusName: selectedShavedStatus.value!.name,
+        shavedStatusId: selectedShavedStatus.value?.id ?? 0,
+        shavedStatusName: selectedShavedStatus.value?.name ?? '',
         tappingAge: tappingAge.value,
-        statusUpdates: statusUpdates,
+        dateCheck: DateTime.now(),
+        statusUpdates: statusUpdates
+            .map((status) => LocalStatusUpdate(
+                  statusId: status['statusId'],
+                  statusName: status['statusName'],
+                  value: status['value'],
+                ))
+            .toList(),
         note: note.value,
-        dateCheck: now,
       );
 
-      final Map<String, dynamic> updateJson = {
-        'farmId': localUpdate.farmId,
-        'farmName': localUpdate.farmName,
-        'productTeamId': localUpdate.productTeamId,
-        'productTeamName': localUpdate.productTeamName,
-        'farmLotId': localUpdate.farmLotId,
-        'farmLotName': localUpdate.farmLotName,
-        'treeLineName': localUpdate.treeLineName,
-        'shavedStatusId': localUpdate.shavedStatusId,
-        'shavedStatusName': localUpdate.shavedStatusName,
-        'tappingAge': localUpdate.tappingAge,
-        'dateCheck': now.toIso8601String(),
-        'statusUpdates': statusUpdates
+      final updateJson = {
+        'farmId': update.farmId,
+        'farmName': update.farmName,
+        'productTeamId': update.productTeamId,
+        'productTeamName': update.productTeamName,
+        'farmLotId': update.farmLotId,
+        'farmLotName': update.farmLotName,
+        'treeLineName': update.treeLineName,
+        'shavedStatusId': update.shavedStatusId,
+        'shavedStatusName': update.shavedStatusName,
+        'tappingAge': update.tappingAge,
+        'dateCheck': update.dateCheck.toIso8601String(),
+        'statusUpdates': update.statusUpdates
             .map((status) => {
                   'statusId': status.statusId,
                   'statusName': status.statusName,
                   'value': status.value,
                 })
             .toList(),
-        'note': localUpdate.note,
+        'note': update.note,
       };
 
       print('Local update to save: $updateJson');
 
+      // Save to sync storage
       List<Map<String, dynamic>> existingUpdates = [];
-      final storedData = storage.read('local_updates');
+      final storedData = storage.read(syncStorageKey);
       if (storedData != null && storedData is List) {
         existingUpdates = List<Map<String, dynamic>>.from(storedData);
       }
-
       existingUpdates.add(updateJson);
-      await storage.write('local_updates', existingUpdates);
+      await storage.write(syncStorageKey, existingUpdates);
+
+      // Save to history storage
+      List<Map<String, dynamic>> historyUpdates = [];
+      final historyData = storage.read(historyStorageKey);
+      if (historyData != null && historyData is List) {
+        historyUpdates = List<Map<String, dynamic>>.from(historyData);
+      }
+      historyUpdates.add(updateJson);
+      await storage.write(historyStorageKey, historyUpdates);
+
       print('Saved updates: $existingUpdates');
 
-      // Cập nhật lại danh sách trong SyncController
-      if (Get.isRegistered<SyncController>()) {
-        final syncController = Get.find<SyncController>();
-        await syncController.loadPendingUpdates();
-      }
+      // Reset form
+      statusCounts.forEach((key, value) => value.value = 0);
+      note.value = '';
+      noteController.clear();
+      selectedShavedStatus.value = null;
 
-      // Show dialog lựa chọn hành động tiếp theo
-      Get.dialog(
-        Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Success icon
-                Container(
-                  width: 72,
-                  height: 72,
-                  decoration: BoxDecoration(
-                    color: Colors.green[50],
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.check_circle,
-                    color: Colors.green[600],
-                    size: 48,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                // Title
-                Text(
-                  'Cập nhật thành công',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(Get.context!).primaryColor,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                // Message
-                const Text(
-                  'Bạn muốn thực hiện thao tác nào tiếp theo?',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                // Buttons
-                Column(
-                  children: [
-                    // Kết thúc đợt kiểm kê button
-                    OutlinedButton(
-                      onPressed: _handleEndInventory,
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 12,
-                        ),
-                        side: BorderSide(
-                          color: Theme.of(Get.context!)
-                              .primaryColor
-                              .withOpacity(0.5),
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        minimumSize: const Size(double.infinity, 48),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.sync,
-                            size: 20,
-                            color: Theme.of(Get.context!).primaryColor,
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            'Kết thúc đợt kiểm kê',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                              color: Theme.of(Get.context!).primaryColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    // Qua hàng tiếp theo button
-                    ElevatedButton(
-                      onPressed: _handleNextRow,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 12,
-                        ),
-                        backgroundColor: Theme.of(Get.context!).primaryColor,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        minimumSize: const Size(double.infinity, 48),
-                      ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.arrow_forward, size: 20),
-                          SizedBox(width: 12),
-                          Text(
-                            'Qua hàng tiếp theo',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-        barrierDismissible: false,
+      Get.back();
+      Get.snackbar(
+        'Thành công',
+        'Đã lưu thông tin kiểm kê',
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
       );
+
+      // Cập nhật lại danh sách trong SyncController
+      final syncController = Get.find<SyncController>();
+      syncController.loadPendingUpdates();
     } catch (e) {
       print('Error saving local update: $e');
-      _showErrorMessage('Lỗi', 'Không thể lưu dữ liệu kiểm kê: $e');
+      Get.snackbar(
+        'Lỗi',
+        'Không thể lưu thông tin kiểm kê',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
 

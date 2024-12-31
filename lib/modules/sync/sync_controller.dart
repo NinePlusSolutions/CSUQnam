@@ -11,6 +11,9 @@ class SyncController extends GetxController {
   final _apiProvider = Get.find<ApiProvider>();
   final GetStorage _storage = GetStorage();
 
+  static const String syncStorageKey = 'local_updates';
+  static const String historyStorageKey = 'history_updates';
+
   final RxList<LocalTreeUpdate> pendingUpdates = <LocalTreeUpdate>[].obs;
   final isSyncing = false.obs;
   final syncProgress = 0.0.obs;
@@ -32,7 +35,7 @@ class SyncController extends GetxController {
 
   Future<void> loadPendingUpdates() async {
     try {
-      final storedData = _storage.read('local_updates');
+      final storedData = _storage.read(syncStorageKey);
       print('Loaded data from storage: $storedData');
 
       if (storedData != null && storedData is List) {
@@ -205,7 +208,7 @@ class SyncController extends GetxController {
 
       if (response.statusCode == 200 && response.data['status'] == true) {
         // Clear local storage after successful sync
-        await _storage.write('local_updates', []);
+        await _storage.write(syncStorageKey, []);
         pendingUpdates.clear();
 
         SchedulerBinding.instance.addPostFrameCallback((_) {
@@ -283,7 +286,7 @@ class SyncController extends GetxController {
       if (response.statusCode == 200) {
         // Remove synced update from local storage
         final List<Map<String, dynamic>> existingUpdates = [];
-        final storedData = _storage.read('local_updates');
+        final storedData = _storage.read(syncStorageKey);
         if (storedData != null && storedData is List) {
           existingUpdates.addAll(List<Map<String, dynamic>>.from(storedData));
         }
@@ -295,7 +298,7 @@ class SyncController extends GetxController {
             item['treeLineName'] == update.treeLineName &&
             item['dateCheck'] == update.dateCheck.toIso8601String());
 
-        await _storage.write('local_updates', existingUpdates);
+        await _storage.write(syncStorageKey, existingUpdates);
         await loadPendingUpdates();
 
         SchedulerBinding.instance.addPostFrameCallback((_) {
@@ -324,35 +327,32 @@ class SyncController extends GetxController {
     }
   }
 
-  Future<void> clearPendingUpdates() async {
+  Future<void> clearSyncedData() async {
     try {
-      await _storage.write('local_updates', []);
+      // Get existing history data
+      final historyData = _storage.read(historyStorageKey) ?? [];
+      final syncData = _storage.read(syncStorageKey) ?? [];
+
+      // Add sync data to history before clearing
+      if (syncData is List) {
+        List<dynamic> newHistory = List.from(historyData);
+        newHistory.addAll(syncData);
+        await _storage.write(historyStorageKey, newHistory);
+      }
+
+      // Clear sync data
+      await _storage.write(syncStorageKey, []);
       pendingUpdates.clear();
-      SchedulerBinding.instance.addPostFrameCallback((_) {
-        Get.snackbar(
-          'Thành công',
-          'Đã xóa tất cả dữ liệu cập nhật',
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
-      });
+
     } catch (e) {
-      print('Error clearing pending updates: $e');
-      SchedulerBinding.instance.addPostFrameCallback((_) {
-        Get.snackbar(
-          'Lỗi',
-          'Không thể xóa dữ liệu cập nhật',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
-      });
+      print('Error clearing synced data: $e');
     }
   }
 
   Future<void> deleteSingleUpdate(LocalTreeUpdate update) async {
     try {
       final List<Map<String, dynamic>> existingUpdates = [];
-      final storedData = _storage.read('local_updates');
+      final storedData = _storage.read(syncStorageKey);
       if (storedData != null && storedData is List) {
         existingUpdates.addAll(List<Map<String, dynamic>>.from(storedData));
       }
@@ -364,7 +364,7 @@ class SyncController extends GetxController {
           item['treeLineName'] == update.treeLineName &&
           item['dateCheck'] == update.dateCheck.toIso8601String());
 
-      await _storage.write('local_updates', existingUpdates);
+      await _storage.write(syncStorageKey, existingUpdates);
       await loadPendingUpdates();
 
       Get.snackbar(

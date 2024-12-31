@@ -36,7 +36,7 @@ class SyncController extends GetxController {
       print('Loaded data from storage: $storedData');
 
       if (storedData != null && storedData is List) {
-        final List<LocalTreeUpdate> updates = [];
+        final Map<String, LocalTreeUpdate> groupedUpdates = {};
 
         for (var item in storedData) {
           try {
@@ -56,7 +56,7 @@ class SyncController extends GetxController {
                 }
               }
 
-              updates.add(LocalTreeUpdate(
+              final update = LocalTreeUpdate(
                 farmId: item['farmId'],
                 farmName: item['farmName'],
                 productTeamId: item['productTeamId'],
@@ -70,15 +70,73 @@ class SyncController extends GetxController {
                 dateCheck: dateCheck,
                 statusUpdates: statusUpdates,
                 note: item['note'],
-              ));
+              );
+
+              // Create a unique key for grouping
+              final key =
+                  '${update.farmId}_${update.productTeamId}_${update.farmLotId}_${update.tappingAge}_${update.treeLineName}';
+
+              if (groupedUpdates.containsKey(key)) {
+                // If we already have an update with this key, merge the status updates
+                final existingUpdate = groupedUpdates[key]!;
+
+                // Create a map of existing status updates for easy lookup
+                Map<int, LocalStatusUpdate> existingStatusMap = {
+                  for (var status in existingUpdate.statusUpdates)
+                    status.statusId: status
+                };
+
+                // Merge status updates
+                for (var newStatus in update.statusUpdates) {
+                  if (existingStatusMap.containsKey(newStatus.statusId)) {
+                    // Add values for existing status
+                    final existingValue =
+                        int.parse(existingStatusMap[newStatus.statusId]!.value);
+                    final newValue = int.parse(newStatus.value);
+                    // Create new LocalStatusUpdate instance with updated value
+                    existingStatusMap[newStatus.statusId] = LocalStatusUpdate(
+                      statusId: newStatus.statusId,
+                      statusName: newStatus.statusName,
+                      value: (existingValue + newValue).toString(),
+                    );
+                  } else {
+                    // Add new status
+                    existingStatusMap[newStatus.statusId] = newStatus;
+                  }
+                }
+
+                // Update the grouped entry with merged status updates and latest date
+                groupedUpdates[key] = LocalTreeUpdate(
+                  farmId: update.farmId,
+                  farmName: update.farmName,
+                  productTeamId: update.productTeamId,
+                  productTeamName: update.productTeamName,
+                  farmLotId: update.farmLotId,
+                  farmLotName: update.farmLotName,
+                  treeLineName: update.treeLineName,
+                  shavedStatusId: update.shavedStatusId,
+                  shavedStatusName: update.shavedStatusName,
+                  tappingAge: update.tappingAge,
+                  dateCheck: update.dateCheck.isAfter(existingUpdate.dateCheck)
+                      ? update.dateCheck
+                      : existingUpdate.dateCheck,
+                  statusUpdates: existingStatusMap.values.toList(),
+                  note: update.note,
+                );
+              } else {
+                // If this is the first update with this key, add it to the map
+                groupedUpdates[key] = update;
+              }
             }
           } catch (e) {
             print('Error parsing item: $e');
           }
         }
 
-        // Sort updates by dateCheck in descending order (newest first)
-        updates.sort((a, b) => b.dateCheck.compareTo(a.dateCheck));
+        // Convert map values to list and sort by dateCheck
+        final updates = groupedUpdates.values.toList()
+          ..sort((a, b) => b.dateCheck.compareTo(a.dateCheck));
+
         pendingUpdates.value = updates;
       } else {
         pendingUpdates.clear();

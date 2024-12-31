@@ -283,29 +283,41 @@ class HomeController extends GetxController {
 
   void processInventoryBatchData(dynamic data) {
     try {
-      if (data != null && data is List) {
+      if (data != null && data is List && data.isNotEmpty) {
         // Update observable list
         inventoryBatches.value = data;
 
         // Find active batch
-        final activeBatch = data.firstWhereOrNull(
+        final activeBatchData = data.firstWhereOrNull(
           (batch) => batch['isCompleted'] == false,
         );
 
-        if (activeBatch != null) {
+        if (activeBatchData != null) {
+          final activeBatch = InventoryBatch.fromJson(
+              Map<String, dynamic>.from(activeBatchData));
           currentBatch.value = activeBatch;
-          currentBatchName.value = activeBatch['name']?.toString() ?? '';
+          currentBatchName.value = activeBatch.name;
           hasActiveBatch.value = true;
         } else {
-          currentBatch.value = null;
-          currentBatchName.value = '';
-          hasActiveBatch.value = false;
+          // Nếu không có batch active, lấy batch mới nhất
+          final latestBatchData = data.last;
+          final latestBatch = InventoryBatch.fromJson(
+              Map<String, dynamic>.from(latestBatchData));
+          currentBatch.value = latestBatch;
+          currentBatchName.value = latestBatch.name;
+          hasActiveBatch.value = true;
         }
+      } else {
+        // Nếu không có dữ liệu
+        currentBatch.value = null;
+        currentBatchName.value = '';
+        hasActiveBatch.value = false;
       }
     } catch (e) {
       print('Error processing inventory batch data: $e');
-      hasActiveBatch.value = false;
+      currentBatch.value = null;
       currentBatchName.value = '';
+      hasActiveBatch.value = false;
     }
   }
 

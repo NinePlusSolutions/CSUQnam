@@ -524,52 +524,74 @@ class InventoryController extends GetxController {
 
       print('Local update to save: $updateJson');
 
-      // Save to sync storage
-      List<Map<String, dynamic>> existingUpdates = [];
-      final storedData = storage.read(_currentSyncKey);
-      if (storedData != null && storedData is List) {
-        existingUpdates = List<Map<String, dynamic>>.from(storedData);
-      }
-      existingUpdates.add(updateJson);
-      await storage.write(_currentSyncKey, existingUpdates);
-
-      // Save to history storage
-      List<dynamic> existingData =
-          storage.read(currentHistoryKey) as List<dynamic>? ?? [];
-
-      // If in edit mode, update the existing record instead of adding a new one
       if (isEditMode.value) {
-        final index = existingData.indexWhere((item) {
-          if (item is Map<String, dynamic>) {
-            return item['farmId'].toString() == farmId.value.toString() &&
-                item['productTeamId'].toString() ==
-                    productTeamId.value.toString() &&
-                item['farmLotId'].toString() == farmLotId.value.toString() &&
-                item['treeLineName'] == row.value &&
-                item['tappingAge'] == tappingAge.value;
-          }
-          return false;
-        });
+        // In edit mode, override existing data in both storages
 
-        if (index != -1) {
-          existingData[index] = updateJson;
-        } else {
-          existingData.add(updateJson);
+        // 1. Override in sync storage
+        List<Map<String, dynamic>> syncData = [];
+        final storedSyncData = storage.read(_currentSyncKey);
+        if (storedSyncData != null && storedSyncData is List) {
+          syncData = List<Map<String, dynamic>>.from(storedSyncData);
         }
+
+        final syncIndex = syncData.indexWhere((item) =>
+            item['farmId'] == farmId.value.toString() &&
+            item['productTeamId'] == productTeamId.value.toString() &&
+            item['farmLotId'] == farmLotId.value.toString() &&
+            item['treeLineName'] == row.value);
+
+        if (syncIndex != -1) {
+          // Override existing sync data
+          syncData[syncIndex] = updateJson;
+        } else {
+          syncData.add(updateJson);
+        }
+        await storage.write(_currentSyncKey, syncData);
+
+        // 2. Override in history storage
+        List<Map<String, dynamic>> historyData = [];
+        final storedHistoryData = storage.read(currentHistoryKey);
+        if (storedHistoryData != null && storedHistoryData is List) {
+          historyData = List<Map<String, dynamic>>.from(storedHistoryData);
+        }
+
+        final historyIndex = historyData.indexWhere((item) =>
+            item['farmId'] == farmId.value.toString() &&
+            item['productTeamId'] == productTeamId.value.toString() &&
+            item['farmLotId'] == farmLotId.value.toString() &&
+            item['treeLineName'] == row.value);
+
+        if (historyIndex != -1) {
+          // Override existing history data
+          historyData[historyIndex] = updateJson;
+        } else {
+          historyData.add(updateJson);
+        }
+        await storage.write(currentHistoryKey, historyData);
       } else {
+        // Normal mode - add to existing values
+        // Save to sync storage
+        List<Map<String, dynamic>> existingUpdates = [];
+        final storedData = storage.read(_currentSyncKey);
+        if (storedData != null && storedData is List) {
+          existingUpdates = List<Map<String, dynamic>>.from(storedData);
+        }
+        existingUpdates.add(updateJson);
+        await storage.write(_currentSyncKey, existingUpdates);
+
+        // Save to history storage
+        List<dynamic> existingData =
+            storage.read(currentHistoryKey) as List<dynamic>? ?? [];
         existingData.add(updateJson);
+        storage.write(currentHistoryKey, existingData);
       }
-
-      storage.write(currentHistoryKey, existingData);
-
-      // Reset edit mode after saving
-      isEditMode.value = false;
 
       // Reset form
       statusCounts.forEach((key, value) => value.value = 0);
       note.value = '';
       noteController.clear();
       selectedShavedStatus.value = null;
+      isEditMode.value = false;
 
       Get.dialog(
         Dialog(

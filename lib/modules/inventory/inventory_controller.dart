@@ -272,7 +272,7 @@ class InventoryController extends GetxController {
           statusCounts[status.name] = RxInt(0);
         }
 
-        // Calculate total counts from all matching records
+        // Find matching records
         final List<Map<String, dynamic>> matchingRecords = [];
         for (var item in storedData) {
           if (item is Map<String, dynamic>) {
@@ -292,7 +292,25 @@ class InventoryController extends GetxController {
             matchingRecords.isNotEmpty ? matchingRecords.last : null;
 
         if (latestRecord != null) {
-          // Load shaved status
+          // Sum up all status counts from matching records
+          for (var record in matchingRecords) {
+            if (record['statusUpdates'] is List) {
+              final statusUpdates = record['statusUpdates'] as List;
+              for (var update in statusUpdates) {
+                if (update is Map<String, dynamic>) {
+                  final statusName = update['statusName']?.toString();
+                  final value =
+                      int.tryParse(update['value']?.toString() ?? '0') ?? 0;
+                  if (statusName != null &&
+                      statusCounts.containsKey(statusName)) {
+                    statusCounts[statusName]!.value += value; // Add values from all records
+                  }
+                }
+              }
+            }
+          }
+
+          // Load shaved status from latest record
           final shavedId = latestRecord['shavedStatusId'];
           if (shavedId != null && shavedStatusData.value != null) {
             // Find the status item in all groups
@@ -312,33 +330,125 @@ class InventoryController extends GetxController {
             selectedShavedStatus.value = foundStatus;
           }
 
-          // Load note
+          // Load note from latest record
           final storedNote = latestRecord['note'];
           if (storedNote != null) {
             note.value = storedNote.toString();
             noteController.text = storedNote.toString();
           }
         }
-
-        // Sum up all status counts from matching records
-        for (var record in matchingRecords) {
-          if (record['statusUpdates'] is List) {
-            final statusUpdates = record['statusUpdates'] as List;
-            for (var update in statusUpdates) {
-              if (update is Map<String, dynamic>) {
-                final statusName = update['statusName']?.toString();
-                final value =
-                    int.tryParse(update['value']?.toString() ?? '0') ?? 0;
-                if (statusName != null &&
-                    statusCounts.containsKey(statusName)) {
-                  statusCounts[statusName]!.value += value;
-                }
-              }
-            }
-          }
-        }
       }
     }
+  }
+
+  void saveCurrentStatus() {
+    if (isEditMode.value) {
+      // When saving in edit mode, replace old records with a new one
+      final now = DateTime.now();
+      final statusUpdates = <Map<String, dynamic>>[];
+
+      for (var status in statusList) {
+        if (statusCounts[status.name]!.value > 0) {
+          statusUpdates.add({
+            'statusId': status.id,
+            'statusName': status.name,
+            'value': statusCounts[status.name]!.value.toString(),
+          });
+        }
+      }
+
+      final newRecord = {
+        'dateCheck': now.toIso8601String(),
+        'farmId': farmId.value,
+        'productTeamId': productTeamId.value,
+        'farmLotId': farmLotId.value,
+        'treeLineName': row.value,
+        'tappingAge': tappingAge.value,
+        'shavedStatusId': selectedShavedStatus.value?.id,
+        'shavedStatusName': selectedShavedStatus.value?.name,
+        'statusUpdates': statusUpdates,
+        'note': note.value,
+      };
+
+      // Get existing data
+      final List<dynamic> existingData =
+          storage.read(currentHistoryKey) ?? [];
+
+      // Remove old records for this location
+      existingData.removeWhere((item) {
+        if (item is Map<String, dynamic>) {
+          return item['farmId'].toString() == farmId.value.toString() &&
+              item['productTeamId'].toString() == productTeamId.value.toString() &&
+              item['farmLotId'].toString() == farmLotId.value.toString() &&
+              item['treeLineName'] == row.value &&
+              item['tappingAge'] == tappingAge.value;
+        }
+        return false;
+      });
+
+      // Add new record
+      existingData.add(newRecord);
+
+      // Save back to storage
+      storage.write(currentHistoryKey, existingData);
+
+      // Reset edit mode
+      isEditMode.value = false;
+    } else {
+      // Normal inventory mode - add to existing values
+      final now = DateTime.now();
+      final statusUpdates = <Map<String, dynamic>>[];
+
+      for (var status in statusList) {
+        if (statusCounts[status.name]!.value > 0) {
+          statusUpdates.add({
+            'statusId': status.id,
+            'statusName': status.name,
+            'value': statusCounts[status.name]!.value.toString(),
+          });
+        }
+      }
+
+      final newRecord = {
+        'dateCheck': now.toIso8601String(),
+        'farmId': farmId.value,
+        'productTeamId': productTeamId.value,
+        'farmLotId': farmLotId.value,
+        'treeLineName': row.value,
+        'tappingAge': tappingAge.value,
+        'shavedStatusId': selectedShavedStatus.value?.id,
+        'shavedStatusName': selectedShavedStatus.value?.name,
+        'statusUpdates': statusUpdates,
+        'note': note.value,
+      };
+
+      // Get existing data
+      final List<dynamic> existingData =
+          storage.read(currentHistoryKey) ?? [];
+
+      // Add new record
+      existingData.add(newRecord);
+
+      // Save back to storage
+      storage.write(currentHistoryKey, existingData);
+
+      // Reset all counts to zero
+      for (var status in statusList) {
+        statusCounts[status.name]!.value = 0;
+      }
+
+      // Reset shaved status and note
+      selectedShavedStatus.value = null;
+      note.value = '';
+      noteController.text = '';
+    }
+
+    // Show success message
+    Get.snackbar(
+      'Thành công',
+      'Đã lưu thông tin kiểm kê',
+      snackPosition: SnackPosition.BOTTOM,
+    );
   }
 
   Future<void> saveLocalUpdate() async {
@@ -1393,7 +1503,7 @@ class InventoryController extends GetxController {
             print('Error fetching data from API: $e');
             if (!hasStoredData) {
               _showErrorMessage('Lỗi',
-                  'Không thể tải dữ liệu từ máy chủ. Vui lòng thử lại sau.');
+                  'Không thể tải dữ liệu từ máy chủ. Vui lòng thử lại.');
             }
           }
         }

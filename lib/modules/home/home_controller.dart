@@ -288,36 +288,58 @@ class HomeController extends GetxController {
         inventoryBatches.value = data;
 
         // Find active batch
-        final activeBatchData = data.firstWhereOrNull(
+        final activeBatch = data.firstWhereOrNull(
           (batch) => batch['isCompleted'] == false,
         );
 
-        if (activeBatchData != null) {
-          final activeBatch = InventoryBatch.fromJson(
-              Map<String, dynamic>.from(activeBatchData));
-          currentBatch.value = activeBatch;
-          currentBatchName.value = activeBatch.name;
+        if (activeBatch != null) {
+          currentBatch.value =
+              InventoryBatch.fromJson(Map<String, dynamic>.from(activeBatch));
+          currentBatchName.value = currentBatch.value?.name ?? '';
           hasActiveBatch.value = true;
         } else {
           // Nếu không có batch active, lấy batch mới nhất
-          final latestBatchData = data.last;
-          final latestBatch = InventoryBatch.fromJson(
-              Map<String, dynamic>.from(latestBatchData));
-          currentBatch.value = latestBatch;
-          currentBatchName.value = latestBatch.name;
+          final latestBatch = data.last;
+          currentBatch.value =
+              InventoryBatch.fromJson(Map<String, dynamic>.from(latestBatch));
+          currentBatchName.value = currentBatch.value?.name ?? '';
           hasActiveBatch.value = true;
         }
       } else {
-        // Nếu không có dữ liệu
+        // Nếu không có dữ liệu từ API, thử lấy từ local storage
+        final storedBatch = storage.read('current_batch');
+        if (storedBatch != null) {
+          final batchData = Map<String, dynamic>.from(storedBatch);
+          currentBatch.value = InventoryBatch.fromJson(batchData);
+          currentBatchName.value = currentBatch.value?.name ?? '';
+          hasActiveBatch.value = true;
+        } else {
+          currentBatch.value = null;
+          currentBatchName.value = '';
+          hasActiveBatch.value = false;
+        }
+      }
+    } catch (e) {
+      print('Error processing inventory batch data: $e');
+      // Nếu có lỗi, thử lấy từ local storage
+      final storedBatch = storage.read('current_batch');
+      if (storedBatch != null) {
+        try {
+          final batchData = Map<String, dynamic>.from(storedBatch);
+          currentBatch.value = InventoryBatch.fromJson(batchData);
+          currentBatchName.value = currentBatch.value?.name ?? '';
+          hasActiveBatch.value = true;
+        } catch (e) {
+          print('Error loading from local storage: $e');
+          currentBatch.value = null;
+          currentBatchName.value = '';
+          hasActiveBatch.value = false;
+        }
+      } else {
         currentBatch.value = null;
         currentBatchName.value = '';
         hasActiveBatch.value = false;
       }
-    } catch (e) {
-      print('Error processing inventory batch data: $e');
-      currentBatch.value = null;
-      currentBatchName.value = '';
-      hasActiveBatch.value = false;
     }
   }
 

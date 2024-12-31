@@ -380,36 +380,28 @@ class InventoryScreen extends GetView<InventoryController> {
                   : const SizedBox()),
 
               // Row input
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey[300]!),
+              TextFormField(
+                initialValue: controller.row.value,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  // border: InputBorder.none,
+                  hintText: 'Nhập số hàng',
+                  labelText: 'Chọn hàng',
                 ),
-                child: TextFormField(
-                  initialValue: controller.row.value,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    hintText: 'Nhập số hàng',
-                    labelText: 'Chọn hàng',
-                  ),
-                  onChanged: (value) {
-                    if (value.isEmpty) return;
+                onChanged: (value) {
+                  if (value.isEmpty) return;
 
-                    final number = int.tryParse(value);
-                    if (number != null && number > 0) {
-                      controller.row.value = number.toString();
-                    } else {
-                      Get.snackbar(
-                        'Thông báo',
-                        'Vui lòng nhập số hàng hợp lệ',
-                        backgroundColor: Colors.red[100],
-                      );
-                    }
-                  },
-                ),
+                  final number = int.tryParse(value);
+                  if (number != null && number > 0) {
+                    controller.row.value = number.toString();
+                  } else {
+                    Get.snackbar(
+                      'Thông báo',
+                      'Vui lòng nhập số hàng hợp lệ',
+                      backgroundColor: Colors.red[100],
+                    );
+                  }
+                },
               ),
 
               // Buttons
@@ -838,7 +830,8 @@ class InventoryScreen extends GetView<InventoryController> {
   }
 
   void _showHistoryDialog() {
-    final storedData = controller.storage.read(InventoryController.historyStorageKey);
+    final storedData =
+        controller.storage.read(InventoryController.historyStorageKey);
     final List<LocalTreeUpdate> updates = [];
 
     if (storedData is List) {

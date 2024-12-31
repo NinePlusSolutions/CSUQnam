@@ -86,6 +86,8 @@ class InventoryController extends GetxController {
   final Rxn<ShavedStatusItem> selectedShavedStatus = Rxn<ShavedStatusItem>();
   final RxString selectedType = RxString('');
 
+  final isEditMode = false.obs;
+
   List<String> getRowNumbers() {
     return List.generate(totalRows, (index) => (index + 1).toString());
   }
@@ -259,6 +261,86 @@ class InventoryController extends GetxController {
     });
   }
 
+  void setEditMode(bool value) {
+    isEditMode.value = value;
+    if (value) {
+      // Load current shaved status if available
+      final storedData = storage.read(currentHistoryKey);
+      if (storedData is List && storedData.isNotEmpty) {
+        // Reset all status counts first
+        for (var status in statusList) {
+          statusCounts[status.name] = RxInt(0);
+        }
+
+        // Calculate total counts from all matching records
+        final List<Map<String, dynamic>> matchingRecords = [];
+        for (var item in storedData) {
+          if (item is Map<String, dynamic>) {
+            if (item['farmId'].toString() == farmId.value.toString() &&
+                item['productTeamId'].toString() ==
+                    productTeamId.value.toString() &&
+                item['farmLotId'].toString() == farmLotId.value.toString() &&
+                item['treeLineName'] == row.value &&
+                item['tappingAge'] == tappingAge.value) {
+              matchingRecords.add(item);
+            }
+          }
+        }
+
+        // Get the latest record for shaved status and note
+        final latestRecord =
+            matchingRecords.isNotEmpty ? matchingRecords.last : null;
+
+        if (latestRecord != null) {
+          // Load shaved status
+          final shavedId = latestRecord['shavedStatusId'];
+          if (shavedId != null && shavedStatusData.value != null) {
+            // Find the status item in all groups
+            ShavedStatusItem? foundStatus;
+            for (var group in shavedStatusData.value!.toJson().entries) {
+              try {
+                foundStatus = group.value.firstWhere(
+                  (status) => status.id == shavedId,
+                  orElse: () => throw StateError('Not found'),
+                );
+                break; // Exit loop if found
+              } catch (e) {
+                // Continue searching in next group if not found
+                continue;
+              }
+            }
+            selectedShavedStatus.value = foundStatus;
+          }
+
+          // Load note
+          final storedNote = latestRecord['note'];
+          if (storedNote != null) {
+            note.value = storedNote.toString();
+            noteController.text = storedNote.toString();
+          }
+        }
+
+        // Sum up all status counts from matching records
+        for (var record in matchingRecords) {
+          if (record['statusUpdates'] is List) {
+            final statusUpdates = record['statusUpdates'] as List;
+            for (var update in statusUpdates) {
+              if (update is Map<String, dynamic>) {
+                final statusName = update['statusName']?.toString();
+                final value =
+                    int.tryParse(update['value']?.toString() ?? '0') ?? 0;
+                if (statusName != null &&
+                    statusCounts.containsKey(statusName)) {
+                  statusCounts[statusName]!.value += value;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
   Future<void> saveLocalUpdate() async {
     try {
       // Kiểm tra xem có status nào được cập nhật không
@@ -342,26 +424,36 @@ class InventoryController extends GetxController {
       await storage.write(_currentSyncKey, existingUpdates);
 
       // Save to history storage
-      List<Map<String, dynamic>> historyUpdates = [];
-      final historyData = storage.read(currentHistoryKey);
-      if (historyData != null && historyData is List) {
-        historyUpdates = List<Map<String, dynamic>>.from(historyData);
-      }
-      historyUpdates.add(updateJson);
-      await storage.write(currentHistoryKey, historyUpdates);
+      List<dynamic> existingData =
+          storage.read(currentHistoryKey) as List<dynamic>? ?? [];
 
-      // Cập nhật current_batch trong local storage
-      final currentBatch = storage.read('inventory_batches');
-      if (currentBatch != null && currentBatch is List) {
-        final batchList = List<Map<String, dynamic>>.from(currentBatch);
-        final activeBatch = batchList
-            .firstWhereOrNull((batch) => batch['isCompleted'] == false);
-        if (activeBatch != null) {
-          await storage.write('current_batch', activeBatch);
+      // If in edit mode, update the existing record instead of adding a new one
+      if (isEditMode.value) {
+        final index = existingData.indexWhere((item) {
+          if (item is Map<String, dynamic>) {
+            return item['farmId'].toString() == farmId.value.toString() &&
+                item['productTeamId'].toString() ==
+                    productTeamId.value.toString() &&
+                item['farmLotId'].toString() == farmLotId.value.toString() &&
+                item['treeLineName'] == row.value &&
+                item['tappingAge'] == tappingAge.value;
+          }
+          return false;
+        });
+
+        if (index != -1) {
+          existingData[index] = updateJson;
+        } else {
+          existingData.add(updateJson);
         }
+      } else {
+        existingData.add(updateJson);
       }
 
-      print('Saved updates: $existingUpdates');
+      storage.write(currentHistoryKey, existingData);
+
+      // Reset edit mode after saving
+      isEditMode.value = false;
 
       // Reset form
       statusCounts.forEach((key, value) => value.value = 0);

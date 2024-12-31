@@ -967,6 +967,7 @@ class InventoryScreen extends GetView<InventoryController> {
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
+
                 // Content
                 Expanded(
                   child: Column(
@@ -985,11 +986,24 @@ class InventoryScreen extends GetView<InventoryController> {
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            IconButton(
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                              icon: const Icon(Icons.close),
-                              onPressed: () => Get.back(),
+                            Row(
+                              children: [
+                                if (updates.isNotEmpty)
+                                  TextButton(
+                                    onPressed: () {
+                                      // Transfer status counts to inventory screen for editing
+                                      controller.setEditMode(true);
+                                      Get.back();
+                                    },
+                                    child: const Text('Chỉnh sửa'),
+                                  ),
+                                IconButton(
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  icon: const Icon(Icons.close),
+                                  onPressed: () => Get.back(),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -1030,11 +1044,6 @@ class InventoryScreen extends GetView<InventoryController> {
                                   padding: const EdgeInsets.all(12),
                                   child: Column(
                                     children: [
-                                      // _buildInfoRow(
-                                      //   'Đợt kiểm kê',
-                                      //   controller.currentBatchName.value,
-                                      //   icon: Icons.inventory,
-                                      // ),
                                       const Divider(height: 16),
                                       _buildInfoRow(
                                         'Nông trường',
@@ -1099,6 +1108,7 @@ class InventoryScreen extends GetView<InventoryController> {
                                   ],
                                 ),
                               ),
+
                               const SizedBox(height: 16),
 
                               // Tình trạng mặt cạo
@@ -1127,6 +1137,7 @@ class InventoryScreen extends GetView<InventoryController> {
                                   ],
                                 ),
                               ),
+
                               const SizedBox(height: 16),
 
                               // Danh sách trạng thái
@@ -1224,6 +1235,7 @@ class InventoryScreen extends GetView<InventoryController> {
                                         ),
                                       ),
                                     ),
+
                                     // Status details when expanded
                                     if (isExpanded)
                                       ...updates.map((update) {

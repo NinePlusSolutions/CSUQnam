@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_getx_boilerplate/modules/home/home.dart';
 import 'package:flutter_getx_boilerplate/routes/app_pages.dart';
+import 'package:flutter_getx_boilerplate/modules/profile/profile_screen.dart';
 import 'package:get/get.dart';
 import 'package:badges/badges.dart' as badges;
 import '../sync/sync_controller.dart';
@@ -16,9 +17,17 @@ class HomeScreen extends GetView<HomeController> {
     return Scaffold(
       appBar: _buildAppBar(),
       body: SafeArea(
-        child: _buildBody(),
+        child: Obx(() => IndexedStack(
+          index: controller.selectedIndex.value,
+          children: [
+            _buildBody(),
+            const ProfileScreen(),
+          ],
+        )),
       ),
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: Obx(() => BottomNavigationBar(
+        currentIndex: controller.selectedIndex.value,
+        onTap: controller.changeTabIndex,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
@@ -31,20 +40,20 @@ class HomeScreen extends GetView<HomeController> {
         ],
         selectedItemColor: Colors.green,
         unselectedItemColor: Colors.grey,
-      ),
+      )),
     );
   }
 
   AppBar _buildAppBar() {
     return AppBar(
-      title: const Text(
-        'Trang chủ',
-        style: TextStyle(
+      title: Obx(() => Text(
+        controller.selectedIndex.value == 0 ? 'Trang chủ' : 'Hồ sơ',
+        style: const TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: Colors.white,
         ),
-      ),
+      )),
       backgroundColor: Colors.green,
       elevation: 0,
       actions: [

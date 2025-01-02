@@ -10,6 +10,7 @@ class ApiConstants {
   static const String shavedStatus = '/v1/common/shaved-status';
   static const String history = '/v1/tree-condition/history';
   static const String inventoryBatches = '/v1/common/inventory-batches';
+  static const String changePassword = '/v1/common/change-password';
 
   // Farm endpoints
   static const String farm = '/v1/common/farm';
@@ -29,4 +30,5 @@ class ApiConstants {
   static String getSyncTreeConditionUrl() => '$baseUrlProd$treeCondition';
   static String getHistoryTreeConditionUrl() => '$baseUrlProd$history';
   static String getInventoryBatchesUrl() => '$baseUrlProd$inventoryBatches';
+  static String getChangePasswordUrl() => '$baseUrlProd$changePassword';
 }

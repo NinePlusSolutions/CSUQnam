@@ -9,6 +9,8 @@ import 'package:flutter_getx_boilerplate/modules/sync/sync_binding.dart';
 import 'package:flutter_getx_boilerplate/modules/sync/sync_screen.dart';
 import 'package:flutter_getx_boilerplate/modules/history/history_controller.dart';
 import 'package:flutter_getx_boilerplate/modules/history/history_screen.dart';
+import 'package:flutter_getx_boilerplate/modules/change_password/change_password_screen.dart';
+import 'package:flutter_getx_boilerplate/modules/change_password/change_password_binding.dart';
 import 'package:get/get.dart';
 
 part 'app_routes.dart';
@@ -70,6 +72,11 @@ class AppPages {
       binding: BindingsBuilder(() {
         Get.lazyPut(() => HistoryController());
       }),
+    ),
+    GetPage(
+      name: Routes.changePassword,
+      page: () => const ChangePasswordScreen(),
+      binding: ChangePasswordBinding(),
     ),
   ];
 }

@@ -16,9 +16,9 @@ class ApiProvider {
 
   ApiProvider() : _dio = Dio() {
     _dio.options = BaseOptions(
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30),
-      sendTimeout: const Duration(seconds: 30),
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 10),
+      sendTimeout: const Duration(seconds: 10),
       validateStatus: (status) {
         return status! < 500;
       },
@@ -291,6 +291,27 @@ class ApiProvider {
       throw Exception('Network error: ${e.message}');
     } catch (e) {
       throw Exception('Error fetching inventory batches: $e');
+    }
+  }
+
+  Future<Response> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String confirmPasswordNew,
+  }) async {
+    try {
+      final response = await _dio.post(
+        ApiConstants.getChangePasswordUrl(),
+        data: {
+          'currentPassword': currentPassword,
+          'newPassword': newPassword,
+          'confirmPasswordNew': confirmPasswordNew,
+        },
+      );
+      return response;
+    } on DioException catch (e) {
+      _logger.e('Error changing password: $e');
+      rethrow;
     }
   }
 }

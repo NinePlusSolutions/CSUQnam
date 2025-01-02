@@ -4,6 +4,7 @@ import 'package:flutter_getx_boilerplate/modules/sync/sync_controller.dart';
 import 'package:get/get.dart';
 
 import 'home_controller.dart';
+import 'package:flutter_getx_boilerplate/modules/profile/profile_controller.dart';
 
 class HomeBinding implements Bindings {
   @override
@@ -18,6 +19,7 @@ class HomeBinding implements Bindings {
     // Initialize controllers
     Get.put(AuthController(), permanent: true);  // Make AuthController permanent
     Get.put(SyncController());  // Initialize SyncController
-    Get.put(HomeController());  // Initialize HomeController
+    Get.lazyPut<HomeController>(() => HomeController());
+    Get.lazyPut<ProfileController>(() => ProfileController());
   }
 }

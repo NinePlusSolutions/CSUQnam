@@ -8,9 +8,10 @@ abstract class Routes {
   static const login = '/login';
   static const register = '/register';
 
-  static const home = '/';
+  static const home = '/home';
   static const inventory = '/inventory';
   static const updateTree = '/update-tree';
   static const sync = '/sync';
   static const history = '/history';
+  static const changePassword = '/change-password';
 }

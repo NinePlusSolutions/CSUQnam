@@ -1443,6 +1443,10 @@ class InventoryController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    final args = Get.arguments;
+    if (args != null && args['batchId'] != null) {
+      storage.write('current_batch_id', args['batchId']);
+    }
     initData();
   }
 

@@ -53,7 +53,7 @@ class InventoryBatchList extends StatelessWidget {
                 onTap: isActive
                     ? () {
                         Get.back();
-                        Get.toNamed(Routes.inventory);
+                        Get.toNamed(Routes.inventory, arguments: {'batchId': batch.id});
                       }
                     : null,
                 borderRadius: BorderRadius.circular(12),

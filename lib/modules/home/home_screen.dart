@@ -18,42 +18,42 @@ class HomeScreen extends GetView<HomeController> {
       appBar: _buildAppBar(),
       body: SafeArea(
         child: Obx(() => IndexedStack(
-          index: controller.selectedIndex.value,
-          children: [
-            _buildBody(),
-            const ProfileScreen(),
-          ],
-        )),
+              index: controller.selectedIndex.value,
+              children: [
+                _buildBody(),
+                const ProfileScreen(),
+              ],
+            )),
       ),
       bottomNavigationBar: Obx(() => BottomNavigationBar(
-        currentIndex: controller.selectedIndex.value,
-        onTap: controller.changeTabIndex,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Trang chủ',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            label: 'Hồ sơ',
-          ),
-        ],
-        selectedItemColor: Colors.green,
-        unselectedItemColor: Colors.grey,
-      )),
+            currentIndex: controller.selectedIndex.value,
+            onTap: controller.changeTabIndex,
+            items: const [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.home),
+                label: 'Trang chủ',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.person_outline),
+                label: 'Hồ sơ',
+              ),
+            ],
+            selectedItemColor: Colors.green,
+            unselectedItemColor: Colors.grey,
+          )),
     );
   }
 
   AppBar _buildAppBar() {
     return AppBar(
       title: Obx(() => Text(
-        controller.selectedIndex.value == 0 ? 'Trang chủ' : 'Hồ sơ',
-        style: const TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          color: Colors.white,
-        ),
-      )),
+            controller.selectedIndex.value == 0 ? 'Trang chủ' : 'Hồ sơ',
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+          )),
       backgroundColor: Colors.green,
       elevation: 0,
       actions: [
@@ -235,7 +235,7 @@ class HomeScreen extends GetView<HomeController> {
               icon: Icons.inventory_2_outlined,
               label: 'Kiểm kê',
               color: Colors.green,
-              description: '',
+              description: 'Tiến hành kiểm kê nông trường',
               onTap: controller.handleInventoryPress,
             ),
             const SizedBox(height: 16),

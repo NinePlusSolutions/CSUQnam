@@ -253,11 +253,59 @@ class HomeController extends GetxController {
   Future<void> fetchInventoryBatch() async {
     try {
       final response = await _apiProvider.getInventoryBatches();
-      inventoryBatches.value =
+      final batches =
           response.map((json) => InventoryBatch.fromJson(json)).toList();
+
+      await storage.write('inventory_batches', jsonEncode(response));
+
+      inventoryBatches.value = batches;
     } catch (e) {
-      print('Error fetching inventory batches: $e');
+      print('Error fetching inventory batches from API: $e');
+
+      try {
+        final localDataStr = storage.read('inventory_batches');
+        if (localDataStr != null) {
+          final localData = jsonDecode(localDataStr) as List;
+          inventoryBatches.value =
+              localData.map((json) => InventoryBatch.fromJson(json)).toList();
+        }
+      } catch (e) {
+        print('Error loading local inventory batches: $e');
+      }
     }
+  }
+
+  Future<void> handleInventoryPress() async {
+    final localDataStr = storage.read('inventory_batches');
+    if (localDataStr == null) {
+      await fetchInventoryBatch();
+      if (inventoryBatches.isEmpty) {
+        Get.snackbar(
+          'Thông báo',
+          'Hiện tại chưa có đợt kiểm kê nào',
+          backgroundColor: Colors.orange[100],
+        );
+        return;
+      }
+    } else if (inventoryBatches.isEmpty) {
+      try {
+        final localData = jsonDecode(localDataStr) as List;
+        inventoryBatches.value =
+            localData.map((json) => InventoryBatch.fromJson(json)).toList();
+      } catch (e) {
+        print('Error parsing local inventory batches: $e');
+        await fetchInventoryBatch();
+        if (inventoryBatches.isEmpty) {
+          Get.snackbar(
+            'Thông báo',
+            'Hiện tại chưa có đợt kiểm kê nào',
+            backgroundColor: Colors.orange[100],
+          );
+          return;
+        }
+      }
+    }
+    showInventoryBatchBottomSheet();
   }
 
   void showInventoryBatchBottomSheet() {
@@ -316,22 +364,6 @@ class HomeController extends GetxController {
   void onInit() {
     super.onInit();
     fetchInventoryBatch();
-    fetchInventoryBatch();
-  }
-
-  Future<void> handleInventoryPress() async {
-    if (inventoryBatches.isEmpty) {
-      await fetchInventoryBatch(); // Thử lấy dữ liệu mới nếu danh sách rỗng
-      if (inventoryBatches.isEmpty) {
-        Get.snackbar(
-          'Thông báo',
-          'Hiện tại chưa có đợt kiểm kê nào',
-          backgroundColor: Colors.orange[100],
-        );
-        return;
-      }
-    }
-    showInventoryBatchBottomSheet();
   }
 
   Future<void> logout() async {

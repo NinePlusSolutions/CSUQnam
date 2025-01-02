@@ -5,6 +5,8 @@ part 'local_tree_update.g.dart';
 
 @JsonSerializable()
 class LocalTreeUpdate {
+  @JsonKey(name: 'inventoryBatchId')
+  final int inventoryBatchId;
   @JsonKey(name: 'farmId')
   final int farmId;
   @JsonKey(name: 'farmName')
@@ -31,8 +33,11 @@ class LocalTreeUpdate {
   final List<LocalStatusUpdate> statusUpdates;
   @JsonKey(name: 'note')
   final String? note;
+  @JsonKey(name: 'averageAgeToShave')
+  final int averageAgeToShave;
 
   LocalTreeUpdate({
+    required this.inventoryBatchId,
     required this.farmId,
     required this.farmName,
     required this.productTeamId,
@@ -44,6 +49,7 @@ class LocalTreeUpdate {
     required this.shavedStatusName,
     required this.dateCheck,
     required this.statusUpdates,
+    required this.averageAgeToShave,
     this.tappingAge,
     this.note,
   });

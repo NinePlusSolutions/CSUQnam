@@ -298,31 +298,39 @@ class HomeController extends GetxController {
               InventoryBatch.fromJson(Map<String, dynamic>.from(activeBatch));
           currentBatchName.value = currentBatch.value?.name ?? '';
           hasActiveBatch.value = true;
+          // Save current batch ID
+          storage.write('current_batch_id', currentBatch.value?.id.toString());
         } else {
-          // Nếu không có batch active, lấy batch mới nhất
+          // If no active batch, get the latest batch
           final latestBatch = data.last;
           currentBatch.value =
               InventoryBatch.fromJson(Map<String, dynamic>.from(latestBatch));
           currentBatchName.value = currentBatch.value?.name ?? '';
           hasActiveBatch.value = true;
+          // Save current batch ID
+          storage.write('current_batch_id', currentBatch.value?.id.toString());
         }
       } else {
-        // Nếu không có dữ liệu từ API, thử lấy từ local storage
+        // Try to get from local storage
         final storedBatch = storage.read('current_batch');
         if (storedBatch != null) {
           final batchData = Map<String, dynamic>.from(storedBatch);
           currentBatch.value = InventoryBatch.fromJson(batchData);
           currentBatchName.value = currentBatch.value?.name ?? '';
           hasActiveBatch.value = true;
+          // Save current batch ID
+          storage.write('current_batch_id', currentBatch.value?.id.toString());
         } else {
           currentBatch.value = null;
           currentBatchName.value = '';
           hasActiveBatch.value = false;
+          // Remove current batch ID
+          storage.remove('current_batch_id');
         }
       }
     } catch (e) {
       print('Error processing inventory batch data: $e');
-      // Nếu có lỗi, thử lấy từ local storage
+      // Try to get from local storage
       final storedBatch = storage.read('current_batch');
       if (storedBatch != null) {
         try {
@@ -330,16 +338,22 @@ class HomeController extends GetxController {
           currentBatch.value = InventoryBatch.fromJson(batchData);
           currentBatchName.value = currentBatch.value?.name ?? '';
           hasActiveBatch.value = true;
+          // Save current batch ID
+          storage.write('current_batch_id', currentBatch.value?.id.toString());
         } catch (e) {
           print('Error loading from local storage: $e');
           currentBatch.value = null;
           currentBatchName.value = '';
           hasActiveBatch.value = false;
+          // Remove current batch ID
+          storage.remove('current_batch_id');
         }
       } else {
         currentBatch.value = null;
         currentBatchName.value = '';
         hasActiveBatch.value = false;
+        // Remove current batch ID
+        storage.remove('current_batch_id');
       }
     }
   }

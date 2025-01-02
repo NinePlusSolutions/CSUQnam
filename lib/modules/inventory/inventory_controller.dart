@@ -453,7 +453,7 @@ class InventoryController extends GetxController {
 
   Future<void> saveLocalUpdate() async {
     try {
-      // Kiểm tra xem có status nào được cập nhật không
+      // Check if any status has been updated
       final hasUpdates = statusCounts.values.any((count) => count.value > 0);
       if (!hasUpdates && selectedShavedStatus.value == null) {
         Get.snackbar(
@@ -465,20 +465,57 @@ class InventoryController extends GetxController {
         return;
       }
 
-      // Tạo danh sách status updates
+      // Validate batch ID
+      final batchId = _currentBatchId;
+      if (batchId.isEmpty) {
+        Get.snackbar(
+          'Lỗi',
+          'Không tìm thấy đợt kiểm kê hiện tại',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      // Validate tapping age
+      if (tappingAge.value.isEmpty) {
+        Get.snackbar(
+          'Lỗi',
+          'Vui lòng nhập tuổi cạo',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      int parsedTappingAge;
+      try {
+        parsedTappingAge = int.parse(tappingAge.value);
+      } catch (e) {
+        Get.snackbar(
+          'Lỗi',
+          'Tuổi cạo không hợp lệ',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      // Create status updates list
       final statusUpdates = <Map<String, dynamic>>[];
       statusCounts.forEach((statusName, count) {
         if (count.value > 0) {
           final status = statusList.firstWhere((s) => s.name == statusName);
           statusUpdates.add({
-            'statusId': status.id.toString(), // Convert to String
+            'statusId': status.id.toString(),
             'statusName': statusName,
-            'value': count.value.toString(), // Keep as String
+            'value': count.value.toString(),
           });
         }
       });
 
       final update = LocalTreeUpdate(
+        inventoryBatchId: int.parse(batchId),
         farmId: farmId.value,
         farmName: farm.value,
         productTeamId: productTeamId.value,
@@ -492,34 +529,37 @@ class InventoryController extends GetxController {
         dateCheck: DateTime.now(),
         statusUpdates: statusUpdates
             .map((status) => LocalStatusUpdate(
-                  statusId: int.parse(status['statusId']), // Parse back to int
+                  statusId: int.parse(status['statusId']),
                   statusName: status['statusName'],
-                  value: status['value'], // Keep as String
+                  value: status['value'],
                 ))
             .toList(),
         note: note.value,
+        averageAgeToShave: parsedTappingAge,
       );
 
       final updateJson = {
-        'farmId': update.farmId.toString(), // Convert to String
+        'inventoryBatchId': update.inventoryBatchId.toString(),
+        'farmId': update.farmId.toString(),
         'farmName': update.farmName,
-        'productTeamId': update.productTeamId.toString(), // Convert to String
+        'productTeamId': update.productTeamId.toString(),
         'productTeamName': update.productTeamName,
-        'farmLotId': update.farmLotId.toString(), // Convert to String
+        'farmLotId': update.farmLotId.toString(),
         'farmLotName': update.farmLotName,
         'treeLineName': update.treeLineName,
-        'shavedStatusId': update.shavedStatusId.toString(), // Convert to String
+        'shavedStatusId': update.shavedStatusId.toString(),
         'shavedStatusName': update.shavedStatusName,
         'tappingAge': update.tappingAge,
         'dateCheck': update.dateCheck.toIso8601String(),
         'statusUpdates': update.statusUpdates
             .map((status) => {
-                  'statusId': status.statusId.toString(), // Convert to String
+                  'statusId': status.statusId.toString(),
                   'statusName': status.statusName,
-                  'value': status.value, // Keep as String
+                  'value': status.value,
                 })
             .toList(),
         'note': update.note,
+        'averageAgeToShave': update.averageAgeToShave.toString(),
       };
 
       print('Local update to save: $updateJson');
@@ -535,9 +575,10 @@ class InventoryController extends GetxController {
         }
 
         final syncIndex = syncData.indexWhere((item) =>
-            item['farmId'] == farmId.value.toString() &&
-            item['productTeamId'] == productTeamId.value.toString() &&
-            item['farmLotId'] == farmLotId.value.toString() &&
+            item['farmId'].toString() == farmId.value.toString() &&
+            item['productTeamId'].toString() ==
+                productTeamId.value.toString() &&
+            item['farmLotId'].toString() == farmLotId.value.toString() &&
             item['treeLineName'] == row.value);
 
         if (syncIndex != -1) {
@@ -556,9 +597,10 @@ class InventoryController extends GetxController {
         }
 
         final historyIndex = historyData.indexWhere((item) =>
-            item['farmId'] == farmId.value.toString() &&
-            item['productTeamId'] == productTeamId.value.toString() &&
-            item['farmLotId'] == farmLotId.value.toString() &&
+            item['farmId'].toString() == farmId.value.toString() &&
+            item['productTeamId'].toString() ==
+                productTeamId.value.toString() &&
+            item['farmLotId'].toString() == farmLotId.value.toString() &&
             item['treeLineName'] == row.value);
 
         if (historyIndex != -1) {

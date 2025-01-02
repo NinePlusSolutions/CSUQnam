@@ -65,6 +65,7 @@ class SyncController extends GetxController {
               }
 
               final update = LocalTreeUpdate(
+                inventoryBatchId: int.parse(item['inventoryBatchId'] ?? '0'),
                 farmId: int.parse(item['farmId'] ?? '0'),
                 farmName: item['farmName'] ?? '',
                 productTeamId: int.parse(item['productTeamId'] ?? '0'),
@@ -78,6 +79,7 @@ class SyncController extends GetxController {
                 dateCheck: dateCheck,
                 statusUpdates: statusUpdates,
                 note: item['note'],
+                averageAgeToShave: int.parse(item['averageAgeToShave'] ?? '0'),
               );
 
               // Create a unique key for grouping
@@ -178,19 +180,26 @@ class SyncController extends GetxController {
         final details = update.statusUpdates
             .map((statusUpdate) => TreeConditionDetail(
                   statusId: statusUpdate.statusId,
-                  value: statusUpdate.value, // Use the count value directly
+                  statusName: statusUpdate.statusName,
+                  value: statusUpdate.value,
                 ))
             .toList();
 
         return TreeCondition(
+          inventoryBatchId: update.inventoryBatchId,
           farmId: update.farmId,
+          farmName: update.farmName,
           productTeamId: update.productTeamId,
+          productTeamName: update.productTeamName,
           farmLotId: update.farmLotId,
+          farmLotName: update.farmLotName,
           treeLineName: "Hàng ${update.treeLineName}",
           shavedStatus: update.shavedStatusId,
+          shavedStatusName: update.shavedStatusName,
           description: update.note,
           dateCheck: update.dateCheck,
           treeConditionDetails: details,
+          averageAgeToShave: update.averageAgeToShave,
         );
       }).toList();
       final request = TreeConditionRequest(
@@ -238,19 +247,26 @@ class SyncController extends GetxController {
       final details = update.statusUpdates
           .map((statusUpdate) => TreeConditionDetail(
                 statusId: statusUpdate.statusId,
-                value: statusUpdate.value, // Use the count value directly
+                statusName: statusUpdate.statusName,
+                value: statusUpdate.value,
               ))
           .toList();
 
       final treeCondition = TreeCondition(
+        inventoryBatchId: update.inventoryBatchId,
         farmId: update.farmId,
+        farmName: update.farmName,
         productTeamId: update.productTeamId,
+        productTeamName: update.productTeamName,
         farmLotId: update.farmLotId,
+        farmLotName: update.farmLotName,
         treeLineName: "Hàng ${update.treeLineName}",
         shavedStatus: update.shavedStatusId,
+        shavedStatusName: update.shavedStatusName,
         description: update.note,
         dateCheck: update.dateCheck,
         treeConditionDetails: details,
+        averageAgeToShave: update.averageAgeToShave,
       );
 
       // Create request with single item

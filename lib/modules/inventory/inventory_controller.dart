@@ -503,12 +503,12 @@ class InventoryController extends GetxController {
 
       // Create status updates list
       final statusUpdates = <Map<String, dynamic>>[];
-      statusCounts.forEach((statusName, count) {
+      statusCounts.forEach((status, count) {
         if (count.value > 0) {
-          final status = statusList.firstWhere((s) => s.name == statusName);
+          final statusItem = statusList.firstWhere((s) => s.name == status);
           statusUpdates.add({
-            'statusId': status.id.toString(),
-            'statusName': statusName,
+            'statusId': statusItem.id.toString(),
+            'statusName': status,
             'value': count.value.toString(),
           });
         }
@@ -792,402 +792,294 @@ class InventoryController extends GetxController {
 
   void _showConfirmDialog() {
     final screenWidth = MediaQuery.of(Get.context!).size.width;
+    final totalTrees = statusCounts.values.fold<int>(
+      0,
+      (sum, count) => sum + count.value,
+    );
+
     Get.dialog(Dialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
       child: Container(
         width: screenWidth * 0.9,
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(Get.context!).size.height * 0.8,
-        ),
-        padding: const EdgeInsets.all(24),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Header with icon
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.green[50],
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.fact_check_rounded,
-                  color: Colors.green[700],
-                  size: 40,
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Title
-              const Text(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Title
+            const Center(
+              child: Text(
                 'Xác nhận thông tin',
                 style: TextStyle(
-                  fontSize: 20,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 24),
-              // Location info in a decorated container
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.grey[50],
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Colors.grey.withOpacity(0.2),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    _buildLocationInfoRow(
-                      Icons.location_on,
-                      'Nông trường:',
-                      farm.value,
-                      Colors.green[700]!,
-                    ),
-                    const SizedBox(height: 12),
-                    _buildLocationInfoRow(
-                      Icons.group,
-                      'Tổ:',
-                      productionTeam.value,
-                      Colors.green[700]!,
-                    ),
-                    const SizedBox(height: 12),
-                    _buildLocationInfoRow(
-                      Icons.grid_view,
-                      'Lô:',
-                      lot.value,
-                      Colors.green[700]!,
-                    ),
-                    const SizedBox(height: 12),
-                    _buildLocationInfoRow(
-                      Icons.calendar_today,
-                      'Tuổi cạo:',
-                      '$tappingAge tuổi',
-                      Colors.green[700]!,
-                    ),
-                    const SizedBox(height: 12),
-                    _buildLocationInfoRow(
-                      Icons.format_list_numbered,
-                      'Hàng:',
-                      row.value,
-                      Colors.green[700]!,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              // Tree status section
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.green[50],
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Colors.green.withOpacity(0.2),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.forest,
-                          color: Colors.green[700],
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Số lượng theo trạng thái',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.green,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        // Total tree count
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.green[700]!.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: Colors.green[700]!.withOpacity(0.3),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'Tổng số cây',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  color: Colors.green[700],
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.green[700]!.withOpacity(0.15),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  statusCounts.values
-                                      .fold<int>(
-                                        0,
-                                        (sum, count) => sum + count.value,
-                                      )
-                                      .toString(),
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.green[700],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        // Individual status counts
-                        ...statusList.map((condition) {
-                          final count = statusCounts[condition.name] ?? 0;
-                          if (count == 0) return const SizedBox.shrink();
+            ),
+            const SizedBox(height: 16),
 
-                          final color =
-                              statusColors[condition.name] ?? Colors.grey;
-                          return Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              color: color.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: color.withOpacity(0.3),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  condition.name,
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    color: color,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: color.withOpacity(0.15),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Text(
-                                    count.toString(),
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: color,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }).where((widget) => widget != const SizedBox.shrink()),
-                      ],
-                    ),
-                  ],
-                ),
+            // Basic Info Container
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.green[50],
+                borderRadius: BorderRadius.circular(8),
               ),
-              const SizedBox(height: 20),
-              // Shaved status in a decorated container
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.orange[50],
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Colors.orange.withOpacity(0.2),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.face,
-                      color: Colors.orange[700],
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Trạng thái mặt cạo: ${selectedShavedStatus.value?.name ?? ''}',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.orange[700],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (note.value.isNotEmpty) ...[
-                const SizedBox(height: 20),
-                // Note in a separate container
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.blue[50],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.blue.withOpacity(0.2),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.note,
-                            color: Colors.blue[700],
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Ghi chú',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.blue[700],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
+                      Icon(Icons.location_on,
+                          size: 16, color: Colors.green[700]),
+                      const SizedBox(width: 8),
                       Text(
-                        note.value,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontStyle: FontStyle.italic,
+                        'Nông trường: ${farm.value}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.green[700],
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
                   ),
-                ),
-              ],
-              const SizedBox(height: 24),
-              // Action buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Get.back(),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.grey[700],
-                        side: BorderSide(color: Colors.grey[400]!),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text(
-                        'Hủy',
-                        style: TextStyle(fontSize: 16),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Get.back();
-                        saveLocalUpdate();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text(
-                        'Xác nhận',
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.group, size: 16, color: Colors.green[700]),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Tổ: ${productionTeam.value}',
                         style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                          color: Colors.green[700],
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                    ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.grid_view, size: 16, color: Colors.green[700]),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Lô: ${lot.value}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.green[700],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.calendar_today,
+                          size: 16, color: Colors.green[700]),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Tuổi cạo: $tappingAge tuổi',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.green[700],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.format_list_numbered,
+                          size: 16, color: Colors.green[700]),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Hàng: ${row.value}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.green[700],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.forest, size: 16, color: Colors.green[700]),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Tổng số cây: $totalTrees',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.green[700],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 16),
+
+            // Status Details Container
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.format_list_numbered,
+                          size: 16, color: Colors.green[700]),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Chi tiết theo trạng thái',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.green[700],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                      childAspectRatio: 3,
+                    ),
+                    itemCount: statusList
+                        .where((condition) =>
+                            (statusCounts[condition.name]?.value ?? 0) > 0)
+                        .length,
+                    itemBuilder: (context, index) {
+                      final condition = statusList
+                          .where((condition) =>
+                              (statusCounts[condition.name]?.value ?? 0) > 0)
+                          .toList()[index];
+                      final count = statusCounts[condition.name]?.value ?? 0;
+                      final color = statusColors[condition.name] ?? Colors.grey;
+
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: color.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                condition.name,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: color,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: color.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                count.toString(),
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: color,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Action buttons
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Get.back(),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      side: BorderSide(color: Colors.green[700]!),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: Text(
+                      'Hủy',
+                      style: TextStyle(
+                        color: Colors.green[700],
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Get.back();
+                      saveLocalUpdate();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green[700],
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text(
+                      'Xác nhận',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     ));
-  }
-
-  Widget _buildLocationInfoRow(
-    IconData icon,
-    String label,
-    String value,
-    Color color,
-  ) {
-    return Row(
-      children: [
-        Icon(icon, color: color, size: 20),
-        const SizedBox(width: 8),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 15,
-            color: Colors.grey[700],
-          ),
-        ),
-        const SizedBox(width: 4),
-        Expanded(
-          child: Text(
-            value,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-      ],
-    );
   }
 
   void submitInventory() {
@@ -1282,7 +1174,9 @@ class InventoryController extends GetxController {
                 row.value = (currentRow + 1).toString();
               }
             },
-            child: const Text('Xác nhận'),
+            child: const Text(
+              'Xác nhận',
+            ),
           ),
         ],
       ),

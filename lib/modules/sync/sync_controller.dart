@@ -208,7 +208,6 @@ class SyncController extends GetxController {
       final response = await _apiProvider.syncTreeCondition(request);
 
       if (response.statusCode == 200 && response.data['status'] == true) {
-        // Clear local storage after successful sync
         await _storage.write(_currentSyncKey, []);
         pendingUpdates.clear();
 

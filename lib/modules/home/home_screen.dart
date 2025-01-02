@@ -231,19 +231,13 @@ class HomeScreen extends GetView<HomeController> {
               ),
             ),
             const SizedBox(height: 48),
-            Obx(() {
-              return _buildActionButton(
-                icon: Icons.inventory_2_outlined,
-                label: 'Kiểm kê',
-                color: Colors.green,
-                description: controller.isLoadingBatch.value
-                    ? 'Đang tải...'
-                    : controller.currentBatchName.value.isEmpty
-                        ? 'Chưa có đợt kiểm kê'
-                        : controller.currentBatchName.value,
-                onTap: controller.handleInventoryPress,
-              );
-            }),
+            _buildActionButton(
+              icon: Icons.inventory_2_outlined,
+              label: 'Kiểm kê',
+              color: Colors.green,
+              description: '',
+              onTap: controller.handleInventoryPress,
+            ),
             const SizedBox(height: 16),
             _buildActionButton(
               icon: Icons.sync,

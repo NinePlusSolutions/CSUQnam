@@ -888,6 +888,7 @@ class InventoryScreen extends GetView<InventoryController> {
         if (item is Map<String, dynamic>) {
           try {
             final update = LocalTreeUpdate(
+              inventoryBatchId: int.parse(item['inventoryBatchId'] ?? '0'),
               farmId: int.parse(item['farmId'] ?? '0'),
               farmName: item['farmName'] ?? '',
               productTeamId: int.parse(item['productTeamId'] ?? '0'),
@@ -909,6 +910,7 @@ class InventoryScreen extends GetView<InventoryController> {
                       .toList() ??
                   [],
               note: item['note'],
+              averageAgeToShave: int.parse(item['averageAgeToShave'] ?? '0'),
             );
 
             if (update.farmId == controller.farmId.value &&

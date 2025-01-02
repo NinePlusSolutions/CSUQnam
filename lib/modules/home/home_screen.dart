@@ -50,7 +50,7 @@ class HomeScreen extends GetView<HomeController> {
       actions: [
         IconButton(
           icon: const Icon(Icons.logout, color: Colors.white),
-          onPressed: _showLogoutConfirmation,
+          onPressed: _handleLogout,
         ),
       ],
     );

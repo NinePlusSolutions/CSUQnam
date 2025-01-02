@@ -9,6 +9,8 @@ import 'package:flutter_getx_boilerplate/routes/app_pages.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'dart:convert';
+import 'package:intl/intl.dart';
+import 'widgets/inventory_batch_list.dart';
 
 class TreeStatus {
   final String id;
@@ -246,116 +248,62 @@ class HomeController extends GetxController {
 
   final searchController = TextEditingController();
 
-  final currentBatchName = ''.obs;
-  final isLoadingBatch = false.obs;
-  final Rxn<InventoryBatch> currentBatch = Rxn<InventoryBatch>();
-  final inventoryBatches = <dynamic>[].obs;
-  final hasActiveBatch = false.obs;
+  final RxList<InventoryBatch> inventoryBatches = <InventoryBatch>[].obs;
 
   Future<void> fetchInventoryBatch() async {
     try {
-      isLoadingBatch.value = true;
-
-      // Try to get data from local storage first
-      final storedData = storage.read('inventory_batches');
-      if (storedData != null) {
-        final decodedData = jsonDecode(storedData);
-        processInventoryBatchData(decodedData);
-      }
-
-      // Try to get fresh data from API
-      try {
-        final response = await _apiProvider.getInventoryBatches();
-        if (response.isNotEmpty) {
-          // Save to local storage
-          await storage.write('inventory_batches', jsonEncode(response));
-          processInventoryBatchData(response);
-        }
-      } catch (e) {
-        print('Error fetching fresh inventory data: $e');
-        // Continue with stored data if API fails
-      }
+      final response = await _apiProvider.getInventoryBatches();
+      inventoryBatches.value =
+          response.map((json) => InventoryBatch.fromJson(json)).toList();
     } catch (e) {
-      print('Error in fetchInventoryBatch: $e');
-    } finally {
-      isLoadingBatch.value = false;
+      print('Error fetching inventory batches: $e');
     }
   }
 
-  void processInventoryBatchData(dynamic data) {
-    try {
-      if (data != null && data is List && data.isNotEmpty) {
-        // Update observable list
-        inventoryBatches.value = data;
-
-        // Find active batch
-        final activeBatch = data.firstWhereOrNull(
-          (batch) => batch['isCompleted'] == false,
-        );
-
-        if (activeBatch != null) {
-          currentBatch.value =
-              InventoryBatch.fromJson(Map<String, dynamic>.from(activeBatch));
-          currentBatchName.value = currentBatch.value?.name ?? '';
-          hasActiveBatch.value = true;
-          // Save current batch ID
-          storage.write('current_batch_id', currentBatch.value?.id.toString());
-        } else {
-          // If no active batch, get the latest batch
-          final latestBatch = data.last;
-          currentBatch.value =
-              InventoryBatch.fromJson(Map<String, dynamic>.from(latestBatch));
-          currentBatchName.value = currentBatch.value?.name ?? '';
-          hasActiveBatch.value = true;
-          // Save current batch ID
-          storage.write('current_batch_id', currentBatch.value?.id.toString());
-        }
-      } else {
-        // Try to get from local storage
-        final storedBatch = storage.read('current_batch');
-        if (storedBatch != null) {
-          final batchData = Map<String, dynamic>.from(storedBatch);
-          currentBatch.value = InventoryBatch.fromJson(batchData);
-          currentBatchName.value = currentBatch.value?.name ?? '';
-          hasActiveBatch.value = true;
-          // Save current batch ID
-          storage.write('current_batch_id', currentBatch.value?.id.toString());
-        } else {
-          currentBatch.value = null;
-          currentBatchName.value = '';
-          hasActiveBatch.value = false;
-          // Remove current batch ID
-          storage.remove('current_batch_id');
-        }
-      }
-    } catch (e) {
-      print('Error processing inventory batch data: $e');
-      // Try to get from local storage
-      final storedBatch = storage.read('current_batch');
-      if (storedBatch != null) {
-        try {
-          final batchData = Map<String, dynamic>.from(storedBatch);
-          currentBatch.value = InventoryBatch.fromJson(batchData);
-          currentBatchName.value = currentBatch.value?.name ?? '';
-          hasActiveBatch.value = true;
-          // Save current batch ID
-          storage.write('current_batch_id', currentBatch.value?.id.toString());
-        } catch (e) {
-          print('Error loading from local storage: $e');
-          currentBatch.value = null;
-          currentBatchName.value = '';
-          hasActiveBatch.value = false;
-          // Remove current batch ID
-          storage.remove('current_batch_id');
-        }
-      } else {
-        currentBatch.value = null;
-        currentBatchName.value = '';
-        hasActiveBatch.value = false;
-        // Remove current batch ID
-        storage.remove('current_batch_id');
-      }
-    }
+  void showInventoryBatchBottomSheet() {
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.all(16),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Chọn đợt kiểm kê',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Get.back(),
+                  icon: const Icon(Icons.close),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Flexible(
+              child: SingleChildScrollView(
+                child: GetX<HomeController>(
+                  builder: (controller) => InventoryBatchList(
+                    batches: controller.inventoryBatches.toList(),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+    );
   }
 
   var selectedIndex = 0.obs;
@@ -368,23 +316,26 @@ class HomeController extends GetxController {
   void onInit() {
     super.onInit();
     fetchInventoryBatch();
+    fetchInventoryBatch();
   }
 
   Future<void> handleInventoryPress() async {
-    if (currentBatch.value == null) {
-      Get.snackbar(
-        'Thông báo',
-        'Hiện tại chưa có đợt kiểm kê nào',
-        backgroundColor: Colors.orange[100],
-      );
-      return;
+    if (inventoryBatches.isEmpty) {
+      await fetchInventoryBatch(); // Thử lấy dữ liệu mới nếu danh sách rỗng
+      if (inventoryBatches.isEmpty) {
+        Get.snackbar(
+          'Thông báo',
+          'Hiện tại chưa có đợt kiểm kê nào',
+          backgroundColor: Colors.orange[100],
+        );
+        return;
+      }
     }
-    Get.toNamed('/inventory');
+    showInventoryBatchBottomSheet();
   }
 
   Future<void> logout() async {
     try {
-      await storage.remove('current_batch_id');
       await storage.remove('user_token');
       Get.offAllNamed(Routes.login);
     } catch (e) {

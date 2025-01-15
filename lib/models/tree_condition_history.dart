@@ -87,7 +87,7 @@ class TreeConditionHistory {
       treeConditionDetails: (json['treeConditionDetails'] as List)
           .map((e) => TreeConditionDetail.fromJson(e))
           .toList(),
-      yearShaved: json['yearShaved']?.toString() ?? '',
+      yearShaved: json['averageAgeToShave']?.toString() ?? '',
     );
   }
 }

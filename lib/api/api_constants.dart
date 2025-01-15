@@ -1,8 +1,8 @@
 class ApiConstants {
-  static const baseUrlDev = 'http://119.82.130.211:6781/api';
-  static const baseUrlProd = 'http://119.82.130.211:6781/api';
-  static const baseUrl = 'http://119.82.130.211:6781/api';
-
+  static const baseUrlDev = 'http://caosu.nineplus.vn/api';
+  static const baseUrlProd = 'http://caosu.nineplus.vn/api';
+  static const baseUrl = 'http://caosu.nineplus.vn/api';
+//http://caosu.nineplus.vn/api/identity/token
   static const String login = '/identity/token';
   static const String status = '/v1/common/status';
   static const String profile = '/v1/common/profile';

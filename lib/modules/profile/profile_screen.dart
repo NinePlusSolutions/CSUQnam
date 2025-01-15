@@ -98,36 +98,36 @@ class ProfileScreen extends GetView<ProfileController> {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    _buildProfileOption(
-                      icon: Icons.person_outline,
-                      title: 'Thông tin cá nhân',
-                      onTap: _showFeatureInDevelopment,
-                      enabled: false,
-                    ),
-                    _buildProfileOption(
-                      icon: Icons.notifications_outlined,
-                      title: 'Thông báo',
-                      onTap: _showFeatureInDevelopment,
-                      enabled: false,
-                    ),
+                    // _buildProfileOption(
+                    //   icon: Icons.person_outline,
+                    //   title: 'Thông tin cá nhân',
+                    //   onTap: _showFeatureInDevelopment,
+                    //   enabled: false,
+                    // ),
+                    // _buildProfileOption(
+                    //   icon: Icons.notifications_outlined,
+                    //   title: 'Thông báo',
+                    //   onTap: _showFeatureInDevelopment,
+                    //   enabled: false,
+                    // ),
                     _buildProfileOption(
                       icon: Icons.lock_outline,
                       title: 'Đổi mật khẩu',
                       onTap: () => Get.toNamed('/change-password'),
                       enabled: true,
                     ),
-                    _buildProfileOption(
-                      icon: Icons.settings_outlined,
-                      title: 'Cài đặt',
-                      onTap: _showFeatureInDevelopment,
-                      enabled: false,
-                    ),
-                    _buildProfileOption(
-                      icon: Icons.help_outline,
-                      title: 'Trợ giúp & Hỗ trợ',
-                      onTap: _showFeatureInDevelopment,
-                      enabled: false,
-                    ),
+                    // _buildProfileOption(
+                    //   icon: Icons.settings_outlined,
+                    //   title: 'Cài đặt',
+                    //   onTap: _showFeatureInDevelopment,
+                    //   enabled: false,
+                    // ),
+                    // _buildProfileOption(
+                    //   icon: Icons.help_outline,
+                    //   title: 'Trợ giúp & Hỗ trợ',
+                    //   onTap: _showFeatureInDevelopment,
+                    //   enabled: false,
+                    // ),
                     const SizedBox(height: 20),
                     // Logout Button
                     // Container(

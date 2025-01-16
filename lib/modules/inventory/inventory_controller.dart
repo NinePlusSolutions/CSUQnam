@@ -113,14 +113,6 @@ class InventoryController extends GetxController {
     this.farmId.value = farmId;
     farm.value = farmName;
 
-    // Clear previous selections
-    productTeamId.value = 0;
-    productionTeam.value = '';
-    farmLotId.value = 0;
-    lot.value = '';
-    tappingAge.value = '';
-    yearShaved.value = 0;
-
     // Find the selected farm and update selectedFarm
     final selectedFarm = farmResponses.value.firstWhereOrNull(
       (farm) => farm.farmId == farmId,
@@ -130,27 +122,29 @@ class InventoryController extends GetxController {
       this.selectedFarm.value = selectedFarm;
       // Only show team dropdown if the farm has teams
       showTeamDropdown.value = selectedFarm.productTeamResponse.isNotEmpty;
+
+      // Auto select first team if available
+      if (selectedFarm.productTeamResponse.isNotEmpty) {
+        final firstTeam = selectedFarm.productTeamResponse.first;
+        if (firstTeam.productTeamId != null &&
+            firstTeam.productTeamName != null) {
+          onTeamSelected(firstTeam.productTeamId!, firstTeam.productTeamName!);
+        }
+      }
     } else {
       this.selectedFarm.value = null;
       showTeamDropdown.value = false;
+      // Reset dependent selections
+      selectedTeam.value = null;
+      selectedLot.value = null;
+      showLotDropdown.value = false;
+      showYearDropdown.value = false;
     }
-
-    // Reset dependent selections
-    selectedTeam.value = null;
-    selectedLot.value = null;
-    showLotDropdown.value = false;
-    showYearDropdown.value = false;
   }
 
   void onTeamSelected(int teamId, String teamName) {
     productTeamId.value = teamId;
     productionTeam.value = teamName;
-
-    // Clear lot selections
-    farmLotId.value = 0;
-    lot.value = '';
-    tappingAge.value = '';
-    yearShaved.value = 0;
 
     // Find the selected team from the current farm
     if (selectedFarm.value != null) {
@@ -163,24 +157,27 @@ class InventoryController extends GetxController {
         this.selectedTeam.value = selectedTeam;
         // Only show lot dropdown if the team has lots
         showLotDropdown.value = selectedTeam.farmLotResponse.isNotEmpty;
+
+        // Auto select first lot if available
+        if (selectedTeam.farmLotResponse.isNotEmpty) {
+          final firstLot = selectedTeam.farmLotResponse.first;
+          if (firstLot.farmLotId != null && firstLot.farmLotName != null) {
+            onLotSelected(firstLot.farmLotId!, firstLot.farmLotName!);
+          }
+        }
       } else {
         this.selectedTeam.value = null;
         showLotDropdown.value = false;
+        // Reset dependent selections
+        selectedLot.value = null;
+        showYearDropdown.value = false;
       }
     }
-
-    // Reset dependent selections
-    selectedLot.value = null;
-    showYearDropdown.value = false;
   }
 
   void onLotSelected(int lotId, String lotName) {
     farmLotId.value = lotId;
     lot.value = lotName;
-
-    // Clear age selections
-    tappingAge.value = '';
-    yearShaved.value = 0;
 
     // Find the selected lot from the current team
     if (selectedTeam.value != null) {
@@ -191,20 +188,27 @@ class InventoryController extends GetxController {
       if (selectedLot != null) {
         this.selectedLot.value = selectedLot;
         // Only show year dropdown if the lot has age shaved responses
-        final hasValidAges = selectedLot.ageShavedResponse
+        final validAges = selectedLot.ageShavedResponse
             .where((age) => age.value != null)
-            .isNotEmpty;
+            .toList();
+        final hasValidAges = validAges.isNotEmpty;
         showYearDropdown.value = hasValidAges;
+
+        // Auto select first year if available
+        if (hasValidAges) {
+          final firstAge = validAges.first;
+          if (firstAge.value != null) {
+            yearShaved.value = firstAge.value!;
+            tappingAge.value = firstAge.value.toString();
+          }
+        }
       } else {
         this.selectedLot.value = null;
         showYearDropdown.value = false;
+        yearShaved.value = 0;
+        tappingAge.value = '';
       }
     }
-  }
-
-  void onYearSelected(int year) {
-    yearShaved.value = year;
-    tappingAge.value = year.toString();
   }
 
   void incrementStatus(String status) {

@@ -20,7 +20,7 @@ class SyncController extends GetxController {
   String get _currentHistoryKey => '${historyStorageKey}_$_currentBatchId';
 
   final RxList<LocalTreeUpdate> pendingUpdates = <LocalTreeUpdate>[].obs;
-  final isSyncing = false.obs;
+  final isLoading = false.obs;
   final syncProgress = 0.0.obs;
 
   @override
@@ -49,6 +49,9 @@ class SyncController extends GetxController {
         for (var item in storedData) {
           try {
             if (item is Map<String, dynamic>) {
+              // Chỉ xử lý những record chưa được sync
+              if (item['isSynced'] == true) continue;
+
               final dateCheck = DateTime.parse(item['dateCheck']);
               final List<LocalStatusUpdate> statusUpdates = [];
 
@@ -145,45 +148,112 @@ class SyncController extends GetxController {
   }
 
   Future<void> syncUpdates() async {
-    if (pendingUpdates.isEmpty) {
-      SchedulerBinding.instance.addPostFrameCallback((_) {
-        Get.snackbar(
-          'Thông báo',
-          'Không có dữ liệu cần đồng bộ',
-          backgroundColor: Colors.blue,
-          colorText: Colors.white,
-        );
-      });
-      return;
-    }
-
-    // Check internet connection first
-    final hasInternet = await checkInternetConnection();
-    if (!hasInternet) {
-      SchedulerBinding.instance.addPostFrameCallback((_) {
-        Get.snackbar(
-          'Lỗi kết nối',
-          'Không có kết nối mạng. Vui lòng kiểm tra lại kết nối của bạn.',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
-      });
-      return;
-    }
-
     try {
-      isSyncing.value = true;
-      syncProgress.value = 0.0;
+      isLoading.value = true;
 
-      // Convert LocalTreeUpdate to TreeCondition
-      final treeConditions = pendingUpdates.map((update) {
-        final details = update.statusUpdates
-            .map((statusUpdate) => TreeConditionDetail(
-                  statusId: statusUpdate.statusId,
-                  statusName: statusUpdate.statusName,
-                  value: statusUpdate.value,
-                ))
-            .toList();
+      // Lấy tất cả dữ liệu từ storage
+      final storedData = _storage.read(_currentSyncKey);
+      if (storedData == null || storedData is! List) {
+        throw Exception('No data to sync');
+      }
+
+      final List<Map<String, dynamic>> allUpdates =
+          List<Map<String, dynamic>>.from(storedData);
+
+      // Map để gom nhóm tất cả records (cả đã sync và chưa sync)
+      final Map<String, LocalTreeUpdate> groupedAllUpdates = {};
+
+      // Xử lý tất cả records
+      for (var item in allUpdates) {
+        try {
+          final dateCheck = DateTime.parse(item['dateCheck']);
+          final List<LocalStatusUpdate> statusUpdates = [];
+
+          if (item['statusUpdates'] is List) {
+            for (var status in item['statusUpdates']) {
+              if (status is Map<String, dynamic>) {
+                statusUpdates.add(LocalStatusUpdate(
+                  statusId: int.parse(status['statusId'] ?? '0'),
+                  statusName: status['statusName'] ?? '',
+                  value: status['value']?.toString() ?? '0',
+                ));
+              }
+            }
+          }
+
+          final update = LocalTreeUpdate(
+            inventoryBatchId: int.parse(item['inventoryBatchId'] ?? '0'),
+            farmId: int.parse(item['farmId'] ?? '0'),
+            farmName: item['farmName'] ?? '',
+            productTeamId: int.parse(item['productTeamId'] ?? '0'),
+            productTeamName: item['productTeamName'] ?? '',
+            farmLotId: int.parse(item['farmLotId'] ?? '0'),
+            farmLotName: item['farmLotName'] ?? '',
+            treeLineName: item['treeLineName'] ?? '',
+            shavedStatusId: int.parse(item['shavedStatusId'] ?? '0'),
+            shavedStatusName: item['shavedStatusName'] ?? '',
+            tappingAge: item['tappingAge'] ?? '',
+            dateCheck: dateCheck,
+            statusUpdates: statusUpdates,
+            note: item['note'],
+            averageAgeToShave: int.parse(item['averageAgeToShave'] ?? '0'),
+          );
+
+          // Create a unique key for grouping
+          final key =
+              '${update.farmId}_${update.productTeamId}_${update.farmLotId}_${update.tappingAge}_${update.treeLineName}';
+
+          if (groupedAllUpdates.containsKey(key)) {
+            // If we already have an update with this key, merge the status updates
+            final existingUpdate = groupedAllUpdates[key]!;
+
+            // Create a map of existing status updates for easy lookup
+            Map<int, LocalStatusUpdate> existingStatusMap = {
+              for (var status in existingUpdate.statusUpdates)
+                status.statusId: status
+            };
+
+            // Merge status updates
+            for (var newStatus in update.statusUpdates) {
+              if (existingStatusMap.containsKey(newStatus.statusId)) {
+                // Add values for existing status
+                final existingValue =
+                    int.parse(existingStatusMap[newStatus.statusId]!.value);
+                final newValue = int.parse(newStatus.value);
+
+                // Create new instance with updated value
+                existingStatusMap[newStatus.statusId] = LocalStatusUpdate(
+                  statusId: newStatus.statusId,
+                  statusName: newStatus.statusName,
+                  value: (existingValue + newValue).toString(),
+                );
+              } else {
+                // Add new status
+                existingStatusMap[newStatus.statusId] = newStatus;
+              }
+            }
+
+            // Update the existing update with merged status updates
+            existingUpdate.statusUpdates.clear();
+            existingUpdate.statusUpdates.addAll(existingStatusMap.values);
+          } else {
+            // Add new update to the map
+            groupedAllUpdates[key] = update;
+          }
+        } catch (e) {
+          print('Error processing update for sync: $e');
+        }
+      }
+
+      // Convert all updates to TreeCondition objects for API request
+      final treeConditions = groupedAllUpdates.values.map((update) {
+        final details = update.statusUpdates.map((status) {
+          return TreeConditionDetail(
+            statusId: status.statusId,
+            statusName: status.statusName,
+            value: status.value, // Sửa lại không parse sang int nữa
+          );
+        }).toList();
 
         return TreeCondition(
           inventoryBatchId: update.inventoryBatchId,
@@ -202,14 +272,24 @@ class SyncController extends GetxController {
           averageAgeToShave: update.averageAgeToShave,
         );
       }).toList();
+
       final request = TreeConditionRequest(
         treeConditionList: treeConditions,
       );
+
       final response = await _apiProvider.syncTreeCondition(request);
 
       if (response.statusCode == 200 && response.data['status'] == true) {
-        await _storage.write(_currentSyncKey, []);
-        pendingUpdates.clear();
+        // Đánh dấu tất cả records là đã sync
+        for (var i = 0; i < allUpdates.length; i++) {
+          allUpdates[i] = {...allUpdates[i], 'isSynced': true};
+        }
+
+        // Lưu lại vào storage
+        await _storage.write(_currentSyncKey, allUpdates);
+
+        // Refresh danh sách pending updates (chỉ hiển thị những record chưa sync)
+        await loadPendingUpdates();
 
         SchedulerBinding.instance.addPostFrameCallback((_) {
           Get.snackbar(
@@ -233,23 +313,22 @@ class SyncController extends GetxController {
         );
       });
     } finally {
-      isSyncing.value = false;
-      syncProgress.value = 0.0;
+      isLoading.value = false;
     }
   }
 
   Future<void> syncSingleUpdate(LocalTreeUpdate update) async {
     try {
-      isSyncing.value = true;
+      isLoading.value = true;
 
       // Convert single update to TreeCondition
-      final details = update.statusUpdates
-          .map((statusUpdate) => TreeConditionDetail(
-                statusId: statusUpdate.statusId,
-                statusName: statusUpdate.statusName,
-                value: statusUpdate.value,
-              ))
-          .toList();
+      final details = update.statusUpdates.map((statusUpdate) {
+        return TreeConditionDetail(
+          statusId: statusUpdate.statusId,
+          statusName: statusUpdate.statusName,
+          value: statusUpdate.value, // Sửa lại không parse sang int nữa
+        );
+      }).toList();
 
       final treeCondition = TreeCondition(
         inventoryBatchId: update.inventoryBatchId,
@@ -330,7 +409,7 @@ class SyncController extends GetxController {
         );
       });
     } finally {
-      isSyncing.value = false;
+      isLoading.value = false;
     }
   }
 

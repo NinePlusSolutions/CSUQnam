@@ -560,6 +560,7 @@ class InventoryController extends GetxController {
             .toList(),
         'note': update.note,
         'averageAgeToShave': update.averageAgeToShave.toString(),
+        'isSynced': false, // Thêm dòng này
       };
 
       print('Local update to save: $updateJson');

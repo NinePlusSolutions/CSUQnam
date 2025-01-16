@@ -56,18 +56,18 @@ class _SyncScreenState extends State<SyncScreen> {
         ],
       ),
       body: Obx(() {
-        if (controller.isSyncing.value) {
-          return Center(
+        if (controller.isLoading.value) {
+          return const Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const CircularProgressIndicator(
+                CircularProgressIndicator(
                   valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 Text(
-                  'Đang đồng bộ... ${(controller.syncProgress.value * 100).toInt()}%',
-                  style: const TextStyle(
+                  'Đang đồng bộ...',
+                  style: TextStyle(
                     fontSize: 16,
                     color: Colors.grey,
                   ),

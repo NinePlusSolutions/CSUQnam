@@ -287,25 +287,23 @@ class InventoryController extends GetxController {
           }
         }
 
-        // Get the latest record for shaved status and note
+        // Get the latest record for all data
         final latestRecord =
             matchingRecords.isNotEmpty ? matchingRecords.last : null;
 
         if (latestRecord != null) {
-          // Sum up all status counts from matching records
-          for (var record in matchingRecords) {
-            if (record['statusUpdates'] is List) {
-              final statusUpdates = record['statusUpdates'] as List;
-              for (var update in statusUpdates) {
-                if (update is Map<String, dynamic>) {
-                  final statusName = update['statusName']?.toString();
-                  final value =
-                      int.tryParse(update['value']?.toString() ?? '0') ?? 0;
-                  if (statusName != null &&
-                      statusCounts.containsKey(statusName)) {
-                    statusCounts[statusName]!.value +=
-                        value; // Add values from all records
-                  }
+          // Load status counts from latest record only
+          if (latestRecord['statusUpdates'] is List) {
+            final statusUpdates = latestRecord['statusUpdates'] as List;
+            for (var update in statusUpdates) {
+              if (update is Map<String, dynamic>) {
+                final statusName = update['statusName']?.toString();
+                final value =
+                    int.tryParse(update['value']?.toString() ?? '0') ?? 0;
+                if (statusName != null &&
+                    statusCounts.containsKey(statusName)) {
+                  statusCounts[statusName]!.value =
+                      value; // Set value directly from latest record
                 }
               }
             }
@@ -566,9 +564,7 @@ class InventoryController extends GetxController {
       print('Local update to save: $updateJson');
 
       if (isEditMode.value) {
-        // In edit mode, override existing data in both storages
-
-        // 1. Override in sync storage
+        // In edit mode, completely override existing data with new data
         List<Map<String, dynamic>> syncData = [];
         final storedSyncData = storage.read(_currentSyncKey);
         if (storedSyncData != null && storedSyncData is List) {
@@ -583,14 +579,14 @@ class InventoryController extends GetxController {
             item['treeLineName'] == row.value);
 
         if (syncIndex != -1) {
-          // Override existing sync data
+          // Simply override with new data
           syncData[syncIndex] = updateJson;
         } else {
           syncData.add(updateJson);
         }
         await storage.write(_currentSyncKey, syncData);
 
-        // 2. Override in history storage
+        // Do the same for history storage
         List<Map<String, dynamic>> historyData = [];
         final storedHistoryData = storage.read(currentHistoryKey);
         if (storedHistoryData != null && storedHistoryData is List) {
@@ -605,30 +601,133 @@ class InventoryController extends GetxController {
             item['treeLineName'] == row.value);
 
         if (historyIndex != -1) {
-          // Override existing history data
+          // Simply override with new data
           historyData[historyIndex] = updateJson;
         } else {
           historyData.add(updateJson);
         }
         await storage.write(currentHistoryKey, historyData);
       } else {
-        // Normal mode - add to existing values
-        // Save to sync storage
+        // Normal inventory mode - accumulate values
         List<Map<String, dynamic>> existingUpdates = [];
         final storedData = storage.read(_currentSyncKey);
         if (storedData != null && storedData is List) {
           existingUpdates = List<Map<String, dynamic>>.from(storedData);
         }
-        existingUpdates.add(updateJson);
+
+        final existingIndex = existingUpdates.indexWhere((item) =>
+            item['farmId'].toString() == farmId.value.toString() &&
+            item['productTeamId'].toString() ==
+                productTeamId.value.toString() &&
+            item['farmLotId'].toString() == farmLotId.value.toString() &&
+            item['treeLineName'] == row.value);
+
+        if (existingIndex != -1) {
+          // If exists, merge status updates by adding new values
+          final existingItem = existingUpdates[existingIndex];
+          final existingStatusUpdates =
+              (existingItem['statusUpdates'] as List<dynamic>)
+                  .map((s) => {
+                        'statusId': s['statusId'],
+                        'statusName': s['statusName'],
+                        'value': s['value'],
+                      })
+                  .toList();
+
+          final Map<String, Map<String, dynamic>> mergedStatusUpdates = {};
+
+          // First, add existing status updates to the map
+          for (var status in existingStatusUpdates) {
+            mergedStatusUpdates[status['statusId']] = status;
+          }
+
+          // Then add new values to existing ones
+          for (var status in updateJson['statusUpdates'] as List) {
+            final statusId = status['statusId'];
+            if (mergedStatusUpdates.containsKey(statusId)) {
+              // Add new value to existing value
+              final existingValue =
+                  int.parse(mergedStatusUpdates[statusId]!['value']);
+              final newValue = int.parse(status['value']);
+              mergedStatusUpdates[statusId]!['value'] =
+                  (existingValue + newValue).toString();
+            } else {
+              // Add new status as is
+              mergedStatusUpdates[statusId] = status;
+            }
+          }
+
+          // Update with merged values but keep other fields from new data
+          existingUpdates[existingIndex] = {
+            ...updateJson,
+            'statusUpdates': mergedStatusUpdates.values.toList(),
+          };
+        } else {
+          // If no existing data, add new data as is
+          existingUpdates.add(updateJson);
+        }
         await storage.write(_currentSyncKey, existingUpdates);
 
-        // Save to history storage
-        List<dynamic> existingData =
-            storage.read(currentHistoryKey) as List<dynamic>? ?? [];
-        existingData.add(updateJson);
-        storage.write(currentHistoryKey, existingData);
-      }
+        // Do the same for history storage
+        List<Map<String, dynamic>> historyData = [];
+        final storedHistoryData = storage.read(currentHistoryKey);
+        if (storedHistoryData != null && storedHistoryData is List) {
+          historyData = List<Map<String, dynamic>>.from(storedHistoryData);
+        }
 
+        final historyIndex = historyData.indexWhere((item) =>
+            item['farmId'].toString() == farmId.value.toString() &&
+            item['productTeamId'].toString() ==
+                productTeamId.value.toString() &&
+            item['farmLotId'].toString() == farmLotId.value.toString() &&
+            item['treeLineName'] == row.value);
+
+        if (historyIndex != -1) {
+          // If exists, merge status updates by adding new values
+          final existingItem = historyData[historyIndex];
+          final existingStatusUpdates =
+              (existingItem['statusUpdates'] as List<dynamic>)
+                  .map((s) => {
+                        'statusId': s['statusId'],
+                        'statusName': s['statusName'],
+                        'value': s['value'],
+                      })
+                  .toList();
+
+          final Map<String, Map<String, dynamic>> mergedStatusUpdates = {};
+
+          // First, add existing status updates to the map
+          for (var status in existingStatusUpdates) {
+            mergedStatusUpdates[status['statusId']] = status;
+          }
+
+          // Then add new values to existing ones
+          for (var status in updateJson['statusUpdates'] as List) {
+            final statusId = status['statusId'];
+            if (mergedStatusUpdates.containsKey(statusId)) {
+              // Add new value to existing value
+              final existingValue =
+                  int.parse(mergedStatusUpdates[statusId]!['value']);
+              final newValue = int.parse(status['value']);
+              mergedStatusUpdates[statusId]!['value'] =
+                  (existingValue + newValue).toString();
+            } else {
+              // Add new status as is
+              mergedStatusUpdates[statusId] = status;
+            }
+          }
+
+          // Update with merged values but keep other fields from new data
+          historyData[historyIndex] = {
+            ...updateJson,
+            'statusUpdates': mergedStatusUpdates.values.toList(),
+          };
+        } else {
+          // If no existing data, add new data as is
+          historyData.add(updateJson);
+        }
+        await storage.write(currentHistoryKey, historyData);
+      }
       // Reset form
       statusCounts.forEach((key, value) => value.value = 0);
       note.value = '';

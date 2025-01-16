@@ -48,7 +48,7 @@ class HistoryController extends GetxController {
   List<Map<String, dynamic>> groupHistoryData() {
     final result = <Map<String, dynamic>>[];
 
-    // Đầu tiên nhóm theo tổ
+    // Nhóm theo nông trường và tổ
     final teamGroups =
         groupBy(histories, (h) => '${h.farmId}_${h.productTeamId}');
 
@@ -59,67 +59,55 @@ class HistoryController extends GetxController {
       final lotGroups = groupBy(teamHistories, (h) => h.farmLotId);
 
       if (lotGroups.length > 1) {
-        // Nếu có nhiều lô -> hiển thị theo tổ
+        // Nhiều lô -> show "Nông trường - Tổ: Dữ liệu"
         result.add({
-          'title':
-              '${firstTeamItem.farmName} - ${firstTeamItem.productTeamName}',
-          'details': _calculateStatusCounts(teamHistories),
+          'farmName': firstTeamItem.farmName,
+          'details': {
+            'team': firstTeamItem.productTeamName,
+          },
+          'statusDetails': _calculateStatusCounts(teamHistories),
           'level': 'team',
           'dateCheck': firstTeamItem.dateCheck,
-          'icon': Icons.group,
         });
       } else {
-        // Nếu chỉ có 1 lô
+        // Chỉ có 1 lô
         final lotHistories = lotGroups.values.first;
         final firstLotItem = lotHistories.first;
 
         // Kiểm tra số lượng tuổi cạo trong lô
-        final yearGroups = groupBy(lotHistories, (h) => h.yearShaved);
+        final uniqueAges = lotHistories.map((h) => h.yearShaved).toSet();
 
-        if (yearGroups.length > 1) {
-          // Nếu có nhiều tuổi cạo -> hiển thị theo lô
+        if (uniqueAges.length > 1) {
+          // 1 lô nhiều tuổi -> show "Nông trường - Tổ -> Lô: Dữ liệu"
           result.add({
-            'title':
-                '${firstLotItem.farmName} - ${firstLotItem.productTeamName} - ${firstLotItem.farmLotName}',
-            'details': _calculateStatusCounts(lotHistories),
+            'farmName': firstLotItem.farmName,
+            'details': {
+              'team': firstLotItem.productTeamName,
+              'lot': firstLotItem.farmLotName,
+            },
+            'statusDetails': _calculateStatusCounts(lotHistories),
             'level': 'lot',
             'dateCheck': firstLotItem.dateCheck,
-            'icon': Icons.grid_on,
           });
         } else {
-          // Nếu chỉ có 1 tuổi cạo
-          final yearHistories = yearGroups.values.first;
-          final firstYearItem = yearHistories.first;
-
-          // Kiểm tra số lượng hàng trong tuổi cạo
-          final lineGroups = groupBy(yearHistories, (h) => h.treeLineName);
-
-          if (lineGroups.length > 1) {
-            // Nếu có nhiều hàng -> hiển thị theo tuổi cạo
-            result.add({
-              'title':
-                  '${firstYearItem.farmName} - ${firstYearItem.productTeamName} - ${firstYearItem.farmLotName} - Tuổi cạo ${firstYearItem.yearShaved}',
-              'details': _calculateStatusCounts(yearHistories),
-              'level': 'year',
-              'dateCheck': firstYearItem.dateCheck,
-              'icon': Icons.calendar_today,
-            });
-          } else {
-            // Nếu chỉ có 1 hàng -> hiển thị theo hàng
-            result.add({
-              'title':
-                  '${firstYearItem.farmName} - ${firstYearItem.productTeamName} - ${firstYearItem.farmLotName} - Hàng ${firstYearItem.treeLineName}',
-              'details': _calculateStatusCounts(yearHistories),
-              'level': 'line',
-              'dateCheck': firstYearItem.dateCheck,
-              'icon': Icons.straighten,
-            });
-          }
+          // 1 lô 1 tuổi -> show "Nông trường - Tổ -> Lô -> Tuổi cạo: Dữ liệu"
+          final age = uniqueAges.first;
+          result.add({
+            'farmName': firstLotItem.farmName,
+            'details': {
+              'team': firstLotItem.productTeamName,
+              'lot': firstLotItem.farmLotName,
+              'age': age.toString(),
+            },
+            'statusDetails': _calculateStatusCounts(lotHistories),
+            'level': 'year',
+            'dateCheck': firstLotItem.dateCheck,
+          });
         }
       }
     });
 
-    // Sắp xếp kết quả theo thời gian kiểm tra
+    // Sắp xếp theo thời gian mới nhất
     result.sort((a, b) => b['dateCheck'].compareTo(a['dateCheck']));
     return result;
   }

@@ -174,6 +174,17 @@ class _SyncScreenState extends State<SyncScreen> {
   }
 
   void _showClearConfirmation() {
+    // Kiểm tra nếu không có dữ liệu cần đồng bộ thì không hiển thị dialog
+    if (controller.pendingUpdates.isEmpty) {
+      // Get.snackbar(
+      //   'Thông báo',
+      //   'Không có dữ liệu nào cần đồng bộ',
+      //   backgroundColor: Colors.grey[100],
+      //   colorText: Colors.grey[800],
+      // );
+      return;
+    }
+
     Get.dialog(
       AlertDialog(
         title: Row(

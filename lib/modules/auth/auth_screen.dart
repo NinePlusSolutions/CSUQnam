@@ -72,18 +72,29 @@ class AuthScreen extends GetView<AuthController> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        TextField(
-                          controller: _passwordController,
-                          onChanged: (value) =>
-                              controller.password.value = value,
-                          obscureText: true,
-                          decoration: const InputDecoration(
-                            labelText: "Mật khẩu",
-                            hintText: "Nhập mật khẩu",
-                            prefixIcon: Icon(Icons.lock),
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
+                        Obx(() => TextField(
+                              controller: _passwordController,
+                              onChanged: (value) =>
+                                  controller.password.value = value,
+                              obscureText: controller.isPasswordHidden.value,
+                              decoration: InputDecoration(
+                                labelText: "Mật khẩu",
+                                hintText: "Nhập mật khẩu",
+                                prefixIcon: const Icon(Icons.lock),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    controller.isPasswordHidden.value
+                                        ? Icons.visibility_off
+                                        : Icons.visibility,
+                                    color: Colors.grey,
+                                  ),
+                                  onPressed: () =>
+                                      controller.isPasswordHidden.value =
+                                          !controller.isPasswordHidden.value,
+                                ),
+                                border: const OutlineInputBorder(),
+                              ),
+                            )),
                         const SizedBox(height: 16),
                         Row(
                           children: [

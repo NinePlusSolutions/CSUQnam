@@ -16,6 +16,7 @@ class AuthController extends GetxController {
   final password = ''.obs;
   final rememberLogin = true.obs;
   final isLoading = false.obs;
+  final isPasswordHidden = true.obs;
   final syncSteps = <SyncStep>[].obs;
 
   @override

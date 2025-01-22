@@ -442,7 +442,7 @@ class SyncController extends GetxController {
       Get.back(); // Close confirmation dialog
       Get.snackbar(
         'Thành công',
-        'Đã đồng bộ tất cả dữ liệu',
+        'Đã xóa tất cả dữ liệu',
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
@@ -450,7 +450,7 @@ class SyncController extends GetxController {
       print('Error clearing data: $e');
       Get.snackbar(
         'Lỗi',
-        'Không thể đồng bộ dữ liệu',
+        'Không thể xóa dữ liệu',
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
@@ -484,7 +484,7 @@ class SyncController extends GetxController {
 
       Get.snackbar(
         'Thành công',
-        'Đã đồng bộ dữ liệu của ${update.farmName}',
+        'Đã xóa dữ liệu của ${update.farmName}',
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
@@ -492,7 +492,7 @@ class SyncController extends GetxController {
       print('Error deleting single update: $e');
       Get.snackbar(
         'Lỗi',
-        'Không thể đồng bộ dữ liệu: $e',
+        'Không thể xóa dữ liệu: $e',
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );

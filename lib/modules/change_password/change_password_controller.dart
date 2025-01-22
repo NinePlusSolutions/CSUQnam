@@ -5,7 +5,7 @@ import 'package:flutter_getx_boilerplate/api/api_provider.dart';
 class ChangePasswordController extends GetxController {
   final ApiProvider _apiProvider = ApiProvider();
   final formKey = GlobalKey<FormState>();
-  
+
   final currentPasswordController = TextEditingController();
   final newPasswordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
@@ -42,7 +42,8 @@ class ChangePasswordController extends GetxController {
       } else {
         Get.snackbar(
           'Lỗi',
-          response.data['message'] ?? 'Đổi mật khẩu thất bại. Vui lòng thử lại',
+          response.data['message'] ??
+              'Mật khẩu cũ không chính xác. Vui lòng thử lại',
           backgroundColor: Colors.red,
           colorText: Colors.white,
           snackPosition: SnackPosition.BOTTOM,
@@ -51,7 +52,7 @@ class ChangePasswordController extends GetxController {
     } catch (e) {
       Get.snackbar(
         'Lỗi',
-        'Đổi mật khẩu thất bại. Vui lòng thử lại',
+        'Mật khẩu cũ không chính xác. Vui lòng thử lại',
         backgroundColor: Colors.red,
         colorText: Colors.white,
         snackPosition: SnackPosition.BOTTOM,

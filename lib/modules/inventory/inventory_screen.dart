@@ -81,120 +81,153 @@ class InventoryScreen extends GetView<InventoryController> {
           ),
         ],
       ),
-      child: InkWell(
-        onTap: () => _showEditDialog(),
-        borderRadius: BorderRadius.circular(8),
-        child: Column(
-          children: [
-            Row(
+      child: Obx(() => InkWell(
+            onTap: controller.isEditingEnabled.value
+                ? () => _showEditDialog()
+                : null,
+            borderRadius: BorderRadius.circular(8),
+            child: Column(
               children: [
-                // Bên trái: Nông trường và Tổ
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+                Row(
+                  children: [
+                    // Bên trái: Nông trường và Tổ
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.location_on_outlined,
-                              size: 18, color: Colors.grey[600]),
-                          const SizedBox(width: 4),
-                          Obx(() => Text(
+                          Row(
+                            children: [
+                              Icon(Icons.location_on_outlined,
+                                  size: 18,
+                                  color: controller.isEditingEnabled.value
+                                      ? Colors.grey[600]
+                                      : Colors.grey[400]),
+                              const SizedBox(width: 4),
+                              Text(
                                 controller.farm.value,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              )),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Icon(Icons.groups_outlined,
-                              size: 18, color: Colors.grey[600]),
-                          const SizedBox(width: 4),
-                          Obx(() => Text(
-                                controller.productionTeam.value,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              )),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  height: 40,
-                  width: 1,
-                  color: Colors.grey[300],
-                ),
-                const SizedBox(width: 16),
-                // Bên phải: Lô, Tuổi cạo và Hàng
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.grid_view_outlined,
-                              size: 18, color: Colors.grey[600]),
-                          const SizedBox(width: 4),
-                          Obx(() => Text(
-                                controller.lot.value,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              )),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(Icons.calendar_today_outlined,
-                              size: 16, color: Colors.grey[600]),
-                          const SizedBox(width: 4),
-                          Obx(() => Text(
-                                'Tuổi cạo: ${controller.tappingAge.value}',
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color: Colors.grey[700],
                                   fontWeight: FontWeight.w500,
+                                  color: controller.isEditingEnabled.value
+                                      ? Colors.black
+                                      : Colors.grey[600],
                                 ),
-                              )),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(Icons.straighten_outlined,
-                              size: 18, color: Colors.grey[600]),
-                          const SizedBox(width: 4),
-                          Obx(() => Text(
-                                controller.row.value,
-                                style: const TextStyle(
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Icon(Icons.groups_outlined,
+                                  size: 18,
+                                  color: controller.isEditingEnabled.value
+                                      ? Colors.grey[600]
+                                      : Colors.grey[400]),
+                              const SizedBox(width: 4),
+                              Text(
+                                controller.productionTeam.value,
+                                style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
+                                  color: controller.isEditingEnabled.value
+                                      ? Colors.black
+                                      : Colors.grey[600],
                                 ),
-                              )),
-                          const SizedBox(width: 8),
-                          Icon(
-                            Icons.edit_outlined,
-                            size: 16,
-                            color: Colors.green[700],
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
-                  ),
+                    ),
+                    Container(
+                      height: 40,
+                      width: 1,
+                      color: Colors.grey[300],
+                    ),
+                    const SizedBox(width: 16),
+                    // Bên phải: Lô, Tuổi cạo và Hàng
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.grid_view_outlined,
+                                  size: 18,
+                                  color: controller.isEditingEnabled.value
+                                      ? Colors.grey[600]
+                                      : Colors.grey[400]),
+                              const SizedBox(width: 4),
+                              Text(
+                                controller.lot.value,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: controller.isEditingEnabled.value
+                                      ? Colors.black
+                                      : Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(Icons.calendar_today_outlined,
+                                  size: 16,
+                                  color: controller.isEditingEnabled.value
+                                      ? Colors.grey[600]
+                                      : Colors.grey[400]),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Tuổi cạo: ${controller.tappingAge.value}',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: controller.isEditingEnabled.value
+                                      ? Colors.grey[700]
+                                      : Colors.grey[500],
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(Icons.straighten_outlined,
+                                  size: 18,
+                                  color: controller.isEditingEnabled.value
+                                      ? Colors.grey[600]
+                                      : Colors.grey[400]),
+                              const SizedBox(width: 4),
+                              Text(
+                                controller.row.value,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: controller.isEditingEnabled.value
+                                      ? Colors.black
+                                      : Colors.grey[600],
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Icon(
+                                Icons.edit_outlined,
+                                size: 16,
+                                color: controller.isEditingEnabled.value
+                                    ? Colors.green[700]
+                                    : Colors.grey[400],
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
-      ),
+          )),
     );
   }
 
@@ -806,17 +839,22 @@ class InventoryScreen extends GetView<InventoryController> {
               ),
             ],
           ),
-          child: TextField(
-            controller: controller.noteController,
-            onChanged: (value) => controller.note.value = value,
-            maxLines: 3,
-            decoration: InputDecoration(
-              hintText: 'Nhập ghi chú (nếu có)',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
+          child: Obx(() => TextField(
+                controller: controller.noteController,
+                onChanged: (value) => controller.note.value = value,
+                maxLines: 3,
+                enabled: controller.isEditingEnabled.value,
+                decoration: InputDecoration(
+                  hintText: 'Nhập ghi chú (nếu có)',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  fillColor: controller.isEditingEnabled.value
+                      ? Colors.white
+                      : Colors.grey[100],
+                  filled: true,
+                ),
+              )),
         ),
       ],
     );

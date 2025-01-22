@@ -34,7 +34,8 @@ class ChangePasswordScreen extends GetView<ChangePasswordController> {
                       obscureText: controller.isCurrentPasswordHidden.value,
                       decoration: InputDecoration(
                         labelText: 'Mật khẩu hiện tại',
-                        prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF2E7D32)),
+                        prefixIcon: const Icon(Icons.lock_outline,
+                            color: Color(0xFF2E7D32)),
                         suffixIcon: IconButton(
                           icon: Icon(
                             controller.isCurrentPasswordHidden.value
@@ -49,7 +50,8 @@ class ChangePasswordScreen extends GetView<ChangePasswordController> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFF2E7D32)),
+                          borderSide:
+                              const BorderSide(color: Color(0xFF2E7D32)),
                         ),
                       ),
                       validator: (value) {
@@ -66,7 +68,8 @@ class ChangePasswordScreen extends GetView<ChangePasswordController> {
                       obscureText: controller.isNewPasswordHidden.value,
                       decoration: InputDecoration(
                         labelText: 'Mật khẩu mới',
-                        prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF2E7D32)),
+                        prefixIcon: const Icon(Icons.lock_outline,
+                            color: Color(0xFF2E7D32)),
                         suffixIcon: IconButton(
                           icon: Icon(
                             controller.isNewPasswordHidden.value
@@ -81,7 +84,8 @@ class ChangePasswordScreen extends GetView<ChangePasswordController> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFF2E7D32)),
+                          borderSide:
+                              const BorderSide(color: Color(0xFF2E7D32)),
                         ),
                       ),
                       validator: (value) {
@@ -101,7 +105,8 @@ class ChangePasswordScreen extends GetView<ChangePasswordController> {
                       obscureText: controller.isConfirmPasswordHidden.value,
                       decoration: InputDecoration(
                         labelText: 'Xác nhận mật khẩu mới',
-                        prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF2E7D32)),
+                        prefixIcon: const Icon(Icons.lock_outline,
+                            color: Color(0xFF2E7D32)),
                         suffixIcon: IconButton(
                           icon: Icon(
                             controller.isConfirmPasswordHidden.value
@@ -116,7 +121,8 @@ class ChangePasswordScreen extends GetView<ChangePasswordController> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFF2E7D32)),
+                          borderSide:
+                              const BorderSide(color: Color(0xFF2E7D32)),
                         ),
                       ),
                       validator: (value) {
@@ -157,6 +163,7 @@ class ChangePasswordScreen extends GetView<ChangePasswordController> {
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
+                                color: Colors.white,
                               ),
                             ),
                     )),

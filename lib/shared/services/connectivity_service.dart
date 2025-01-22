@@ -23,6 +23,7 @@ class ConnectivityService extends GetxService {
   Future<void> _initConnectivity() async {
     try {
       final result = await _connectivity.checkConnectivity();
+      print('Initial connectivity check result: $result');
       _updateConnectionStatus(result);
     } catch (e) {
       print('Connectivity check failed: $e');
@@ -32,6 +33,7 @@ class ConnectivityService extends GetxService {
   void _setupConnectivityStream() {
     _subscription = _connectivity.onConnectivityChanged.listen(
       (ConnectivityResult result) {
+        print('Connectivity changed to: $result');
         _updateConnectionStatus(result);
       },
       onError: (error) {
@@ -42,6 +44,7 @@ class ConnectivityService extends GetxService {
 
   void _updateConnectionStatus(ConnectivityResult result) {
     final bool isOffline = result == ConnectivityResult.none;
+    print('Updating offline status: $isOffline (Result: $result)');
     OfflineIndicatorController.to.setOfflineStatus(isOffline);
   }
 }

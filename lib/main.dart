@@ -11,8 +11,8 @@ import 'app.dart';
 FutureOr<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await DependencyInjection.init();
+  // Khởi tạo OfflineIndicatorController sau khi DependencyInjection đã hoàn tất
   Get.put(OfflineIndicatorController());
-  await Get.putAsync(() => ConnectivityService().init());
   runApp(const App());
 
   configLoading();

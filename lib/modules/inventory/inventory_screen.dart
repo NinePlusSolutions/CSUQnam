@@ -235,38 +235,35 @@ class InventoryScreen extends GetView<InventoryController> {
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: Colors.grey[300]!),
                 ),
-                child: DropdownButton<int>(
-                  value: controller.farmId.value == 0 ||
-                          !controller.farmResponses.value
-                              .any((f) => f.farmId == controller.farmId.value)
-                      ? null
-                      : controller.farmId.value,
-                  isExpanded: true,
-                  underline: const SizedBox(),
-                  hint: const Text('Chọn nông trường'),
-                  items: controller.farmResponses.value.map((farm) {
-                    return DropdownMenuItem<int>(
-                      value: farm.farmId,
-                      child: Text(farm.farmName ?? 'Không có tên'),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      try {
-                        final selectedFarm = controller.farmResponses.value
-                            .firstWhereOrNull((farm) => farm.farmId == value);
-                        if (selectedFarm != null) {
-                          controller.onFarmSelected(
-                            selectedFarm.farmId,
-                            selectedFarm.farmName ?? '',
-                          );
+                child: Obx(() => DropdownButton<int>(
+                      value: controller.farmId.value,
+                      isExpanded: true,
+                      underline: const SizedBox(),
+                      hint: const Text('Chọn nông trường'),
+                      items: controller.farmResponses.value.map((farm) {
+                        return DropdownMenuItem<int>(
+                          value: farm.farmId,
+                          child: Text(farm.farmName ?? 'Không có tên'),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          try {
+                            final selectedFarm = controller.farmResponses.value
+                                .firstWhereOrNull(
+                                    (farm) => farm.farmId == value);
+                            if (selectedFarm != null) {
+                              controller.onFarmSelected(
+                                selectedFarm.farmId,
+                                selectedFarm.farmName ?? '',
+                              );
+                            }
+                          } catch (e) {
+                            print('Error selecting farm: $e');
+                          }
                         }
-                      } catch (e) {
-                        print('Error selecting farm: $e');
-                      }
-                    }
-                  },
-                ),
+                      },
+                    )),
               ),
 
               // Team dropdown
